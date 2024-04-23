@@ -4,11 +4,11 @@
 #include <string_view>
 #include <vector>
 
-namespace ootz {
+namespace core {
 
-auto parse_args(int argc, char *argv[]) noexcept
+auto ParseArgcArgv(int argc, char *argv[]) noexcept
     -> std::vector<std::string_view>;
 
-}
+} // namespace core
 
 #endif // CPP_GAME_SERVER_PORTFOLIO_CORE_UTILS_H

@@ -1,0 +1,25 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Server",
+      "program": "${workspaceFolder}/build/src/server/server",
+      "args": ["--port", "8000"],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Client Without Build",
+      "program": "${workspaceFolder}/build/src/client/client",
+      "args": ["--ip-port", "127.0.0.1:8000"],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
