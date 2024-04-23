@@ -14,9 +14,9 @@ using Args = std::vector<std::string_view>;
 
 [[nodiscard]] auto ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
 
-class Lexer final : private NonCopyable, Movable {
+class Tokenizer final : private NonCopyable, Movable {
 public:
-  explicit Lexer(Args &&args) noexcept;
+  explicit Tokenizer(Args &&args) noexcept;
 
   auto Current() const noexcept -> std::optional<std::string_view>;
   auto Next() const noexcept -> std::optional<std::string_view>;
