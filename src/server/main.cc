@@ -2,6 +2,12 @@
 #include <iostream>
 #include <system_error>
 
+// TODO: socket to module
+#include <unistd.h>
+// Linux specific headers
+#include <sys/epoll.h>
+// TODO: socket to module
+
 #include "core/core.h"
 #include "core/utils.h"
 
@@ -85,5 +91,12 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
+  int epoll_fd = epoll_create1(0);
+  if (epoll_fd == -1) {
+    perror("epoll_create1");
+    return 1;
+  }
+
+  close(epoll_fd);
   return 0;
 }
