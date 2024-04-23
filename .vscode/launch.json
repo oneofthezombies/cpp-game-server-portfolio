@@ -20,6 +20,15 @@
       "program": "${workspaceFolder}/build/src/client/client",
       "args": ["--ip-port", "127.0.0.1:8000"],
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "debugpy",
+      "name": "Debug Dev",
+      "request": "launch",
+      "program": "dev.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": ["build"]
     }
   ]
 }
