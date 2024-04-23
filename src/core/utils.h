@@ -32,10 +32,10 @@ template <typename T>
 [[nodiscard]] auto ParseNumberString(const std::string_view token) noexcept
     -> Result<T, std::errc> {
   T value{};
-  auto result =
+  auto [ptr, ec] =
       std::from_chars(token.data(), token.data() + token.size(), value);
-  if (result.ec != std::errc{}) {
-    return result.ec;
+  if (ec != std::errc{}) {
+    return ec;
   }
 
   return value;
