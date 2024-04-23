@@ -2,28 +2,10 @@
 #include <iostream>
 #include <system_error>
 
-// TODO: socket to module
-#include <unistd.h>
-// Linux specific headers
-#include <sys/epoll.h>
-// TODO: socket to module
-
 #include "core/core.h"
 #include "core/utils.h"
 
-enum class ServerErrorCode : int32_t {
-  kHelpRequested = 0,
-  kPortNotFound,
-  kPortParsingFailed,
-  kUnknownArgument,
-
-  // Add more error codes before kCount
-  kCount
-};
-
-using Error = core::Error<ServerErrorCode>;
-
-template <typename T> using Result = core::Result<T, Error>;
+#include "engine.h"
 
 struct ServerOptions final : private core::NonCopyable, core::Movable {
   uint16_t port;
@@ -41,9 +23,12 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
   for (auto current = tokenizer.Current(); current.has_value();
        tokenizer.Eat()) {
     const auto token = *current;
+
     if (token == "--help") {
       return Error{ServerErrorCode::kHelpRequested};
-    } else if (token == "--port") {
+    }
+
+    if (token == "--port") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
         return Error{ServerErrorCode::kPortNotFound};
@@ -57,16 +42,15 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
 
       options.port = result.Ok();
       tokenizer.Eat();
-    } else {
-      return Error{ServerErrorCode::kUnknownArgument, std::string{token}};
     }
+
+    return Error{ServerErrorCode::kUnknownArgument, std::string{token}};
   }
   return options;
 }
 
 auto main(int argc, char **argv) noexcept -> int {
-  auto args = core::ParseArgcArgv(argc, argv);
-  auto result = ParseArgs(std::move(args));
+  auto result = ParseArgs(core::ParseArgcArgv(argc, argv));
   if (result.IsErr()) {
     const auto &error = result.Err();
     switch (error.code) {
@@ -82,6 +66,9 @@ auto main(int argc, char **argv) noexcept -> int {
     case ServerErrorCode::kUnknownArgument:
       std::cout << "Error: unknown argument\n";
       break;
+    case ServerErrorCode::kEngineCreationFailed:
+      std::cout << "Error: engine creation failed\n";
+      break;
     case ServerErrorCode::kCount:
       assert(false && "Do not use kCount as an error code");
       break;
@@ -91,12 +78,5 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
-  int epoll_fd = epoll_create1(0);
-  if (epoll_fd == -1) {
-    perror("epoll_create1");
-    return 1;
-  }
-
-  close(epoll_fd);
   return 0;
 }
