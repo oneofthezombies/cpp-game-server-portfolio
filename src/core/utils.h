@@ -1,13 +1,45 @@
 #ifndef CPP_GAME_SERVER_PORTFOLIO_CORE_UTILS_H
 #define CPP_GAME_SERVER_PORTFOLIO_CORE_UTILS_H
 
+#include <charconv>
+#include <optional>
 #include <string_view>
 #include <vector>
 
+#include "core.h"
+
 namespace core {
 
-auto ParseArgcArgv(int argc, char *argv[]) noexcept
-    -> std::vector<std::string_view>;
+using Args = std::vector<std::string_view>;
+
+[[nodiscard]] auto ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
+
+class Lexer final : private NonCopyable, Movable {
+public:
+  explicit Lexer(Args &&args) noexcept;
+
+  auto Current() const noexcept -> std::optional<std::string_view>;
+  auto Next() const noexcept -> std::optional<std::string_view>;
+  auto Eat() noexcept -> void;
+
+private:
+  Args args_;
+  size_t index_{};
+};
+
+template <typename T>
+  requires std::integral<T> || std::floating_point<T>
+[[nodiscard]] auto ParseNumberString(const std::string_view token) noexcept
+    -> Result<T, std::errc> {
+  T value{};
+  auto result =
+      std::from_chars(token.data(), token.data() + token.size(), value);
+  if (result.ec != std::errc{}) {
+    return result.ec;
+  }
+
+  return value;
+}
 
 } // namespace core
 
