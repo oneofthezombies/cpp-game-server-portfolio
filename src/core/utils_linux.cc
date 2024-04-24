@@ -5,8 +5,9 @@
 
 using namespace core;
 
-LinuxError::LinuxError(const int code, const std::string_view message) noexcept
-    : code{code}, message{message} {}
+LinuxError::LinuxError(const int errno_value,
+                       const std::string_view errno_description) noexcept
+    : errno_value{errno_value}, errno_description{errno_description} {}
 
 auto core::LinuxError::FromErrno() noexcept -> LinuxError {
   const auto errno_value = errno;
@@ -16,9 +17,9 @@ auto core::LinuxError::FromErrno() noexcept -> LinuxError {
 auto core::operator<<(std::ostream &os, const LinuxError &error) noexcept
     -> std::ostream & {
   os << "LinuxError{";
-  os << "code=" << error.code;
+  os << "errno_value=" << error.errno_value;
   os << ", ";
-  os << "message=" << error.message;
+  os << "errno_description=" << error.errno_description;
   os << "}";
   return os;
 }

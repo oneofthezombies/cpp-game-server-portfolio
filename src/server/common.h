@@ -14,7 +14,8 @@ enum class Symbol : int32_t {
   // Add symbols after kBegin
 
   kHelpRequested,
-  kPortNotFound,
+  kPortArgNotFound,
+  kPortValueNotFound,
   kPortParsingFailed,
   kUnknownArgument,
   kLinuxEngineEpollCreate1Failed,
@@ -35,6 +36,9 @@ enum class Symbol : int32_t {
   // Add symbols before kEnd
   kEnd
 };
+
+auto operator<<(std::ostream &os, const Symbol symbol) noexcept
+    -> std::ostream &;
 
 using Error = core::Error<Symbol>;
 

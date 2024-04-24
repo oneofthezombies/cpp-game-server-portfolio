@@ -32,7 +32,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
     if (token == "--port") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return Error{Symbol::kPortNotFound};
+        return Error{Symbol::kPortValueNotFound};
       }
 
       auto result = core::ParseNumberString<uint16_t>(*next);
@@ -48,6 +48,11 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
 
     return Error{Symbol::kUnknownArgument, std::string{token}};
   }
+
+  if (options.port == ServerOptions::kUndefinedPort) {
+    return Error{Symbol::kPortArgNotFound};
+  }
+
   return options;
 }
 
@@ -57,14 +62,16 @@ auto main(int argc, char **argv) noexcept -> int {
     const auto &error = args_res.Err();
     if (error.code == Symbol::kHelpRequested) {
       std::cout << "Usage: server [--port <port>]";
-    } else if (error.code == Symbol::kPortNotFound) {
-      std::cout << "Error: port not found";
+    } else if (error.code == Symbol::kPortArgNotFound) {
+      std::cout << "Error: --port argument not found";
+    } else if (error.code == Symbol::kPortValueNotFound) {
+      std::cout << "Error: --port argument value not found";
     } else if (error.code == Symbol::kPortParsingFailed) {
       std::cout << "Error: port parsing failed: " << error.message;
     } else if (error.code == Symbol::kUnknownArgument) {
       std::cout << "Error: unknown argument";
     } else {
-      std::cout << "Error: " << static_cast<int>(error.code) << error.message;
+      std::cout << "Error: " << error;
     }
 
     std::cout << std::endl;
@@ -74,15 +81,15 @@ auto main(int argc, char **argv) noexcept -> int {
   const auto &options = args_res.Ok();
   auto engine_res = EngineBuilder{}.Build(options.port);
   if (engine_res.IsErr()) {
-    std::cout << "Error: engine creation failed: " << engine_res.Err().message
-              << std::endl;
+    std::cout << engine_res.Err() << std::endl;
     return 1;
   }
 
   auto &engine = engine_res.Ok();
   if (auto res = engine.Run(); res.IsErr()) {
-    std::cout << "Error: engine run failed: " << res.Err().message << std::endl;
+    std::cout << res.Err() << std::endl;
     return 1;
   }
+
   return 0;
 }

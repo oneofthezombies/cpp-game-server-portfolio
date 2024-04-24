@@ -8,10 +8,10 @@ namespace core {
 
 struct LinuxError final : private Copyable, Movable {
   // `errno`
-  int code;
+  int errno_value;
 
   // `strerror(errno)`
-  std::string_view message;
+  std::string_view errno_description;
 
   [[nodiscard]] static auto FromErrno() noexcept -> LinuxError;
 

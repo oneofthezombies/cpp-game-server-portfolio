@@ -1,6 +1,7 @@
 #ifndef CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H
 #define CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H
 
+#include <ostream>
 #include <string>
 #include <variant>
 
@@ -71,6 +72,25 @@ private:
   std::variant<std::monostate, T, E> data_;
 };
 
+template <typename T, typename E>
+auto operator<<(std::ostream &os, const Result<T, E> &result)
+    -> std::ostream & {
+  os << "Result{";
+  if (result.IsOk()) {
+    os << "Ok{";
+    os << result.Ok();
+    os << "}";
+  } else if (result.IsErr()) {
+    os << "Err{";
+    os << result.Err();
+    os << "}";
+  } else {
+    os << "Empty{}";
+  }
+  os << "}";
+  return os;
+}
+
 template <typename T>
   requires std::is_enum_v<T>
 struct Error final : private NonCopyable, Movable {
@@ -81,6 +101,18 @@ struct Error final : private NonCopyable, Movable {
   Error(const T code, std::string &&message) noexcept
       : code(code), message(std::move(message)) {}
 };
+
+template <typename T>
+auto operator<<(std::ostream &os, const Error<T> &error) -> std::ostream & {
+  os << "Error{";
+  os << "code=";
+  os << error.code;
+  os << ", ";
+  os << "message=";
+  os << error.message;
+  os << "}";
+  return os;
+}
 
 struct Void final : private Copyable, Movable {};
 
