@@ -1,5 +1,3 @@
-#include <cassert>
-#include <cstring>
 #include <iostream>
 #include <system_error>
 
@@ -9,7 +7,7 @@
 #include "engine.h"
 
 struct ServerOptions final : private core::NonCopyable, core::Movable {
-  uint16_t port;
+  uint16_t port{kUndefinedPort};
 
   static constexpr uint16_t kUndefinedPort{0};
 };

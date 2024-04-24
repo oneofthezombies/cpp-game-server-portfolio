@@ -16,6 +16,9 @@ public:
   [[nodiscard]] auto Get(const std::string_view key) const noexcept
       -> std::optional<std::string_view>;
 
+  auto AsRaw() const noexcept
+      -> const std::unordered_map<std::string_view, std::string_view> &;
+
   /**
    * The lifetime in the input `tiny_json` must be longer than the lifetime
    * in `std::string_view` returned by the `TinyJson` object and the object's
@@ -32,6 +35,9 @@ private:
 
   friend class TinyJsonParser;
 };
+
+auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
+    -> std::ostream &;
 
 class TinyJsonParser final : private NonCopyable, Movable {
 public:

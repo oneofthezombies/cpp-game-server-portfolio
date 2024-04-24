@@ -134,6 +134,7 @@ auto LinuxEngine::OnServerFdEvent() noexcept -> Result<core::Void> {
       connected_sessions_.erase(old_session);
     }
 
+    std::cout << "New session connected: " << session << std::endl;
     connected_sessions_.emplace(session.Id(), std::move(session));
   }
 
@@ -183,6 +184,8 @@ auto LinuxEngine::OnClientFdEvent(
                      .Build()};
   }
 
+  std::cout << "Received message: " << *message << std::endl;
+
   const auto room_id = message->json.Get("room_id");
   if (!room_id) {
     DeleteConnectedSessionOrCloseFd(client_fd);
@@ -216,6 +219,7 @@ auto LinuxEngine::DeleteConnectedSessionOrCloseFd(
   auto found_session = connected_sessions_.find(session_id);
   if (found_session != connected_sessions_.end()) {
     connected_sessions_.erase(found_session);
+    std::cout << "Session deleted: " << session_id << std::endl;
     return;
   }
 
@@ -225,6 +229,8 @@ auto LinuxEngine::DeleteConnectedSessionOrCloseFd(
                           .Add("client_fd", client_fd)
                           .Build()};
     std::cout << error << std::endl;
+  } else {
+    std::cout << "Client fd closed: " << client_fd << std::endl;
   }
 }
 

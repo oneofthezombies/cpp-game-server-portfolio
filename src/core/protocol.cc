@@ -73,3 +73,18 @@ auto Message::BuildRaw(const MessageKind kind, const IdType id,
 
   return raw;
 }
+
+auto core::operator<<(std::ostream &os, const Message &message) noexcept
+    -> std::ostream & {
+  os << "Message{";
+  os << "kind=";
+  os << message.kind;
+  os << ", ";
+  os << "id=";
+  os << message.id;
+  os << ", ";
+  os << "json=";
+  os << message.json;
+  os << "}";
+  return os;
+}

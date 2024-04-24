@@ -57,6 +57,9 @@ struct Message final : private NonCopyable, Movable {
       -> std::string;
 };
 
+auto operator<<(std::ostream &os, const Message &message) noexcept
+    -> std::ostream &;
+
 } // namespace core
 
 #endif // CORE_PROTOCOL_H

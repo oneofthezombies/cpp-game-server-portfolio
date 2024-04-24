@@ -1,6 +1,7 @@
 #include "session.h"
 
 #include <cassert>
+#include <iostream>
 
 #if defined(__linux__)
 #include "file_descriptor_linux.h"

@@ -22,9 +22,9 @@ public:
 
   explicit Session(SessionImplPtr &&impl) noexcept;
 
-  auto Id() const noexcept -> IdType;
+  [[nodiscard]] auto Id() const noexcept -> IdType;
 
-  auto Hash() const noexcept -> size_t;
+  [[nodiscard]] auto Hash() const noexcept -> size_t;
 
 private:
   SessionImplPtr impl_;
