@@ -26,4 +26,7 @@ private:
   static constexpr int kInvalidFd{-1};
 };
 
+auto operator<<(std::ostream &os, const LinuxFileDescriptor &fd)
+    -> std::ostream &;
+
 #endif // SERVER_FILE_DESCRIPTOR_LINUX_H

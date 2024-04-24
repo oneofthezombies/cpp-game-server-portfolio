@@ -52,6 +52,13 @@ public:
     return *this;
   }
 
+  template <typename T>
+  [[nodiscard]] auto Add(const std::string_view key, const T &value) noexcept
+      -> StringBuilder & {
+    oss_ << key << "=" << value;
+    return *this;
+  }
+
   [[nodiscard]] auto Build() const noexcept -> std::string {
     return oss_.str();
   }

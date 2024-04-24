@@ -27,6 +27,7 @@ enum class Symbol : int32_t {
   kLinuxEngineServerSocketListenFailed,
   kLinuxEngineServerSocketAcceptFailed,
   kLinuxEngineClientSocketReadFailed,
+  kLinuxEngineClientSessionAlreadyExists,
   kLinuxFileDescriptorGetStatusFailed,
   kLinuxFileDescriptorSetStatusFailed,
   kLinuxFileDescriptorCloseFailed,

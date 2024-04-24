@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <cstring>
 #include <iostream>
 #include <signal.h>
 
@@ -11,7 +10,7 @@
 #include <sys/socket.h>
 
 #include "common.h"
-#include "server/file_descriptor_linux.h"
+#include "file_descriptor_linux.h"
 #include "utils.h"
 #include "utils_linux.h"
 
@@ -62,14 +61,12 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
         if (!client_fd.IsValid()) {
           const Error error{Symbol::kLinuxEngineServerSocketAcceptFailed,
                             SB{}.Add(core::LinuxError::FromErrno()).Build()};
-          // TODO: Log error
-          std::cout << error.message << std::endl;
+          std::cout << error << std::endl;
           continue;
         }
 
         if (auto res = client_fd.UpdateNonBlocking(); res.IsErr()) {
-          // TODO: Log error
-          std::cout << res.Err().message << std::endl;
+          std::cout << res.Err() << std::endl;
           continue;
         }
 
@@ -79,35 +76,41 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
         if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, client_fd.AsRaw(),
                       &add_client_ev) == -1) {
           const Error error{Symbol::kLinuxEngineEpollCtlAddClientFailed,
-                            SB{}.Add(core::LinuxError::FromErrno()).Build()};
-          // TODO: Log error
-          std::cout << error.message << std::endl;
+                            SB{}.Add(core::LinuxError::FromErrno())
+                                .Add("client_fd", client_fd)
+                                .Build()};
+          std::cout << error << std::endl;
           continue;
         }
 
         if (auto found = client_fds_.find(client_fd.AsRaw());
             found != client_fds_.end()) {
-          // TODO: Log error
+          const Error error{Symbol::kLinuxEngineClientSessionAlreadyExists,
+                            SB{}.Add("Delete old client session")
+                                .Add("client_fd", client_fd)
+                                .Build()};
+          std::cout << error << std::endl;
           client_fds_.erase(found);
         }
         client_fds_.emplace(client_fd.AsRaw(), std::move(client_fd));
       } else {
         char buffer[1024]{};
-        const ssize_t count = read(current_ev.data.fd, buffer, sizeof(buffer));
+        const auto fd = current_ev.data.fd;
+        const ssize_t count = read(fd, buffer, sizeof(buffer));
         if (count == -1) {
-          const Error error{Symbol::kLinuxEngineClientSocketReadFailed,
-                            SB{}.Add(core::LinuxError::FromErrno()).Build()};
-          // TODO: Log error
-          std::cout << error.message << std::endl;
-          close(current_ev.data.fd);
+          const Error error{
+              Symbol::kLinuxEngineClientSocketReadFailed,
+              SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd).Build()};
+          std::cout << error << std::endl;
+          close(fd);
         } else if (count == 0) {
-          close(current_ev.data.fd);
+          close(fd);
         } else {
-          if (write(current_ev.data.fd, buffer, count) == -1) {
-            const Error error{Symbol::kLinuxEngineClientSocketReadFailed,
-                              SB{}.Add(core::LinuxError::FromErrno()).Build()};
-            // TODO: Log error
-            std::cout << error.message << std::endl;
+          if (write(fd, buffer, count) == -1) {
+            const Error error{
+                Symbol::kLinuxEngineClientSocketReadFailed,
+                SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd).Build()};
+            std::cout << error << std::endl;
           }
         }
       }

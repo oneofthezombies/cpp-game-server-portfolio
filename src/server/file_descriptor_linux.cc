@@ -52,14 +52,29 @@ auto LinuxFileDescriptor::UpdateNonBlocking() const noexcept
     -> Result<core::Void> {
   const int opts = fcntl(fd_, F_GETFL);
   if (opts < 0) {
-    return Error{Symbol::kLinuxFileDescriptorGetStatusFailed,
-                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{
+        Symbol::kLinuxFileDescriptorGetStatusFailed,
+        SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd_).Build()};
   }
 
   if (fcntl(fd_, F_SETFL, (opts | O_NONBLOCK)) < 0) {
-    return Error{Symbol::kLinuxFileDescriptorSetStatusFailed,
-                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{
+        Symbol::kLinuxFileDescriptorSetStatusFailed,
+        SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd_).Build()};
   }
 
   return core::Void{};
+}
+
+auto operator<<(std::ostream &os, const LinuxFileDescriptor &fd)
+    -> std::ostream & {
+  os << "LinuxFileDescriptor{";
+  os << "fd=";
+  if (fd.IsValid()) {
+    os << fd.AsRaw();
+  } else {
+    os << "invalid";
+  }
+  os << "}";
+  return os;
 }
