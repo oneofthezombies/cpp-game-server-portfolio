@@ -1,41 +1,29 @@
-#ifndef CPP_GAME_SERVER_PORTFOLIO_SERVER_ENGINE_H
-#define CPP_GAME_SERVER_PORTFOLIO_SERVER_ENGINE_H
+#ifndef SERVER_ENGINE_H
+#define SERVER_ENGINE_H
 
-#include <memory>
-
-#include "core/core.h"
-
-struct EngineImpl;
-
-enum class ServerErrorCode : int32_t {
-  kHelpRequested = 0,
-  kPortNotFound,
-  kPortParsingFailed,
-  kUnknownArgument,
-  kEngineCreationFailed,
-  kEngineEpollCreationFailed,
-
-  // Add more error codes before kCount
-  kCount
-};
-
-using Error = core::Error<ServerErrorCode>;
-
-template <typename T> using Result = core::Result<T, Error>;
+#include "common.h"
 
 class Engine final : private core::NonCopyable, core::Movable {
 public:
+  Engine(Engine &&) noexcept;
+  ~Engine() noexcept;
+
+  auto operator=(Engine &&) noexcept -> Engine &;
+
+  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
+
 private:
-  explicit Engine(std::unique_ptr<EngineImpl> &&impl) noexcept;
+  explicit Engine(void *impl) noexcept;
 
-  std::unique_ptr<EngineImpl> impl_;
+  void *impl_{};
 
-  friend class EngineFactory;
+  friend class EngineBuilder;
 };
 
-class EngineFactory final : private core::NonCopyable, core::NonMovable {
+class EngineBuilder final : private core::NonCopyable, core::NonMovable {
 public:
-  auto Create() const noexcept -> Result<Engine>;
+  [[nodiscard]] auto Build(const uint16_t port) const noexcept
+      -> Result<Engine>;
 };
 
-#endif // CPP_GAME_SERVER_PORTFOLIO_SERVER_ENGINE_H
+#endif // SERVER_ENGINE_H

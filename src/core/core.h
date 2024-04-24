@@ -82,6 +82,10 @@ struct Error final : private NonCopyable, Movable {
       : code(code), message(std::move(message)) {}
 };
 
+struct Void final : private Copyable, Movable {};
+
+auto operator<<(std::ostream &os, const Void &) -> std::ostream &;
+
 } // namespace core
 
 #endif // CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H
