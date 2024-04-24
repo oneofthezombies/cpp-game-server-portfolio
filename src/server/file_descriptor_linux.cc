@@ -21,9 +21,8 @@ LinuxFileDescriptor::~LinuxFileDescriptor() noexcept {
   }
 
   if (close(fd_) == -1) {
-    const Error error{
-        Symbol::kLinuxFileDescriptorCloseFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    const Error error{Symbol::kLinuxFileDescriptorCloseFailed,
+                      SB{}.Add(core::LinuxError::FromErrno()).Build()};
     // TODO: Log error
     std::cout << error.message << std::endl;
   }
@@ -53,15 +52,13 @@ auto LinuxFileDescriptor::UpdateNonBlocking() const noexcept
     -> Result<core::Void> {
   const int opts = fcntl(fd_, F_GETFL);
   if (opts < 0) {
-    return Error{
-        Symbol::kLinuxFileDescriptorGetStatusFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxFileDescriptorGetStatusFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   if (fcntl(fd_, F_SETFL, (opts | O_NONBLOCK)) < 0) {
-    return Error{
-        Symbol::kLinuxFileDescriptorSetStatusFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxFileDescriptorSetStatusFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   return core::Void{};

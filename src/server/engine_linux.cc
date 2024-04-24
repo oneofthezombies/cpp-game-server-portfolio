@@ -32,15 +32,13 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
   add_server_ev.data.fd = server_fd_.AsRaw();
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, server_fd_.AsRaw(),
                 &add_server_ev) == -1) {
-    return Error{
-        Symbol::kLinuxEngineEpollCtlAddServerFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxEngineEpollCtlAddServerFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
-    return Error{
-        Symbol::kLinuxSignalSetFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxSignalSetFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   struct epoll_event events[kMaxEvents]{};
@@ -50,9 +48,8 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
       if (errno == EINTR) {
         continue;
       }
-      return Error{
-          Symbol::kLinuxEngineEpollWaitFailed,
-          core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+      return Error{Symbol::kLinuxEngineEpollWaitFailed,
+                   SB{}.Add(core::LinuxError::FromErrno()).Build()};
     }
 
     for (int n = 0; n < nfds; ++n) {
@@ -63,9 +60,8 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
         auto client_fd = LinuxFileDescriptor{accept(
             server_fd_.AsRaw(), (struct sockaddr *)&client_addr, &addrlen)};
         if (!client_fd.IsValid()) {
-          const Error error{
-              Symbol::kLinuxEngineServerSocketAcceptFailed,
-              core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+          const Error error{Symbol::kLinuxEngineServerSocketAcceptFailed,
+                            SB{}.Add(core::LinuxError::FromErrno()).Build()};
           // TODO: Log error
           std::cout << error.message << std::endl;
           continue;
@@ -82,9 +78,8 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
         add_client_ev.data.fd = client_fd.AsRaw();
         if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, client_fd.AsRaw(),
                       &add_client_ev) == -1) {
-          const Error error{
-              Symbol::kLinuxEngineEpollCtlAddClientFailed,
-              core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+          const Error error{Symbol::kLinuxEngineEpollCtlAddClientFailed,
+                            SB{}.Add(core::LinuxError::FromErrno()).Build()};
           // TODO: Log error
           std::cout << error.message << std::endl;
           continue;
@@ -100,9 +95,8 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
         char buffer[1024]{};
         const ssize_t count = read(current_ev.data.fd, buffer, sizeof(buffer));
         if (count == -1) {
-          const Error error{
-              Symbol::kLinuxEngineClientSocketReadFailed,
-              core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+          const Error error{Symbol::kLinuxEngineClientSocketReadFailed,
+                            SB{}.Add(core::LinuxError::FromErrno()).Build()};
           // TODO: Log error
           std::cout << error.message << std::endl;
           close(current_ev.data.fd);
@@ -111,9 +105,7 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
         } else {
           if (write(current_ev.data.fd, buffer, count) == -1) {
             const Error error{Symbol::kLinuxEngineClientSocketReadFailed,
-                              core::StringBuilder{}
-                                  .Add(core::LinuxError::FromErrno())
-                                  .Build()};
+                              SB{}.Add(core::LinuxError::FromErrno()).Build()};
             // TODO: Log error
             std::cout << error.message << std::endl;
           }
@@ -123,9 +115,8 @@ auto LinuxEngine::Run() noexcept -> Result<core::Void> {
   }
 
   if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
-    return Error{
-        Symbol::kLinuxSignalResetFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxSignalResetFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   return core::Void{};
@@ -135,16 +126,14 @@ auto LinuxEngineBuilder::Build(const uint16_t port) const noexcept
     -> Result<LinuxEngine> {
   auto epoll_fd = LinuxFileDescriptor{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
-    return Error{
-        Symbol::kLinuxEngineEpollCreate1Failed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxEngineEpollCreate1Failed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   auto server_fd = LinuxFileDescriptor{socket(AF_INET, SOCK_STREAM, 0)};
   if (!server_fd.IsValid()) {
-    return Error{
-        Symbol::kLinuxEngineServerSocketFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxEngineServerSocketFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   if (auto result = server_fd.UpdateNonBlocking(); result.IsErr()) {
@@ -158,15 +147,13 @@ auto LinuxEngineBuilder::Build(const uint16_t port) const noexcept
 
   if (bind(server_fd.AsRaw(), (struct sockaddr *)&server_addr,
            sizeof(server_addr)) < 0) {
-    return Error{
-        Symbol::kLinuxEngineServerSocketBindFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxEngineServerSocketBindFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   if (listen(server_fd.AsRaw(), SOMAXCONN) < 0) {
-    return Error{
-        Symbol::kLinuxEngineServerSocketListenFailed,
-        core::StringBuilder{}.Add(core::LinuxError::FromErrno()).Build()};
+    return Error{Symbol::kLinuxEngineServerSocketListenFailed,
+                 SB{}.Add(core::LinuxError::FromErrno()).Build()};
   }
 
   return LinuxEngine{std::move(epoll_fd), std::move(server_fd)};

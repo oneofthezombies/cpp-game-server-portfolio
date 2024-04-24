@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "core/core.h"
+#include "core/utils.h"
 
 /**
  * Server symbols start from 1,000,000
@@ -38,5 +39,7 @@ enum class Symbol : int32_t {
 using Error = core::Error<Symbol>;
 
 template <typename T> using Result = core::Result<T, Error>;
+
+using SB = core::StringBuilder;
 
 #endif // SERVER_COMMON_H
