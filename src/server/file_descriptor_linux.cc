@@ -1,6 +1,5 @@
 #include "file_descriptor_linux.h"
 
-#include <cstring>
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
@@ -21,10 +20,10 @@ LinuxFileDescriptor::~LinuxFileDescriptor() noexcept {
   }
 
   if (close(fd_) == -1) {
-    const Error error{Symbol::kLinuxFileDescriptorCloseFailed,
-                      SB{}.Add(core::LinuxError::FromErrno()).Build()};
-    // TODO: Log error
-    std::cout << error.message << std::endl;
+    const Error error{
+        Symbol::kLinuxFileDescriptorCloseFailed,
+        SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd_).Build()};
+    std::cout << error << std::endl;
   }
 
   fd_ = kInvalidFd;
@@ -64,6 +63,11 @@ auto LinuxFileDescriptor::UpdateNonBlocking() const noexcept
   }
 
   return core::Void{};
+}
+
+auto LinuxFileDescriptor::RawToSessionId(const Raw fd) noexcept
+    -> Session::IdType {
+  return static_cast<Session::IdType>(fd);
 }
 
 auto operator<<(std::ostream &os, const LinuxFileDescriptor &fd)

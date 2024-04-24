@@ -87,7 +87,9 @@ auto main(int argc, char **argv) noexcept -> int {
 
   auto &engine = engine_res.Ok();
   if (auto res = engine.Run(); res.IsErr()) {
-    std::cout << res.Err() << std::endl;
+    for (const auto &error : res.Err()) {
+      std::cout << error << std::endl;
+    }
     return 1;
   }
 

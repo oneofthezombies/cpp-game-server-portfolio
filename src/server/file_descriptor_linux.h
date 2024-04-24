@@ -4,6 +4,7 @@
 #include "core/core.h"
 
 #include "common.h"
+#include "session.h"
 
 class LinuxFileDescriptor final : private core::NonCopyable, core::Movable {
 public:
@@ -19,6 +20,8 @@ public:
   auto AsRaw() const noexcept -> Raw;
 
   [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<core::Void>;
+
+  static auto RawToSessionId(const Raw fd) noexcept -> Session::IdType;
 
 private:
   Raw fd_{kInvalidFd};

@@ -21,18 +21,25 @@ enum class Symbol : int32_t {
   kLinuxEngineEpollCreate1Failed,
   kLinuxEngineEpollCtlAddServerFailed,
   kLinuxEngineEpollCtlAddClientFailed,
+  kLinuxEngineEpollCtlDeleteClientFailed,
   kLinuxEngineEpollWaitFailed,
   kLinuxEngineServerSocketFailed,
   kLinuxEngineServerSocketBindFailed,
   kLinuxEngineServerSocketListenFailed,
   kLinuxEngineServerSocketAcceptFailed,
   kLinuxEngineClientSocketReadFailed,
-  kLinuxEngineClientSessionAlreadyExists,
+  kLinuxEngineClientSocketWriteFailed,
+  kLinuxEngineClientSocketClosed,
+  kLinuxEngineClientSocketCloseFailed,
+  kLinuxEngineSessionAlreadyExists,
+  kLinuxEngineSessionNotFound,
+  kLinuxEngineMessageParseFailed,
   kLinuxFileDescriptorGetStatusFailed,
   kLinuxFileDescriptorSetStatusFailed,
   kLinuxFileDescriptorCloseFailed,
   kLinuxSignalSetFailed,
   kLinuxSignalResetFailed,
+  kThreadWorkerSessionAlreadyExists,
 
   // Add symbols before kEnd
   kEnd
@@ -44,6 +51,7 @@ auto operator<<(std::ostream &os, const Symbol symbol) noexcept
 using Error = core::Error<Symbol>;
 
 template <typename T> using Result = core::Result<T, Error>;
+template <typename T> using ResultMany = core::Result<T, std::vector<Error>>;
 
 using SB = core::StringBuilder;
 

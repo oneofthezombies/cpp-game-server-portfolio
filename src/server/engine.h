@@ -1,21 +1,25 @@
 #ifndef SERVER_ENGINE_H
 #define SERVER_ENGINE_H
 
+#include <memory>
+
 #include "common.h"
+
+class EngineImplDeleter final : private core::NonCopyable, core::Movable {
+public:
+  void operator()(void *impl_raw) const noexcept;
+};
+
+using EngineImplPtr = std::unique_ptr<void, EngineImplDeleter>;
 
 class Engine final : private core::NonCopyable, core::Movable {
 public:
-  Engine(Engine &&) noexcept;
-  ~Engine() noexcept;
-
-  auto operator=(Engine &&) noexcept -> Engine &;
-
-  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
+  [[nodiscard]] auto Run() noexcept -> ResultMany<core::Void>;
 
 private:
-  explicit Engine(void *impl) noexcept;
+  explicit Engine(EngineImplPtr &&impl) noexcept;
 
-  void *impl_{};
+  EngineImplPtr impl_;
 
   friend class EngineBuilder;
 };
