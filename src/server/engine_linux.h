@@ -2,6 +2,7 @@
 #define SERVER_ENGINE_LINUX_H
 
 #include "file_descriptor_linux.h"
+#include <unordered_map>
 
 class LinuxEngine final : private core::NonCopyable, core::Movable {
 public:
@@ -18,6 +19,7 @@ private:
 
   LinuxFileDescriptor epoll_fd_;
   LinuxFileDescriptor server_fd_;
+  std::unordered_map<LinuxFileDescriptor::Raw, LinuxFileDescriptor> client_fds_;
 
   static constexpr size_t kMaxEvents = 64;
 

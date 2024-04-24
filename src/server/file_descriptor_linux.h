@@ -7,19 +7,21 @@
 
 class LinuxFileDescriptor final : private core::NonCopyable, core::Movable {
 public:
-  explicit LinuxFileDescriptor(const int fd) noexcept;
+  using Raw = int;
+
+  explicit LinuxFileDescriptor(const Raw fd) noexcept;
   LinuxFileDescriptor(LinuxFileDescriptor &&other) noexcept;
   ~LinuxFileDescriptor() noexcept;
 
   auto operator=(LinuxFileDescriptor &&other) noexcept -> LinuxFileDescriptor &;
 
   auto IsValid() const noexcept -> bool;
-  auto AsRaw() const noexcept -> int;
+  auto AsRaw() const noexcept -> Raw;
 
   [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<core::Void>;
 
 private:
-  int fd_{kInvalidFd};
+  Raw fd_{kInvalidFd};
 
   static constexpr int kInvalidFd{-1};
 };

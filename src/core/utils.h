@@ -1,8 +1,9 @@
-#ifndef CPP_GAME_SERVER_PORTFOLIO_CORE_UTILS_H
-#define CPP_GAME_SERVER_PORTFOLIO_CORE_UTILS_H
+#ifndef CORE_UTILS_H
+#define CORE_UTILS_H
 
 #include <charconv>
 #include <optional>
+#include <sstream>
 #include <string_view>
 #include <vector>
 
@@ -41,6 +42,24 @@ template <typename T>
   return value;
 }
 
+class StringBuilder final : private NonCopyable, Movable {
+public:
+  explicit StringBuilder() noexcept = default;
+
+  template <typename T>
+  [[nodiscard]] auto Add(const T &value) noexcept -> StringBuilder & {
+    oss_ << value;
+    return *this;
+  }
+
+  [[nodiscard]] auto Build() const noexcept -> std::string {
+    return oss_.str();
+  }
+
+private:
+  std::ostringstream oss_;
+};
+
 } // namespace core
 
-#endif // CPP_GAME_SERVER_PORTFOLIO_CORE_UTILS_H
+#endif // CORE_UTILS_H
