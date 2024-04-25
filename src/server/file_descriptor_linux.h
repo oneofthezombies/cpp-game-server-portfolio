@@ -6,7 +6,7 @@
 #include "common.h"
 #include "session.h"
 
-class FileDescriptorLinux final : private core::NonCopyable, core::Movable {
+class FileDescriptorLinux final : private NonCopyable, Movable {
 public:
   using Raw = int;
 
@@ -19,12 +19,12 @@ public:
   auto IsValid() const noexcept -> bool;
   auto AsRaw() const noexcept -> Raw;
 
-  [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<core::Void>;
+  [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<Void>;
 
   [[nodiscard]] static auto IsValid(const Raw fd) noexcept -> bool;
 
   [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   [[nodiscard]] static auto RawToSessionId(const Raw fd) noexcept
       -> Session::IdType;

@@ -7,8 +7,6 @@
 
 #include "core.h"
 
-namespace core {
-
 template <typename T>
   requires std::movable<T>
 struct Node final : private NonCopyable, Movable {
@@ -114,7 +112,5 @@ struct Channel final : private NonCopyable, Movable {
 private:
   Channel(Tx<T> &&tx, Rx<T> &&rx) : tx{std::move(tx)}, rx{std::move(rx)} {}
 };
-
-} // namespace core
 
 #endif // CORE_SPSC_CHANNEL_H

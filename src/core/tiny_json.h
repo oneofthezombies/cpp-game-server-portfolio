@@ -9,8 +9,6 @@
 
 #include "core.h"
 
-namespace core {
-
 class TinyJson final : private NonCopyable, Movable {
 public:
   [[nodiscard]] auto Get(const std::string_view key) const noexcept
@@ -88,7 +86,5 @@ public:
 private:
   std::unordered_map<std::string, std::string> data_{};
 };
-
-} // namespace core
 
 #endif // CORE_TINY_JSON_H

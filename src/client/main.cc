@@ -31,7 +31,7 @@ auto operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
   return os;
 }
 
-struct ClientOptions final : private core::NonCopyable, core::Movable {
+struct ClientOptions final : private NonCopyable, Movable {
   std::string ip;
   uint16_t port{kUndefinedPort};
   std::string room_id;
@@ -39,15 +39,15 @@ struct ClientOptions final : private core::NonCopyable, core::Movable {
   static constexpr uint16_t kUndefinedPort{0};
 };
 
-using Error = core::Error<Symbol>;
+using Error = ErrorBase<Symbol>;
 
-template <typename T> using Result = core::Result<T, Error>;
+template <typename T> using Result = ResultBase<T, Error>;
 
-auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
+auto ParseArgs(Args &&args) noexcept -> Result<ClientOptions> {
   using ResultT = Result<ClientOptions>;
 
   ClientOptions options;
-  core::Tokenizer tokenizer{std::move(args)};
+  Tokenizer tokenizer{std::move(args)};
 
   // Skip the first argument which is the program name
   tokenizer.Eat();
@@ -77,7 +77,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
         return ResultT{Error{Symbol::kPortValueNotFound}};
       }
 
-      auto result = core::ParseNumberString<uint16_t>(*next);
+      auto result = ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
         return ResultT{Error{Symbol::kPortParsingFailed,
                              std::make_error_code(result.Err()).message()}};
@@ -118,7 +118,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
 }
 
 auto main(int argc, char **argv) noexcept -> int {
-  auto args = core::ParseArgcArgv(argc, argv);
+  auto args = ParseArgcArgv(argc, argv);
   auto options_res = ParseArgs(std::move(args));
   if (options_res.IsErr()) {
     const auto &error = options_res.Err();
@@ -156,7 +156,7 @@ auto main(int argc, char **argv) noexcept -> int {
     std::cout << "Failed to create socket." << std::endl;
     return 1;
   }
-  core::Defer defer{[sock] { close(sock); }};
+  Defer defer{[sock] { close(sock); }};
 
   sockaddr_in server_addr{};
   server_addr.sin_family = AF_INET;
@@ -167,9 +167,9 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
-  const auto message = core::Message::BuildRaw(
-      core::MessageKind::kRequest, 0,
-      core::TinyJsonStringBuilder{}.Add("room_id", options.room_id).Build());
+  const auto message = Message::BuildRaw(
+      MessageKind::kRequest, 0,
+      TinyJsonStringBuilder{}.Add("room_id", options.room_id).Build());
   if (send(sock, message.data(), message.size(), 0) == -1) {
     std::cerr << "Failed to send data." << std::endl;
     return 1;

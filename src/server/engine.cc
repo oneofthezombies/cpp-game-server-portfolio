@@ -31,7 +31,7 @@ Engine::Engine(EngineImplPtr &&impl) noexcept : impl_{std::move(impl)} {
   assert(impl_.get() != nullptr && "impl must not be nullptr");
 }
 
-auto Engine::Run() noexcept -> Result<core::Void> {
+auto Engine::Run() noexcept -> Result<Void> {
   return CastEngineImpl(impl_.get())->Run();
 }
 

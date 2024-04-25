@@ -6,17 +6,17 @@
 
 #include "engine.h"
 
-struct ServerOptions final : private core::NonCopyable, core::Movable {
+struct ServerOptions final : private NonCopyable, Movable {
   uint16_t port{kUndefinedPort};
 
   static constexpr uint16_t kUndefinedPort{0};
 };
 
-auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
+auto ParseArgs(Args &&args) noexcept -> Result<ServerOptions> {
   using ResultT = Result<ServerOptions>;
 
   ServerOptions options;
-  core::Tokenizer tokenizer{std::move(args)};
+  Tokenizer tokenizer{std::move(args)};
 
   // Skip the first argument which is the program name
   tokenizer.Eat();
@@ -35,7 +35,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
         return ResultT{Error{Symbol::kPortValueNotFound}};
       }
 
-      auto result = core::ParseNumberString<uint16_t>(*next);
+      auto result = ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
         return ResultT{Error{Symbol::kPortParsingFailed,
                              std::make_error_code(result.Err()).message()}};
@@ -57,7 +57,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
 }
 
 auto main(int argc, char **argv) noexcept -> int {
-  auto args_res = ParseArgs(core::ParseArgcArgv(argc, argv));
+  auto args_res = ParseArgs(ParseArgcArgv(argc, argv));
   if (args_res.IsErr()) {
     const auto &error = args_res.Err();
     if (error.code == Symbol::kHelpRequested) {

@@ -5,8 +5,6 @@
 #include <string>
 #include <variant>
 
-namespace core {
-
 class Copyable {
 public:
   Copyable() noexcept = default;
@@ -41,12 +39,12 @@ public:
 
 template <typename T, typename E>
   requires std::movable<T> && std::movable<E>
-class Result final : private NonCopyable, Movable {
+class ResultBase final : private NonCopyable, Movable {
 public:
-  explicit Result(const T &value) : data_(value) {}
-  explicit Result(T &&value) : data_(std::forward<T>(value)) {}
-  explicit Result(const E &error) : data_(error) {}
-  explicit Result(E &&error) : data_(std::forward<E>(error)) {}
+  explicit ResultBase(const T &value) : data_(value) {}
+  explicit ResultBase(T &&value) : data_(std::forward<T>(value)) {}
+  explicit ResultBase(const E &error) : data_(error) {}
+  explicit ResultBase(E &&error) : data_(std::forward<E>(error)) {}
 
   auto IsOk() const noexcept -> bool {
     return std::holds_alternative<T>(data_);
@@ -73,7 +71,7 @@ private:
 };
 
 template <typename T, typename E>
-auto operator<<(std::ostream &os, const Result<T, E> &result)
+auto operator<<(std::ostream &os, const ResultBase<T, E> &result)
     -> std::ostream & {
   os << "Result{";
   if (result.IsOk()) {
@@ -93,17 +91,17 @@ auto operator<<(std::ostream &os, const Result<T, E> &result)
 
 template <typename T>
   requires std::is_enum_v<T>
-struct Error final : private NonCopyable, Movable {
+struct ErrorBase final : private NonCopyable, Movable {
   T code;
   std::string message;
 
-  Error(const T code) noexcept : code(code) {}
-  Error(const T code, std::string &&message) noexcept
+  ErrorBase(const T code) noexcept : code(code) {}
+  ErrorBase(const T code, std::string &&message) noexcept
       : code(code), message(std::move(message)) {}
 };
 
 template <typename T>
-auto operator<<(std::ostream &os, const Error<T> &error) -> std::ostream & {
+auto operator<<(std::ostream &os, const ErrorBase<T> &error) -> std::ostream & {
   os << "Error{";
   os << "code=";
   os << error.code;
@@ -117,7 +115,5 @@ auto operator<<(std::ostream &os, const Error<T> &error) -> std::ostream & {
 struct Void final : private Copyable, Movable {};
 
 auto operator<<(std::ostream &os, const Void &) -> std::ostream &;
-
-} // namespace core
 
 #endif // CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H

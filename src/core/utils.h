@@ -10,8 +10,6 @@
 
 #include "core.h"
 
-namespace core {
-
 using Args = std::vector<std::string_view>;
 
 [[nodiscard]] auto ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
@@ -32,8 +30,8 @@ private:
 template <typename T>
   requires std::integral<T> || std::floating_point<T>
 [[nodiscard]] auto ParseNumberString(const std::string_view token) noexcept
-    -> Result<T, std::errc> {
-  using ResultT = Result<T, std::errc>;
+    -> ResultBase<T, std::errc> {
+  using ResultT = ResultBase<T, std::errc>;
 
   T value{};
   auto [ptr, ec] =
@@ -80,7 +78,5 @@ public:
 private:
   std::function<void()> fn_;
 };
-
-} // namespace core
 
 #endif // CORE_UTILS_H

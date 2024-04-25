@@ -2,9 +2,7 @@
 
 #include <ostream>
 
-using namespace core;
-
-auto core::operator<<(std::ostream &os, const Void &) -> std::ostream & {
+auto operator<<(std::ostream &os, const Void &) -> std::ostream & {
   os << "Void";
   return os;
 }

@@ -64,10 +64,10 @@ enum class Symbol : int32_t {
 auto operator<<(std::ostream &os, const Symbol symbol) noexcept
     -> std::ostream &;
 
-using Error = core::Error<Symbol>;
+using Error = ErrorBase<Symbol>;
 
-template <typename T> using Result = core::Result<T, Error>;
+template <typename T> using Result = ResultBase<T, Error>;
 
-using SB = core::StringBuilder;
+using SB = StringBuilder;
 
 #endif // SERVER_COMMON_H

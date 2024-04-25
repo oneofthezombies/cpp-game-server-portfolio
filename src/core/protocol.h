@@ -6,8 +6,6 @@
 #include "core.h"
 #include "tiny_json.h"
 
-namespace core {
-
 enum class MessageKind : uint8_t {
   // undefined message kind
   kUndefined = 0,
@@ -59,7 +57,5 @@ struct Message final : private NonCopyable, Movable {
 
 auto operator<<(std::ostream &os, const Message &message) noexcept
     -> std::ostream &;
-
-} // namespace core
 
 #endif // CORE_PROTOCOL_H

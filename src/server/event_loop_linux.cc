@@ -7,7 +7,7 @@
 #include "utils_linux.h"
 
 EventLoopLinux::EventLoopLinux(
-    std::vector<core::Rx<EventLoopLinuxEvent>> &&event_loop_rxs,
+    std::vector<Rx<EventLoopLinuxEvent>> &&event_loop_rxs,
     FileDescriptorLinux &&epoll_fd) noexcept
     : event_loop_rxs_{std::move(event_loop_rxs)},
       epoll_fd_{std::move(epoll_fd)} {
@@ -15,36 +15,36 @@ EventLoopLinux::EventLoopLinux(
 }
 
 auto EventLoopLinux::Add(const FileDescriptorLinux::Raw fd,
-                         uint32_t events) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+                         uint32_t events) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   struct epoll_event ev {};
   ev.events = events;
   ev.data.fd = fd;
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto EventLoopLinux::Run(OnEventLoopEvent &&on_event_loop_event,
                          OnEpollEvent &&on_epoll_event) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
   struct epoll_event events[kMaxEvents]{};
   std::atomic<bool> shutdown{false};
@@ -69,7 +69,7 @@ auto EventLoopLinux::Run(OnEventLoopEvent &&on_event_loop_event,
       }
 
       return ResultT{Error{Symbol::kEventLoopLinuxEpollWaitFailed,
-                           SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                           SB{}.Add(LinuxError::FromErrno()).Build()}};
     }
 
     for (int i = 0; i < fd_count; ++i) {
@@ -80,18 +80,18 @@ auto EventLoopLinux::Run(OnEventLoopEvent &&on_event_loop_event,
     }
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto EventLoopLinuxBuilder::Build(
-    std::vector<core::Rx<EventLoopLinuxEvent>> &&event_loop_rxs) const noexcept
+    std::vector<Rx<EventLoopLinuxEvent>> &&event_loop_rxs) const noexcept
     -> Result<EventLoopLinux> {
   using ResultT = Result<EventLoopLinux>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCreate1Failed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
   return ResultT{

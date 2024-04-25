@@ -5,16 +5,16 @@
 
 #include "common.h"
 
-class EngineImplDeleter final : private core::NonCopyable, core::Movable {
+class EngineImplDeleter final : private NonCopyable, Movable {
 public:
   void operator()(void *impl_raw) const noexcept;
 };
 
 using EngineImplPtr = std::unique_ptr<void, EngineImplDeleter>;
 
-class Engine final : private core::NonCopyable, core::Movable {
+class Engine final : private NonCopyable, Movable {
 public:
-  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
   explicit Engine(EngineImplPtr &&impl) noexcept;
@@ -24,7 +24,7 @@ private:
   friend class EngineBuilder;
 };
 
-class EngineBuilder final : private core::NonCopyable, core::NonMovable {
+class EngineBuilder final : private NonCopyable, NonMovable {
 public:
   [[nodiscard]] auto Build(const uint16_t port) const noexcept
       -> Result<Engine>;

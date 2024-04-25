@@ -14,14 +14,14 @@
 #include "utils_linux.h"
 
 MainEventLoopLinux::MainEventLoopLinux(
-    core::Tx<EventLoopLinuxEvent> &&main_to_lobby_tx,
-    EventLoopLinux &&event_loop, FileDescriptorLinux &&server_fd) noexcept
+    Tx<EventLoopLinuxEvent> &&main_to_lobby_tx, EventLoopLinux &&event_loop,
+    FileDescriptorLinux &&server_fd) noexcept
     : main_to_lobby_tx_{std::move(main_to_lobby_tx)},
       event_loop_{std::move(event_loop)}, server_fd_{std::move(server_fd)} {
   assert(server_fd_.IsValid() && "server fd must be valid");
 }
 
-auto MainEventLoopLinux::Run() noexcept -> Result<core::Void> {
+auto MainEventLoopLinux::Run() noexcept -> Result<Void> {
   if (auto res = event_loop_.Add(server_fd_.AsRaw(), EPOLLIN); res.IsErr()) {
     return res;
   }
@@ -34,19 +34,19 @@ auto MainEventLoopLinux::Run() noexcept -> Result<core::Void> {
 }
 
 auto MainEventLoopLinux::OnEventLoopEvent(
-    const EventLoopLinuxEvent &event) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    const EventLoopLinuxEvent &event) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (auto found = event.find("shutdown"); found != event.end()) {
     main_to_lobby_tx_.Send({{"shutdown", ""}});
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto MainEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (event.data.fd != server_fd_.AsRaw()) {
     return ResultT{Error{Symbol::kMainEventLoopLinuxUnexpectedFd,
@@ -59,7 +59,7 @@ auto MainEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
       accept(server_fd_.AsRaw(), (struct sockaddr *)&client_addr, &addrlen);
   if (!FileDescriptorLinux::IsValid(client_fd_raw)) {
     return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketAcceptFailed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
   if (auto res = FileDescriptorLinux::UpdateNonBlocking(client_fd_raw);
@@ -68,16 +68,16 @@ auto MainEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
   }
 
   main_to_lobby_tx_.Send({{"client_fd", std::to_string(client_fd_raw)}});
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto MainEventLoopLinuxBuilder::Build(
-    const uint16_t port, core::Rx<EventLoopLinuxEvent> &&signal_to_main_rx,
-    core::Tx<EventLoopLinuxEvent> &&main_to_lobby_tx) const noexcept
+    const uint16_t port, Rx<EventLoopLinuxEvent> &&signal_to_main_rx,
+    Tx<EventLoopLinuxEvent> &&main_to_lobby_tx) const noexcept
     -> Result<MainEventLoopLinux> {
   using ResultT = Result<MainEventLoopLinux>;
 
-  std::vector<core::Rx<EventLoopLinuxEvent>> event_loop_rxs;
+  std::vector<Rx<EventLoopLinuxEvent>> event_loop_rxs;
   event_loop_rxs.emplace_back(std::move(signal_to_main_rx));
   auto event_loop_res =
       EventLoopLinuxBuilder{}.Build(std::move(event_loop_rxs));
@@ -88,7 +88,7 @@ auto MainEventLoopLinuxBuilder::Build(
   auto server_fd_raw = socket(AF_INET, SOCK_STREAM, 0);
   if (!FileDescriptorLinux::IsValid(server_fd_raw)) {
     return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketFailed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
   auto server_fd = FileDescriptorLinux{server_fd_raw};
@@ -104,12 +104,12 @@ auto MainEventLoopLinuxBuilder::Build(
   if (bind(server_fd.AsRaw(), (struct sockaddr *)&server_addr,
            sizeof(server_addr)) < 0) {
     return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketBindFailed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
   if (listen(server_fd.AsRaw(), SOMAXCONN) < 0) {
     return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketListenFailed,
-                         SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                         SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
   return ResultT{MainEventLoopLinux{std::move(main_to_lobby_tx),

@@ -20,9 +20,8 @@ FileDescriptorLinux::~FileDescriptorLinux() noexcept {
   }
 
   if (close(fd_) == -1) {
-    const Error error{
-        Symbol::kFileDescriptorLinuxCloseFailed,
-        SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd_).Build()};
+    const Error error{Symbol::kFileDescriptorLinuxCloseFailed,
+                      SB{}.Add(LinuxError::FromErrno()).Add("fd", fd_).Build()};
     std::cout << error << std::endl;
   }
 
@@ -47,8 +46,7 @@ auto FileDescriptorLinux::IsValid() const noexcept -> bool {
   return IsValid(fd_);
 }
 
-auto FileDescriptorLinux::UpdateNonBlocking() const noexcept
-    -> Result<core::Void> {
+auto FileDescriptorLinux::UpdateNonBlocking() const noexcept -> Result<Void> {
   return UpdateNonBlocking(fd_);
 }
 
@@ -57,23 +55,23 @@ auto FileDescriptorLinux::IsValid(const Raw fd) noexcept -> bool {
 }
 
 auto FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
   const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
     return ResultT{
         Error{Symbol::kFileDescriptorLinuxGetStatusFailed,
-              SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd).Build()}};
+              SB{}.Add(LinuxError::FromErrno()).Add("fd", fd).Build()}};
   }
 
   if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
     return ResultT{
         Error{Symbol::kFileDescriptorLinuxSetStatusFailed,
-              SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd).Build()}};
+              SB{}.Add(LinuxError::FromErrno()).Add("fd", fd).Build()}};
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto FileDescriptorLinux::RawToSessionId(const Raw fd) noexcept

@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "utils_linux.h"
 
-std::atomic<core::Tx<EventLoopLinuxEvent> *> signal_to_main_tx_ptr{};
+std::atomic<Tx<EventLoopLinuxEvent> *> signal_to_main_tx_ptr{};
 
 auto OnSignal(int signal) -> void {
   if (signal == SIGINT) {
@@ -29,22 +29,22 @@ auto OnSignal(int signal) -> void {
 }
 
 EngineLinux::EngineLinux(MainEventLoopLinux &&main_event_loop,
-                         core::Tx<EventLoopLinuxEvent> &&signal_to_main_tx,
+                         Tx<EventLoopLinuxEvent> &&signal_to_main_tx,
                          std::thread &&lobby_thread,
                          std::thread &&battle_thread) noexcept
     : main_event_loop_{std::move(main_event_loop)},
       signal_to_main_tx_{std::move(signal_to_main_tx)},
       lobby_thread_{std::move(lobby_thread)} {}
 
-auto EngineLinux::Run() noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+auto EngineLinux::Run() noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   signal_to_main_tx_ptr = &signal_to_main_tx_;
   {
-    core::Defer reset_tx_ptr{[]() { signal_to_main_tx_ptr = nullptr; }};
+    Defer reset_tx_ptr{[]() { signal_to_main_tx_ptr = nullptr; }};
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
       return ResultT{Error{Symbol::kLinuxSignalSetFailed,
-                           SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                           SB{}.Add(LinuxError::FromErrno()).Build()}};
     }
 
     if (auto res = main_event_loop_.Run(); res.IsErr()) {
@@ -53,23 +53,23 @@ auto EngineLinux::Run() noexcept -> Result<core::Void> {
 
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
       return ResultT{Error{Symbol::kLinuxSignalResetFailed,
-                           SB{}.Add(core::LinuxError::FromErrno()).Build()}};
+                           SB{}.Add(LinuxError::FromErrno()).Build()}};
     }
   }
 
   lobby_thread_.join();
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 // auto EngineLinux::OnClientFdEvent(
-//     const FileDescriptorLinux::Raw client_fd) noexcept -> Result<core::Void>
+//     const FileDescriptorLinux::Raw client_fd) noexcept -> Result<Void>
 //     {
 //   char buffer[1024 * 8]{};
 //   const auto count = read(client_fd, buffer, sizeof(buffer));
 //   if (count == -1) {
 //     DeleteConnectedSessionOrCloseFd(client_fd);
 //     return Error{Symbol::kEngineLinuxClientSocketReadFailed,
-//                  SB{}.Add(core::LinuxError::FromErrno())
+//                  SB{}.Add(LinuxError::FromErrno())
 //                      .Add("client_fd", client_fd)
 //                      .Build()};
 //   }
@@ -88,7 +88,7 @@ auto EngineLinux::Run() noexcept -> Result<core::Void> {
 //     if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, client_fd,
 //                   &del_client_ev) == -1) {
 //       return Error{Symbol::kEngineLinuxEpollCtlDeleteClientFailed,
-//                    SB{}.Add(core::LinuxError::FromErrno())
+//                    SB{}.Add(LinuxError::FromErrno())
 //                        .Add("client_fd", client_fd)
 //                        .Build()};
 //     }
@@ -96,7 +96,7 @@ auto EngineLinux::Run() noexcept -> Result<core::Void> {
 
 //   // parse message
 //   const std::string_view buffer_view{buffer, static_cast<size_t>(count)};
-//   const auto message = core::Message::FromRaw(buffer_view);
+//   const auto message = Message::FromRaw(buffer_view);
 //   if (!message) {
 //     DeleteConnectedSessionOrCloseFd(client_fd);
 //     return Error{Symbol::kEngineLinuxMessageParseFailed,
@@ -120,19 +120,19 @@ auto EngineLinux::Run() noexcept -> Result<core::Void> {
 //   // write to client_fd message
 //   {
 //     const auto success =
-//         core::Message::BuildRaw(core::MessageKind::kRequestSuccess,
+//         Message::BuildRaw(MessageKind::kRequestSuccess,
 //         message->id,
-//                                 core::TinyJsonBuilder{}.Build());
+//                                 TinyJsonBuilder{}.Build());
 //     if (write(client_fd, success.data(), success.size()) == -1) {
 //       DeleteConnectedSessionOrCloseFd(client_fd);
 //       return Error{Symbol::kEngineLinuxClientSocketWriteFailed,
-//                    SB{}.Add(core::LinuxError::FromErrno())
+//                    SB{}.Add(LinuxError::FromErrno())
 //                        .Add("client_fd", client_fd)
 //                        .Build()};
 //     }
 //   }
 
-//   return core::Void{};
+//   return Void{};
 // }
 
 // auto EngineLinux::DeleteConnectedSessionOrCloseFd(
@@ -147,7 +147,7 @@ auto EngineLinux::Run() noexcept -> Result<core::Void> {
 
 //   if (close(client_fd) == -1) {
 //     const Error error{Symbol::kEngineLinuxClientSocketCloseFailed,
-//                       SB{}.Add(core::LinuxError::FromErrno())
+//                       SB{}.Add(LinuxError::FromErrno())
 //                           .Add("client_fd", client_fd)
 //                           .Build()};
 //     std::cout << error << std::endl;
@@ -161,13 +161,13 @@ auto EngineLinuxBuilder::Build(const uint16_t port) const noexcept
   using ResultT = Result<EngineLinux>;
 
   auto [signal_to_main_tx, signal_to_main_rx] =
-      core::Channel<EventLoopLinuxEvent>::Builder{}.Build();
+      Channel<EventLoopLinuxEvent>::Builder{}.Build();
   auto [main_to_lobby_tx, main_to_lobby_rx] =
-      core::Channel<EventLoopLinuxEvent>::Builder{}.Build();
+      Channel<EventLoopLinuxEvent>::Builder{}.Build();
   auto [lobby_to_battle_tx, lobby_to_battle_rx] =
-      core::Channel<EventLoopLinuxEvent>::Builder{}.Build();
+      Channel<EventLoopLinuxEvent>::Builder{}.Build();
   auto [battle_to_lobby_tx, battle_to_lobby_rx] =
-      core::Channel<EventLoopLinuxEvent>::Builder{}.Build();
+      Channel<EventLoopLinuxEvent>::Builder{}.Build();
 
   auto main_event_loop_res = MainEventLoopLinuxBuilder{}.Build(
       port, std::move(signal_to_main_rx), std::move(main_to_lobby_tx));

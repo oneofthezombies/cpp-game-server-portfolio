@@ -7,49 +7,49 @@
 
 #include "event_loop_linux.h"
 
-class LobbyEventLoopLinux final : private core::NonCopyable, core::Movable {
+class LobbyEventLoopLinux final : private NonCopyable, Movable {
 public:
-  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
   explicit LobbyEventLoopLinux(
       EventLoopLinux &&event_loop,
-      core::Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) noexcept;
+      Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) noexcept;
 
   [[nodiscard]] auto OnEventLoopEvent(const EventLoopLinuxEvent &event) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
   [[nodiscard]] auto OnEpollEvent(const struct epoll_event &event) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
   [[nodiscard]] auto
   OnClientFdInserted(const FileDescriptorLinux::Raw client_fd_raw) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   [[nodiscard]] auto
   OnClientFdMatched(const FileDescriptorLinux::Raw client_fd_0,
                     const FileDescriptorLinux::Raw client_fd_1) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   [[nodiscard]] auto
   AddClientFd(const FileDescriptorLinux::Raw client_fd) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
   [[nodiscard]] auto
   DeleteClientFd(const FileDescriptorLinux::Raw client_fd) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   EventLoopLinux event_loop_;
-  core::Tx<EventLoopLinuxEvent> lobby_to_battle_tx_;
+  Tx<EventLoopLinuxEvent> lobby_to_battle_tx_;
   std::unordered_set<FileDescriptorLinux::Raw> client_fds_;
 
   friend class LobbyEventLoopLinuxBuilder;
 };
 
-class LobbyEventLoopLinuxBuilder final : private core::NonCopyable,
-                                         private core::NonMovable {
+class LobbyEventLoopLinuxBuilder final : private NonCopyable,
+                                         private NonMovable {
 public:
   [[nodiscard]] auto
-  Build(core::Rx<EventLoopLinuxEvent> &&main_to_lobby_rx,
-        core::Rx<EventLoopLinuxEvent> &&battle_to_lobby_rx,
-        core::Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) const noexcept
+  Build(Rx<EventLoopLinuxEvent> &&main_to_lobby_rx,
+        Rx<EventLoopLinuxEvent> &&battle_to_lobby_rx,
+        Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) const noexcept
       -> Result<LobbyEventLoopLinux>;
 };
 

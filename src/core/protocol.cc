@@ -1,10 +1,7 @@
 #include "protocol.h"
 #include "tiny_json.h"
 
-using namespace core;
-
-auto core::operator<<(std::ostream &os, const MessageKind kind)
-    -> std::ostream & {
+auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream & {
   switch (kind) {
   case MessageKind::kUndefined:
     os << "Undefined";
@@ -73,7 +70,7 @@ auto Message::BuildRaw(const MessageKind kind, const Id id,
   return raw;
 }
 
-auto core::operator<<(std::ostream &os, const Message &message) noexcept
+auto operator<<(std::ostream &os, const Message &message) noexcept
     -> std::ostream & {
   os << "Message{";
   os << "kind=";

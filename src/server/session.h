@@ -5,7 +5,7 @@
 
 #include "core/core.h"
 
-class SessionImplDeleter final : private core::NonCopyable, core::Movable {
+class SessionImplDeleter final : private NonCopyable, Movable {
 public:
   auto operator()(void *impl_raw) const noexcept -> void;
 };
@@ -16,7 +16,7 @@ enum class SessionState : int32_t {
   kCreated = 0,
 };
 
-class Session final : private core::NonCopyable, core::Movable {
+class Session final : private NonCopyable, Movable {
 public:
   using IdType = uint64_t;
 

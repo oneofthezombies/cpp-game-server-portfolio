@@ -5,38 +5,37 @@
 
 #include "event_loop_linux.h"
 
-class BattleEventLoopLinux final : private core::NonCopyable, core::Movable {
+class BattleEventLoopLinux final : private NonCopyable, Movable {
 public:
   using RoomId = uint64_t;
-  using EventHandler = std::function<Result<core::Void>(const std::string &)>;
+  using EventHandler = std::function<Result<Void>(const std::string &)>;
 
-  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
   explicit BattleEventLoopLinux(
       EventLoopLinux &&event_loop,
-      core::Tx<EventLoopLinuxEvent> &&battle_to_lobby_tx) noexcept;
+      Tx<EventLoopLinuxEvent> &&battle_to_lobby_tx) noexcept;
 
   [[nodiscard]] auto OnEventLoopEvent(const EventLoopLinuxEvent &event) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
   [[nodiscard]] auto OnEpollEvent(const struct epoll_event &event) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   [[nodiscard]] auto AddClientFd(const FileDescriptorLinux::Raw client_fd,
-                                 const RoomId room_id) noexcept
-      -> Result<core::Void>;
+                                 const RoomId room_id) noexcept -> Result<Void>;
   [[nodiscard]] auto
   DeleteClientFd(const FileDescriptorLinux::Raw client_fd) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   [[nodiscard]] auto NextRoomId() noexcept -> RoomId;
 
   [[nodiscard]] auto
   OnMatchedClientFds(const std::string &matched_client_fds) noexcept
-      -> Result<core::Void>;
+      -> Result<Void>;
 
   EventLoopLinux event_loop_;
-  core::Tx<EventLoopLinuxEvent> battle_to_lobby_tx_;
+  Tx<EventLoopLinuxEvent> battle_to_lobby_tx_;
   std::unordered_map<FileDescriptorLinux::Raw, RoomId> client_fds_;
   std::unordered_map<std::string, EventHandler> event_handlers_;
   RoomId next_room_id_{};
@@ -44,12 +43,12 @@ private:
   friend class BattleEventLoopLinuxBuilder;
 };
 
-class BattleEventLoopLinuxBuilder final : private core::NonCopyable,
-                                          private core::NonMovable {
+class BattleEventLoopLinuxBuilder final : private NonCopyable,
+                                          private NonMovable {
 public:
   [[nodiscard]] auto
-  Build(core::Rx<EventLoopLinuxEvent> &&lobby_to_battle_rx,
-        core::Tx<EventLoopLinuxEvent> &&battle_to_lobby_tx) const noexcept
+  Build(Rx<EventLoopLinuxEvent> &&lobby_to_battle_rx,
+        Tx<EventLoopLinuxEvent> &&battle_to_lobby_tx) const noexcept
       -> Result<BattleEventLoopLinux>;
 };
 

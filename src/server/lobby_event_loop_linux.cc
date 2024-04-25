@@ -9,11 +9,11 @@
 
 LobbyEventLoopLinux::LobbyEventLoopLinux(
     EventLoopLinux &&event_loop,
-    core::Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) noexcept
+    Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) noexcept
     : event_loop_{std::move(event_loop)},
       lobby_to_battle_tx_{std::move(lobby_to_battle_tx)} {}
 
-auto LobbyEventLoopLinux::Run() noexcept -> Result<core::Void> {
+auto LobbyEventLoopLinux::Run() noexcept -> Result<Void> {
   return event_loop_.Run(
       [this](const EventLoopLinuxEvent &event) {
         return OnEventLoopEvent(event);
@@ -22,13 +22,13 @@ auto LobbyEventLoopLinux::Run() noexcept -> Result<core::Void> {
 }
 
 auto LobbyEventLoopLinux::OnEventLoopEvent(
-    const EventLoopLinuxEvent &event) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    const EventLoopLinuxEvent &event) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (auto found = event.find("client_fd"); found != event.end()) {
     const auto &client_fd_str = found->second;
     auto client_fd_res =
-        core::ParseNumberString<FileDescriptorLinux::Raw>(client_fd_str);
+        ParseNumberString<FileDescriptorLinux::Raw>(client_fd_str);
     if (client_fd_res.IsErr()) {
       return ResultT{Error{
           Symbol::kLobbyEventLoopLinuxClientFdConversionFailed,
@@ -45,20 +45,19 @@ auto LobbyEventLoopLinux::OnEventLoopEvent(
     return OnClientFdInserted(client_fd_raw);
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto LobbyEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto LobbyEventLoopLinux::OnClientFdInserted(
-    const FileDescriptorLinux::Raw client_fd_raw) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    const FileDescriptorLinux::Raw client_fd_raw) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (client_fds_.size() >= 2) {
     const auto client_fd_0 = *client_fds_.begin();
@@ -68,13 +67,13 @@ auto LobbyEventLoopLinux::OnClientFdInserted(
     }
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto LobbyEventLoopLinux::OnClientFdMatched(
     const FileDescriptorLinux::Raw client_fd_0,
-    const FileDescriptorLinux::Raw client_fd_1) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    const FileDescriptorLinux::Raw client_fd_1) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (auto res = DeleteClientFd(client_fd_0); res.IsErr()) {
     return res;
@@ -89,12 +88,12 @@ auto LobbyEventLoopLinux::OnClientFdMatched(
       {{"matched_client_fds",
         SB{}.Add(client_fd_0).Add(",").Add(client_fd_1).Build()}}});
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto LobbyEventLoopLinux::AddClientFd(
-    const FileDescriptorLinux::Raw client_fd) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    const FileDescriptorLinux::Raw client_fd) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (auto res = event_loop_.Add(client_fd, EPOLLIN | EPOLLET); res.IsErr()) {
     return res;
@@ -109,29 +108,29 @@ auto LobbyEventLoopLinux::AddClientFd(
   }
 
   client_fds_.insert(client_fd);
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto LobbyEventLoopLinux::DeleteClientFd(
-    const FileDescriptorLinux::Raw client_fd) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    const FileDescriptorLinux::Raw client_fd) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   client_fds_.erase(client_fd);
   if (auto res = event_loop_.Delete(client_fd); res.IsErr()) {
     return res;
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto LobbyEventLoopLinuxBuilder::Build(
-    core::Rx<EventLoopLinuxEvent> &&main_to_lobby_rx,
-    core::Rx<EventLoopLinuxEvent> &&battle_to_lobby_rx,
-    core::Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) const noexcept
+    Rx<EventLoopLinuxEvent> &&main_to_lobby_rx,
+    Rx<EventLoopLinuxEvent> &&battle_to_lobby_rx,
+    Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) const noexcept
     -> Result<LobbyEventLoopLinux> {
   using ResultT = Result<LobbyEventLoopLinux>;
 
-  std::vector<core::Rx<EventLoopLinuxEvent>> event_loop_rxs;
+  std::vector<Rx<EventLoopLinuxEvent>> event_loop_rxs;
   event_loop_rxs.push_back(std::move(main_to_lobby_rx));
   event_loop_rxs.push_back(std::move(battle_to_lobby_rx));
   auto event_loop_res =
