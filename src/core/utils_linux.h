@@ -4,12 +4,15 @@
 #include "core.h"
 #include <string_view>
 
-struct LinuxError final : private Copyable, Movable {
+struct LinuxError final {
   // `errno`
   int errno_value;
 
   // `strerror(errno)`
   std::string_view errno_description;
+
+  ~LinuxError() noexcept = default;
+  CLASS_KIND_MOVABLE(LinuxError);
 
   [[nodiscard]] static auto FromErrno() noexcept -> LinuxError;
 

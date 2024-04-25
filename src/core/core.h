@@ -5,46 +5,32 @@
 #include <string>
 #include <variant>
 
-class Copyable {
-public:
-  Copyable() noexcept = default;
-  Copyable(const Copyable &) noexcept = default;
-  auto operator=(const Copyable &) noexcept -> Copyable & = default;
-};
+#define CLASS_KIND_COPYABLE(cls)                                               \
+  cls(const cls &) noexcept = default;                                         \
+  cls(cls &&) noexcept = default;                                              \
+  auto operator=(const cls &) noexcept -> cls & = default;                     \
+  auto operator=(cls &&) noexcept -> cls & = default
 
-class NonCopyable {
-public:
-  NonCopyable() noexcept = default;
-  NonCopyable(const NonCopyable &) = delete;
-  NonCopyable(NonCopyable &&) noexcept = default;
-  auto operator=(const NonCopyable &) -> NonCopyable & = delete;
-  auto operator=(NonCopyable &&) noexcept -> NonCopyable & = default;
-};
+#define CLASS_KIND_MOVABLE(cls)                                                \
+  cls(const cls &) = delete;                                                   \
+  cls(cls &&) noexcept = default;                                              \
+  auto operator=(const cls &) -> cls & = delete;                               \
+  auto operator=(cls &&) noexcept -> cls & = default
 
-class Movable {
-public:
-  Movable() noexcept = default;
-  Movable(Movable &&) noexcept = default;
-  auto operator=(Movable &&) noexcept -> Movable & = default;
-};
+#define CLASS_KIND_PINNABLE(cls)                                               \
+  cls(const cls &) = delete;                                                   \
+  cls(cls &&) = delete;                                                        \
+  auto operator=(const cls &) -> cls & = delete;                               \
+  auto operator=(cls &&) -> cls & = delete
 
-class NonMovable {
-public:
-  NonMovable() noexcept = default;
-  NonMovable(const NonMovable &) noexcept = default;
-  NonMovable(NonMovable &&) = delete;
-  auto operator=(const NonMovable &) -> NonMovable & = default;
-  auto operator=(NonMovable &&) -> NonMovable & = delete;
-};
-
-template <typename T, typename E>
-  requires std::movable<T> && std::movable<E>
-class ResultBase final : private NonCopyable, Movable {
+template <typename T, typename E> class ResultBase final {
 public:
   explicit ResultBase(const T &value) : data_(value) {}
   explicit ResultBase(T &&value) : data_(std::forward<T>(value)) {}
   explicit ResultBase(const E &error) : data_(error) {}
   explicit ResultBase(E &&error) : data_(std::forward<E>(error)) {}
+  ~ResultBase() noexcept = default;
+  CLASS_KIND_MOVABLE(ResultBase);
 
   auto IsOk() const noexcept -> bool {
     return std::holds_alternative<T>(data_);
@@ -91,13 +77,15 @@ auto operator<<(std::ostream &os, const ResultBase<T, E> &result)
 
 template <typename T>
   requires std::is_enum_v<T>
-struct ErrorBase final : private NonCopyable, Movable {
+struct ErrorBase final {
   T code;
   std::string message;
 
-  ErrorBase(const T code) noexcept : code(code) {}
-  ErrorBase(const T code, std::string &&message) noexcept
+  explicit ErrorBase(const T code) noexcept : code(code) {}
+  explicit ErrorBase(const T code, std::string &&message) noexcept
       : code(code), message(std::move(message)) {}
+  ~ErrorBase() noexcept = default;
+  CLASS_KIND_MOVABLE(ErrorBase);
 };
 
 template <typename T>
@@ -112,7 +100,11 @@ auto operator<<(std::ostream &os, const ErrorBase<T> &error) -> std::ostream & {
   return os;
 }
 
-struct Void final : private Copyable, Movable {};
+struct Void final {
+  explicit Void() noexcept = default;
+  ~Void() noexcept = default;
+  CLASS_KIND_COPYABLE(Void);
+};
 
 auto operator<<(std::ostream &os, const Void &) -> std::ostream &;
 

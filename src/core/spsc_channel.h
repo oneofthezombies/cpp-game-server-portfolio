@@ -9,17 +9,19 @@
 
 template <typename T>
   requires std::movable<T>
-struct Node final : private NonCopyable, Movable {
+struct Node final {
   T data{};
   Node *next{};
 
   Node() = default;
   Node(T &&data) : data(std::move(data)) {}
+  ~Node() noexcept = default;
+  CLASS_KIND_MOVABLE(Node);
 };
 
 template <typename T>
   requires std::movable<T>
-class Queue final : private Copyable, Movable {
+class Queue final {
 public:
   Queue() noexcept {
     auto node = new Node<T>{};
@@ -33,6 +35,8 @@ public:
       delete node;
     }
   }
+
+  CLASS_KIND_PINNABLE(Queue);
 
   auto Enqueue(T &&data) noexcept -> void {
     auto node = new Node<T>(std::move(data));
@@ -65,9 +69,11 @@ private:
 
 template <typename T>
   requires std::movable<T>
-class Tx final : private NonCopyable, Movable {
+class Tx final {
 public:
   Tx(const std::shared_ptr<Queue<T>> &queue) : queue_{queue} {}
+  ~Tx() noexcept = default;
+  CLASS_KIND_MOVABLE(Tx);
 
   auto Send(T &&value) const noexcept -> void {
     queue_->Enqueue(std::move(value));
@@ -79,9 +85,11 @@ private:
 
 template <typename T>
   requires std::movable<T>
-class Rx final : private NonCopyable, Movable {
+class Rx final {
 public:
   Rx(const std::shared_ptr<Queue<T>> &queue) : queue_{queue} {}
+  ~Rx() noexcept = default;
+  CLASS_KIND_MOVABLE(Rx);
 
   auto TryReceive() const noexcept -> std::optional<T> {
     return queue_->TryDequeue();
@@ -95,9 +103,13 @@ private:
 
 template <typename T>
   requires std::movable<T>
-struct Channel final : private NonCopyable, Movable {
-  class Builder final : private NonCopyable, NonMovable {
+struct Channel final {
+  class Builder final {
   public:
+    Builder() noexcept = default;
+    ~Builder() noexcept = default;
+    CLASS_KIND_PINNABLE(Builder);
+
     auto Build() noexcept -> Channel<T> {
       auto queue = std::make_shared<Queue<T>>();
       auto tx = Tx<T>{queue};
@@ -108,6 +120,9 @@ struct Channel final : private NonCopyable, Movable {
 
   Tx<T> tx;
   Rx<T> rx;
+
+  ~Channel() noexcept = default;
+  CLASS_KIND_MOVABLE(Channel);
 
 private:
   Channel(Tx<T> &&tx, Rx<T> &&rx) : tx{std::move(tx)}, rx{std::move(rx)} {}

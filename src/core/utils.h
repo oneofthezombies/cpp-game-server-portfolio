@@ -14,9 +14,11 @@ using Args = std::vector<std::string_view>;
 
 [[nodiscard]] auto ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
 
-class Tokenizer final : private NonCopyable, Movable {
+class Tokenizer final {
 public:
   explicit Tokenizer(Args &&args) noexcept;
+  ~Tokenizer() noexcept = default;
+  CLASS_KIND_MOVABLE(Tokenizer);
 
   auto Current() const noexcept -> std::optional<std::string_view>;
   auto Next() const noexcept -> std::optional<std::string_view>;
@@ -43,9 +45,11 @@ template <typename T>
   return ResultT{value};
 }
 
-class StringBuilder final : private NonCopyable, Movable {
+class StringBuilder final {
 public:
   explicit StringBuilder() noexcept = default;
+  ~StringBuilder() noexcept = default;
+  CLASS_KIND_MOVABLE(StringBuilder);
 
   template <typename T>
   [[nodiscard]] auto Add(const T &value) noexcept -> StringBuilder & {
@@ -68,10 +72,11 @@ private:
   std::ostringstream oss_;
 };
 
-class Defer final : private NonCopyable, NonMovable {
+class Defer final {
 public:
   explicit Defer(std::function<void()> &&fn) noexcept;
   ~Defer() noexcept;
+  CLASS_KIND_PINNABLE(Defer);
 
   auto Cancel() noexcept -> void;
 

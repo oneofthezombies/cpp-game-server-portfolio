@@ -6,10 +6,20 @@
 #include "common.h"
 #include "spsc_channel.h"
 
+Mail::Mail(std::string &&from, std::string &&to, MailBody &&body) noexcept
+    : from{std::move(from)}, to{std::move(to)}, body{std::move(body)} {}
+
+auto Mail::Clone() const noexcept -> Mail {
+  auto from = this->from;
+  auto to = this->to;
+  auto body = this->body;
+  return Mail{std::move(from), std::move(to), std::move(body)};
+}
+
 MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
     : tx(std::move(tx)), rx(std::move(rx)) {}
 
-MailCenter::MailCenter(Tx<MessageBody> &&run_tx) noexcept
+MailCenter::MailCenter(Tx<MailBody> &&run_tx) noexcept
     : run_tx_{std::move(run_tx)} {}
 
 auto MailCenter::Shutdown() noexcept -> void {
@@ -59,7 +69,30 @@ auto MailCenter::Delete(const std::string_view name) noexcept -> Result<Void> {
   return ResultT{Void{}};
 }
 
-auto MailCenter::RunOnThread(Rx<MessageBody> &&run_rx) noexcept -> void {
+auto MailCenter::ValidateName(const std::string_view name) const noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  if (name.empty()) {
+    return ResultT{
+        Error{Symbol::kMailBoxNameEmpty, SB{}.Add("name", name).Build()}};
+  }
+
+  if (name.size() > 64) {
+    return ResultT{
+        Error{Symbol::kMailBoxNameTooLong, SB{}.Add("name", name).Build()}};
+  }
+
+  // "all" is reserved for broadcast
+  if (name == "all") {
+    return ResultT{
+        Error{Symbol::kMailBoxNameAll, SB{}.Add("name", name).Build()}};
+  }
+
+  return ResultT{Void{}};
+}
+
+auto MailCenter::RunOnThread(Rx<MailBody> &&run_rx) noexcept -> void {
   while (true) {
     auto run_event = run_rx.TryReceive();
     if (run_event) {
@@ -77,6 +110,18 @@ auto MailCenter::RunOnThread(Rx<MessageBody> &&run_rx) noexcept -> void {
           continue;
         }
 
+        // broadcast
+        if (mail->to == "all") {
+          for (auto &[name, other_mail_box] : mail_boxes_) {
+            if (name == mail->from) {
+              continue;
+            }
+            other_mail_box.tx.Send(mail->Clone());
+          }
+          continue;
+        }
+
+        // unicast
         const auto to = mail_boxes_.find(mail->to);
         if (to == mail_boxes_.end()) {
           std::cout << "MailBox not found: " << mail->to << std::endl;
@@ -89,12 +134,12 @@ auto MailCenter::RunOnThread(Rx<MessageBody> &&run_rx) noexcept -> void {
   }
 }
 
-auto MailCenter::StartRunThread(Rx<MessageBody> &&run_rx) noexcept -> void {
+auto MailCenter::StartRunThread(Rx<MailBody> &&run_rx) noexcept -> void {
   run_thread_ = std::thread{RunThreadMain, std::ref(*this), std::move(run_rx)};
 }
 
 auto MailCenter::RunThreadMain(MailCenter &mail_center,
-                               Rx<MessageBody> &&run_rx) noexcept -> void {
+                               Rx<MailBody> &&run_rx) noexcept -> void {
   mail_center.RunOnThread(std::move(run_rx));
 }
 
@@ -102,7 +147,7 @@ auto MailCenter::Global() noexcept -> MailCenter & {
   static std::unique_ptr<MailCenter> instance{nullptr};
   static std::once_flag flag;
   std::call_once(flag, [] {
-    auto [tx, rx] = Channel<MessageBody>::Builder{}.Build();
+    auto [tx, rx] = Channel<MailBody>::Builder{}.Build();
     instance.reset(new MailCenter{std::move(tx)});
     instance->StartRunThread(std::move(rx));
   });

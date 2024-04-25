@@ -1,6 +1,7 @@
 #ifndef CORE_TINY_JSON_H
 #define CORE_TINY_JSON_H
 
+#include <iostream>
 #include <optional>
 #include <source_location>
 #include <sstream>
@@ -9,27 +10,47 @@
 
 #include "core.h"
 
-class TinyJson final : private NonCopyable, Movable {
+class TinyJson final {
 public:
+  using Raw = std::unordered_map<std::string, std::string>;
+
+  explicit TinyJson() noexcept = default;
+  explicit TinyJson(Raw &&raw) noexcept;
+  ~TinyJson() noexcept = default;
+  CLASS_KIND_MOVABLE(TinyJson);
+
+  /**
+   * Returning value is a reference to the value in the map.
+   */
   [[nodiscard]] auto Get(const std::string_view key) const noexcept
       -> std::optional<std::string_view>;
 
-  auto AsRaw() const noexcept
-      -> const std::unordered_map<std::string_view, std::string_view> &;
+  template <typename T>
+  auto Set(const std::string_view key, const T &value) noexcept -> TinyJson & {
+    std::ostringstream oss;
+    oss << value;
+    auto key_str = std::string(key);
+    auto found = raw_.find(key_str);
+    if (found != raw_.end()) {
+      std::cout << "TinyJson duplicated key: " << key_str << ", "
+                << "Old value: " << found->second << ", "
+                << "New value: " << oss.str() << "\n";
+      found->second = oss.str();
+    } else {
+      raw_.emplace(std::move(key_str), oss.str());
+    }
+    return *this;
+  }
 
-  /**
-   * The lifetime in the input `tiny_json` must be longer than the lifetime
-   * in `std::string_view` returned by the `TinyJson` object and the object's
-   * `Get` method.
-   */
-  [[nodiscard]] static auto Parse(const std::string_view tiny_json) noexcept
+  auto AsRaw() const noexcept -> const Raw &;
+
+  auto ToString() const noexcept -> std::string;
+
+  [[nodiscard]] static auto Parse(const std::string_view tiny_json_str) noexcept
       -> std::optional<TinyJson>;
 
 private:
-  explicit TinyJson(
-      std::unordered_map<std::string_view, std::string_view> &&data) noexcept;
-
-  std::unordered_map<std::string_view, std::string_view> data_;
+  Raw raw_;
 
   friend class TinyJsonParser;
 };
@@ -37,9 +58,11 @@ private:
 auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
     -> std::ostream &;
 
-class TinyJsonParser final : private NonCopyable, Movable {
+class TinyJsonParser final {
 public:
-  explicit TinyJsonParser(const std::string_view tiny_json) noexcept;
+  explicit TinyJsonParser(const std::string_view tiny_json_str) noexcept;
+  ~TinyJsonParser() noexcept = default;
+  CLASS_KIND_MOVABLE(TinyJsonParser);
 
   [[nodiscard]] auto Parse() noexcept -> std::optional<TinyJson>;
 
@@ -65,26 +88,9 @@ private:
   auto Log(const std::string_view message,
            const std::source_location location) const noexcept -> void;
 
-  std::string_view tiny_json_;
+  std::string_view tiny_json_str_;
   size_t cursor_{};
-  std::unordered_map<std::string_view, std::string_view> data_{};
-};
-
-class TinyJsonStringBuilder final : private NonCopyable, NonMovable {
-public:
-  template <typename T>
-  auto Add(std::string &&key, const T &value) noexcept
-      -> TinyJsonStringBuilder & {
-    std::ostringstream oss;
-    oss << value;
-    data_.emplace(key, oss.str());
-    return *this;
-  }
-
-  [[nodiscard]] auto Build() noexcept -> std::string;
-
-private:
-  std::unordered_map<std::string, std::string> data_{};
+  TinyJson::Raw raw_;
 };
 
 #endif // CORE_TINY_JSON_H

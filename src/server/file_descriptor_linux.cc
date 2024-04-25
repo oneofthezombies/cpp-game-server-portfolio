@@ -74,11 +74,6 @@ auto FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
   return ResultT{Void{}};
 }
 
-auto FileDescriptorLinux::RawToSessionId(const Raw fd) noexcept
-    -> Session::IdType {
-  return static_cast<Session::IdType>(fd);
-}
-
 auto operator<<(std::ostream &os, const FileDescriptorLinux &fd)
     -> std::ostream & {
   os << "FileDescriptorLinux{";

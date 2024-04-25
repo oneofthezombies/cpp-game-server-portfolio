@@ -6,30 +6,18 @@
 
 #include "event_loop_linux.h"
 
-BattleEventLoopLinux::BattleEventLoopLinux(
-    EventLoopLinux &&event_loop,
-    Tx<EventLoopLinuxEvent> &&battle_to_lobby_tx) noexcept
-    : event_loop_{std::move(event_loop)},
-      battle_to_lobby_tx_{std::move(battle_to_lobby_tx)} {
+BattleEventLoopLinux::BattleEventLoopLinux() noexcept : EventLoopLinux{} {
   event_handlers_.emplace(
       "matched_client_fds",
       [this](const std::string &value) { return OnMatchedClientFds(value); });
 }
 
-auto BattleEventLoopLinux::Run() noexcept -> Result<Void> {
-  return event_loop_.Run(
-      [this](const EventLoopLinuxEvent &event) {
-        return OnEventLoopEvent(event);
-      },
-      [this](const struct epoll_event &event) { return OnEpollEvent(event); });
-}
-
-auto BattleEventLoopLinux::OnEventLoopEvent(
-    const EventLoopLinuxEvent &event) noexcept -> Result<Void> {
+auto BattleEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
-  for (const auto &[key, value] : event) {
-    std::cout << "battlt event: " << key << " " << value << std::endl;
+  for (const auto &[key, value] : mail.body) {
+    std::cout << "battlt mail body: " << key << " " << value << std::endl;
 
     const auto found = event_handlers_.find(key);
     if (found == event_handlers_.end()) {
@@ -45,7 +33,7 @@ auto BattleEventLoopLinux::OnEventLoopEvent(
   return ResultT{Void{}};
 }
 
-auto BattleEventLoopLinux::OnEpollEvent(
+auto BattleEventLoopLinux::OnEpollEventReceived(
     const struct epoll_event &event) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -57,7 +45,7 @@ auto BattleEventLoopLinux::AddClientFd(const FileDescriptorLinux::Raw client_fd,
     -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (auto res = event_loop_.Add(client_fd, EPOLLIN | EPOLLET); res.IsErr()) {
+  if (auto res = Add(client_fd, EPOLLIN | EPOLLET); res.IsErr()) {
     return res;
   }
 
@@ -78,7 +66,7 @@ auto BattleEventLoopLinux::DeleteClientFd(
   using ResultT = Result<Void>;
 
   client_fds_.erase(client_fd);
-  if (auto res = event_loop_.Delete(client_fd); res.IsErr()) {
+  if (auto res = Delete(client_fd); res.IsErr()) {
     return res;
   }
 
@@ -142,22 +130,4 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
 
   defer.Cancel();
   return ResultT{Void{}};
-}
-
-auto BattleEventLoopLinuxBuilder::Build(
-    Rx<EventLoopLinuxEvent> &&lobby_to_battle_rx,
-    Tx<EventLoopLinuxEvent> &&battle_to_lobby_tx) const noexcept
-    -> Result<BattleEventLoopLinux> {
-  using ResultT = Result<BattleEventLoopLinux>;
-
-  std::vector<Rx<EventLoopLinuxEvent>> event_loop_rxs;
-  event_loop_rxs.emplace_back(std::move(lobby_to_battle_rx));
-  auto event_loop_res =
-      EventLoopLinuxBuilder{}.Build(std::move(event_loop_rxs));
-  if (event_loop_res.IsErr()) {
-    return ResultT{std::move(event_loop_res.Err())};
-  }
-
-  return ResultT{BattleEventLoopLinux{std::move(event_loop_res.Ok()),
-                                      std::move(battle_to_lobby_tx)}};
 }

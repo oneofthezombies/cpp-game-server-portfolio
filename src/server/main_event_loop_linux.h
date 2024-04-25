@@ -6,31 +6,37 @@
 #include "event_loop_linux.h"
 #include "server/file_descriptor_linux.h"
 
-class MainEventLoopLinux final : private NonCopyable, Movable {
+class MainEventLoopLinux final : public EventLoopLinux {
 public:
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
+  using Super = EventLoopLinux;
+
+  class Builder final {
+  public:
+    explicit Builder() noexcept = default;
+    ~Builder() noexcept = default;
+    CLASS_KIND_PINNABLE(Builder);
+
+    [[nodiscard]] auto Build(const uint16_t port) const noexcept
+        -> Result<MainEventLoopLinux>;
+  };
+
+  ~MainEventLoopLinux() noexcept override = default;
+  CLASS_KIND_MOVABLE(MainEventLoopLinux);
+
+  [[nodiscard]] auto Init(const std::string_view name) noexcept
+      -> Result<Void> override;
 
 private:
-  explicit MainEventLoopLinux(Tx<EventLoopLinuxEvent> &&main_to_lobby_tx,
-                              EventLoopLinux &&event_loop,
-                              FileDescriptorLinux &&server_fd) noexcept;
+  explicit MainEventLoopLinux(FileDescriptorLinux &&server_fd) noexcept;
 
-  [[nodiscard]] auto OnEventLoopEvent(const EventLoopLinuxEvent &event) noexcept
-      -> Result<Void>;
-  [[nodiscard]] auto OnEpollEvent(const struct epoll_event &event) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto OnMailReceived(const Mail &mail) noexcept
+      -> Result<Void> override;
 
-  Tx<EventLoopLinuxEvent> main_to_lobby_tx_;
-  EventLoopLinux event_loop_;
+  [[nodiscard]] auto
+  OnEpollEventReceived(const struct epoll_event &event) noexcept
+      -> Result<Void> override;
+
   FileDescriptorLinux server_fd_;
-
-  friend class MainEventLoopLinuxBuilder;
-};
-
-class MainEventLoopLinuxBuilder final : private NonCopyable, NonMovable {
-public:
-  [[nodiscard]] auto Build(const uint16_t port) const noexcept
-      -> Result<MainEventLoopLinux>;
 };
 
 #endif // SERVER_MAIN_EVENT_LOOP_LINUX_H

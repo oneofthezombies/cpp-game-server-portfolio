@@ -31,10 +31,14 @@ auto operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
   return os;
 }
 
-struct ClientOptions final : private NonCopyable, Movable {
+struct ClientOptions final {
   std::string ip;
   uint16_t port{kUndefinedPort};
   std::string room_id;
+
+  explicit ClientOptions() noexcept = default;
+  ~ClientOptions() noexcept = default;
+  CLASS_KIND_MOVABLE(ClientOptions);
 
   static constexpr uint16_t kUndefinedPort{0};
 };
@@ -167,9 +171,9 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
-  const auto message = Message::BuildRaw(
-      MessageKind::kRequest, 0,
-      TinyJsonStringBuilder{}.Add("room_id", options.room_id).Build());
+  const auto message =
+      Message::BuildRaw(MessageKind::kRequest, 0,
+                        TinyJson{}.Set("room_id", options.room_id).ToString());
   if (send(sock, message.data(), message.size(), 0) == -1) {
     std::cerr << "Failed to send data." << std::endl;
     return 1;

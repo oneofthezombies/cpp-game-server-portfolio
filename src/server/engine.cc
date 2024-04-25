@@ -6,7 +6,6 @@
 #if defined(__linux__)
 #include "engine_linux.h"
 using EngineImpl = EngineLinux;
-using EngineImplBuilder = EngineLinuxBuilder;
 #elif defined(_WIN32)
 #error "Not implemented"
 #elif defined(__APPLE__)
@@ -36,12 +35,11 @@ auto Engine::Run() noexcept -> Result<Void> {
   return CastEngineImpl(impl_.get())->Run();
 }
 
-auto EngineBuilder::Build(const uint16_t port) const noexcept
+auto Engine::Builder::Build(const uint16_t port) const noexcept
     -> Result<Engine> {
   using ResultT = Result<Engine>;
 
-  MailCenter::Global();
-  auto result = EngineImplBuilder{}.Build(port);
+  auto result = EngineImpl::Builder{}.Build(port);
   if (result.IsErr()) {
     return ResultT{std::move(result.Err())};
   }

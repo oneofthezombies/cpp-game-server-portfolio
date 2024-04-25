@@ -7,25 +7,11 @@
 #include "event_loop_linux.h"
 #include "file_descriptor_linux.h"
 
-LobbyEventLoopLinux::LobbyEventLoopLinux(
-    EventLoopLinux &&event_loop,
-    Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) noexcept
-    : event_loop_{std::move(event_loop)},
-      lobby_to_battle_tx_{std::move(lobby_to_battle_tx)} {}
-
-auto LobbyEventLoopLinux::Run() noexcept -> Result<Void> {
-  return event_loop_.Run(
-      [this](const EventLoopLinuxEvent &event) {
-        return OnEventLoopEvent(event);
-      },
-      [this](const struct epoll_event &event) { return OnEpollEvent(event); });
-}
-
-auto LobbyEventLoopLinux::OnEventLoopEvent(
-    const EventLoopLinuxEvent &event) noexcept -> Result<Void> {
+auto LobbyEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (auto found = event.find("client_fd"); found != event.end()) {
+  if (auto found = mail.body.find("client_fd"); found != mail.body.end()) {
     const auto &client_fd_str = found->second;
     auto client_fd_res =
         ParseNumberString<FileDescriptorLinux::Raw>(client_fd_str);
@@ -48,8 +34,8 @@ auto LobbyEventLoopLinux::OnEventLoopEvent(
   return ResultT{Void{}};
 }
 
-auto LobbyEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
-    -> Result<Void> {
+auto LobbyEventLoopLinux::OnEpollEventReceived(
+    const struct epoll_event &event) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   return ResultT{Void{}};
@@ -75,6 +61,7 @@ auto LobbyEventLoopLinux::OnClientFdMatched(
     const FileDescriptorLinux::Raw client_fd_1) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
+  AssertInit();
   if (auto res = DeleteClientFd(client_fd_0); res.IsErr()) {
     return res;
   }
@@ -84,9 +71,11 @@ auto LobbyEventLoopLinux::OnClientFdMatched(
   }
 
   std::cout << "Matched " << client_fd_0 << " and " << client_fd_1 << std::endl;
-  lobby_to_battle_tx_.Send(EventLoopLinuxEvent{
-      {{"matched_client_fds",
-        SB{}.Add(client_fd_0).Add(",").Add(client_fd_1).Build()}}});
+  context_->mail_box.tx.Send(
+      Mail{"lobby",
+           "battle",
+           {{"matched_client_fds",
+             SB{}.Add(client_fd_0).Add(",").Add(client_fd_1).Build()}}});
 
   return ResultT{Void{}};
 }
@@ -95,7 +84,7 @@ auto LobbyEventLoopLinux::AddClientFd(
     const FileDescriptorLinux::Raw client_fd) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (auto res = event_loop_.Add(client_fd, EPOLLIN | EPOLLET); res.IsErr()) {
+  if (auto res = Add(client_fd, EPOLLIN | EPOLLET); res.IsErr()) {
     return res;
   }
 
@@ -116,29 +105,9 @@ auto LobbyEventLoopLinux::DeleteClientFd(
   using ResultT = Result<Void>;
 
   client_fds_.erase(client_fd);
-  if (auto res = event_loop_.Delete(client_fd); res.IsErr()) {
+  if (auto res = Delete(client_fd); res.IsErr()) {
     return res;
   }
 
   return ResultT{Void{}};
-}
-
-auto LobbyEventLoopLinuxBuilder::Build(
-    Rx<EventLoopLinuxEvent> &&main_to_lobby_rx,
-    Rx<EventLoopLinuxEvent> &&battle_to_lobby_rx,
-    Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) const noexcept
-    -> Result<LobbyEventLoopLinux> {
-  using ResultT = Result<LobbyEventLoopLinux>;
-
-  std::vector<Rx<EventLoopLinuxEvent>> event_loop_rxs;
-  event_loop_rxs.push_back(std::move(main_to_lobby_rx));
-  event_loop_rxs.push_back(std::move(battle_to_lobby_rx));
-  auto event_loop_res =
-      EventLoopLinuxBuilder{}.Build(std::move(event_loop_rxs));
-  if (event_loop_res.IsErr()) {
-    return ResultT{std::move(event_loop_res.Err())};
-  }
-
-  return ResultT{LobbyEventLoopLinux{std::move(event_loop_res.Ok()),
-                                     std::move(lobby_to_battle_tx)}};
 }

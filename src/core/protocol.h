@@ -37,15 +37,17 @@ enum class MessageKind : uint8_t {
 
 auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
 
-struct Message final : private NonCopyable, Movable {
+struct Message final {
   using Id = uint64_t;
 
   MessageKind kind;
   Id id;
-  TinyJson json;
+  TinyJson tiny_json;
 
   explicit Message(const MessageKind kind, const Id id,
                    TinyJson &&json) noexcept;
+  ~Message() noexcept = default;
+  CLASS_KIND_MOVABLE(Message);
 
   [[nodiscard]] static auto FromRaw(const std::string_view raw)
       -> std::optional<Message>;

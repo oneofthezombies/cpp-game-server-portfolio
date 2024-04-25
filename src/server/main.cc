@@ -6,8 +6,12 @@
 
 #include "engine.h"
 
-struct ServerOptions final : private NonCopyable, Movable {
+struct ServerOptions final {
   uint16_t port{kUndefinedPort};
+
+  explicit ServerOptions() noexcept = default;
+  ~ServerOptions() noexcept = default;
+  CLASS_KIND_MOVABLE(ServerOptions);
 
   static constexpr uint16_t kUndefinedPort{0};
 };
@@ -79,7 +83,7 @@ auto main(int argc, char **argv) noexcept -> int {
   }
 
   const auto &options = args_res.Ok();
-  auto engine_res = EngineBuilder{}.Build(options.port);
+  auto engine_res = Engine::Builder{}.Build(options.port);
   if (engine_res.IsErr()) {
     std::cout << engine_res.Err() << std::endl;
     return 1;

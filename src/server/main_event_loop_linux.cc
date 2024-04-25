@@ -13,39 +13,35 @@
 #include "server/file_descriptor_linux.h"
 #include "utils_linux.h"
 
-MainEventLoopLinux::MainEventLoopLinux(
-    Tx<EventLoopLinuxEvent> &&main_to_lobby_tx, EventLoopLinux &&event_loop,
-    FileDescriptorLinux &&server_fd) noexcept
-    : main_to_lobby_tx_{std::move(main_to_lobby_tx)},
-      event_loop_{std::move(event_loop)}, server_fd_{std::move(server_fd)} {
+MainEventLoopLinux::MainEventLoopLinux(FileDescriptorLinux &&server_fd) noexcept
+    : EventLoopLinux{}, server_fd_{std::move(server_fd)} {
   assert(server_fd_.IsValid() && "server fd must be valid");
 }
 
-auto MainEventLoopLinux::Run() noexcept -> Result<Void> {
-  if (auto res = event_loop_.Add(server_fd_.AsRaw(), EPOLLIN); res.IsErr()) {
+auto MainEventLoopLinux::Init(const std::string_view name) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  if (auto res = Super::Init(name); res.IsErr()) {
     return res;
   }
 
-  return event_loop_.Run(
-      [this](const EventLoopLinuxEvent &event) {
-        return OnEventLoopEvent(event);
-      },
-      [this](const struct epoll_event &event) { return OnEpollEvent(event); });
-}
-
-auto MainEventLoopLinux::OnEventLoopEvent(
-    const EventLoopLinuxEvent &event) noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
-
-  if (auto found = event.find("shutdown"); found != event.end()) {
-    main_to_lobby_tx_.Send({{"shutdown", ""}});
+  if (auto res = Add(server_fd_.AsRaw(), EPOLLIN); res.IsErr()) {
+    return res;
   }
 
   return ResultT{Void{}};
 }
 
-auto MainEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
+auto MainEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
     -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  return ResultT{Void{}};
+}
+
+auto MainEventLoopLinux::OnEpollEventReceived(
+    const struct epoll_event &event) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (event.data.fd != server_fd_.AsRaw()) {
@@ -67,23 +63,14 @@ auto MainEventLoopLinux::OnEpollEvent(const struct epoll_event &event) noexcept
     return ResultT{std::move(res.Err())};
   }
 
-  main_to_lobby_tx_.Send({{"client_fd", std::to_string(client_fd_raw)}});
+  context_->mail_box.tx.Send(
+      Mail{"main", "lobby", {{"client_fd", std::to_string(client_fd_raw)}}});
   return ResultT{Void{}};
 }
 
-auto MainEventLoopLinuxBuilder::Build(
-    const uint16_t port, Rx<EventLoopLinuxEvent> &&signal_to_main_rx,
-    Tx<EventLoopLinuxEvent> &&main_to_lobby_tx) const noexcept
+auto MainEventLoopLinux::Builder::Build(const uint16_t port) const noexcept
     -> Result<MainEventLoopLinux> {
   using ResultT = Result<MainEventLoopLinux>;
-
-  std::vector<Rx<EventLoopLinuxEvent>> event_loop_rxs;
-  event_loop_rxs.emplace_back(std::move(signal_to_main_rx));
-  auto event_loop_res =
-      EventLoopLinuxBuilder{}.Build(std::move(event_loop_rxs));
-  if (event_loop_res.IsErr()) {
-    return ResultT{std::move(event_loop_res.Err())};
-  }
 
   auto server_fd_raw = socket(AF_INET, SOCK_STREAM, 0);
   if (!FileDescriptorLinux::IsValid(server_fd_raw)) {
@@ -112,7 +99,5 @@ auto MainEventLoopLinuxBuilder::Build(
                          SB{}.Add(LinuxError::FromErrno()).Build()}};
   }
 
-  return ResultT{MainEventLoopLinux{std::move(main_to_lobby_tx),
-                                    std::move(event_loop_res.Ok()),
-                                    std::move(server_fd)}};
+  return ResultT{MainEventLoopLinux{std::move(server_fd)}};
 }

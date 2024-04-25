@@ -1,7 +1,6 @@
 #ifndef SERVER_MAIL_CENTER_H
 #define SERVER_MAIL_CENTER_H
 
-#include <memory>
 #include <thread>
 #include <unordered_map>
 
@@ -10,17 +9,27 @@
 
 #include "common.h"
 
-using MessageBody = std::unordered_map<std::string, std::string>;
+using MailBody = std::unordered_map<std::string, std::string>;
 
-struct Mail {
+struct Mail final {
   std::string from;
   std::string to;
-  MessageBody body;
+  MailBody body;
+
+  explicit Mail() noexcept = default;
+  explicit Mail(std::string &&from, std::string &&to, MailBody &&body) noexcept;
+  ~Mail() noexcept = default;
+  CLASS_KIND_MOVABLE(Mail);
+
+  auto Clone() const noexcept -> Mail;
 };
 
-struct MailBox final : private NonCopyable, Movable {
+struct MailBox final {
   Tx<Mail> tx;
   Rx<Mail> rx;
+
+  ~MailBox() noexcept = default;
+  CLASS_KIND_MOVABLE(MailBox);
 
 private:
   explicit MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept;
@@ -28,8 +37,11 @@ private:
   friend class MailCenter;
 };
 
-class MailCenter final : private NonCopyable, NonMovable {
+class MailCenter final {
 public:
+  ~MailCenter() noexcept = default;
+  CLASS_KIND_PINNABLE(MailCenter);
+
   auto Shutdown() noexcept -> void;
 
   [[nodiscard]] auto Create(const std::string_view name) noexcept
@@ -40,18 +52,20 @@ public:
   static auto Global() noexcept -> MailCenter &;
 
 private:
-  explicit MailCenter(Tx<MessageBody> &&run_tx) noexcept;
+  explicit MailCenter(Tx<MailBody> &&run_tx) noexcept;
 
-  auto RunOnThread(Rx<MessageBody> &&run_rx) noexcept -> void;
+  auto ValidateName(const std::string_view name) const noexcept -> Result<Void>;
 
-  auto StartRunThread(Rx<MessageBody> &&run_rx) noexcept -> void;
+  auto RunOnThread(Rx<MailBody> &&run_rx) noexcept -> void;
+
+  auto StartRunThread(Rx<MailBody> &&run_rx) noexcept -> void;
 
   static auto RunThreadMain(MailCenter &mail_center,
-                            Rx<MessageBody> &&run_rx) noexcept -> void;
+                            Rx<MailBody> &&run_rx) noexcept -> void;
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;
-  Tx<MessageBody> run_tx_;
+  Tx<MailBody> run_tx_;
   std::thread run_thread_;
 };
 

@@ -21,6 +21,9 @@ enum class Symbol : int32_t {
 
   kMailBoxAlreadyExists,
   kMailBoxNotFound,
+  kMailBoxNameEmpty,
+  kMailBoxNameTooLong,
+  kMailBoxNameAll,
 
   kEventLoopLinuxEpollCreate1Failed,
   kEventLoopLinuxEpollCtlAddFailed,

@@ -34,8 +34,9 @@ auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream & {
   return os;
 }
 
-Message::Message(const MessageKind kind, const Id id, TinyJson &&json) noexcept
-    : kind{kind}, id{id}, json{std::move(json)} {}
+Message::Message(const MessageKind kind, const Id id,
+                 TinyJson &&tiny_json) noexcept
+    : kind{kind}, id{id}, tiny_json{std::move(tiny_json)} {}
 
 auto Message::FromRaw(const std::string_view raw) -> std::optional<Message> {
   if (raw.size() < sizeof(MessageKind)) {
@@ -79,8 +80,8 @@ auto operator<<(std::ostream &os, const Message &message) noexcept
   os << "id=";
   os << message.id;
   os << ", ";
-  os << "json=";
-  os << message.json;
+  os << "tiny_json=";
+  os << message.tiny_json;
   os << "}";
   return os;
 }

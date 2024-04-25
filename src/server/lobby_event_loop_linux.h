@@ -7,19 +7,22 @@
 
 #include "event_loop_linux.h"
 
-class LobbyEventLoopLinux final : private NonCopyable, Movable {
+class LobbyEventLoopLinux final : public EventLoopLinux {
 public:
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
+  using Super = EventLoopLinux;
+
+  explicit LobbyEventLoopLinux() noexcept = default;
+  ~LobbyEventLoopLinux() noexcept override = default;
+  CLASS_KIND_MOVABLE(LobbyEventLoopLinux);
 
 private:
-  explicit LobbyEventLoopLinux(
-      EventLoopLinux &&event_loop,
-      Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) noexcept;
+  [[nodiscard]] auto OnMailReceived(const Mail &mail) noexcept
+      -> Result<Void> override;
 
-  [[nodiscard]] auto OnEventLoopEvent(const EventLoopLinuxEvent &event) noexcept
-      -> Result<Void>;
-  [[nodiscard]] auto OnEpollEvent(const struct epoll_event &event) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  OnEpollEventReceived(const struct epoll_event &event) noexcept
+      -> Result<Void> override;
+
   [[nodiscard]] auto
   OnClientFdInserted(const FileDescriptorLinux::Raw client_fd_raw) noexcept
       -> Result<Void>;
@@ -36,21 +39,7 @@ private:
   DeleteClientFd(const FileDescriptorLinux::Raw client_fd) noexcept
       -> Result<Void>;
 
-  EventLoopLinux event_loop_;
-  Tx<EventLoopLinuxEvent> lobby_to_battle_tx_;
   std::unordered_set<FileDescriptorLinux::Raw> client_fds_;
-
-  friend class LobbyEventLoopLinuxBuilder;
-};
-
-class LobbyEventLoopLinuxBuilder final : private NonCopyable,
-                                         private NonMovable {
-public:
-  [[nodiscard]] auto
-  Build(Rx<EventLoopLinuxEvent> &&main_to_lobby_rx,
-        Rx<EventLoopLinuxEvent> &&battle_to_lobby_rx,
-        Tx<EventLoopLinuxEvent> &&lobby_to_battle_tx) const noexcept
-      -> Result<LobbyEventLoopLinux>;
 };
 
 #endif // SERVER_LOBBY_EVENT_LOOP_LINUX_H

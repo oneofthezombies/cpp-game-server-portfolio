@@ -4,9 +4,8 @@
 #include "core/core.h"
 
 #include "common.h"
-#include "session.h"
 
-class FileDescriptorLinux final : private NonCopyable, Movable {
+class FileDescriptorLinux final {
 public:
   using Raw = int;
 
@@ -22,12 +21,8 @@ public:
   [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<Void>;
 
   [[nodiscard]] static auto IsValid(const Raw fd) noexcept -> bool;
-
   [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
       -> Result<Void>;
-
-  [[nodiscard]] static auto RawToSessionId(const Raw fd) noexcept
-      -> Session::IdType;
 
 private:
   Raw fd_{kInvalidFd};
