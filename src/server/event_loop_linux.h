@@ -27,6 +27,8 @@ public:
                      FileDescriptorLinux &&epoll_fd) noexcept;
     ~Context() noexcept = default;
     CLASS_KIND_MOVABLE(Context);
+
+    auto SendMail(std::string &&to, MailBody &&body) noexcept -> void;
   };
 
   virtual ~EventLoopLinux() noexcept = default;
@@ -36,6 +38,10 @@ public:
                          uint32_t events) noexcept -> Result<Void>;
 
   [[nodiscard]] auto Delete(const FileDescriptorLinux::Raw fd) noexcept
+      -> Result<Void>;
+
+  [[nodiscard]] auto Write(const FileDescriptorLinux::Raw fd,
+                           const std::string_view data) noexcept
       -> Result<Void>;
 
   [[nodiscard]] virtual auto Init(const std::string_view name) noexcept

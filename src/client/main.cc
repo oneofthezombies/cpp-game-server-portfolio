@@ -149,5 +149,22 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
+  while (true) {
+    char buffer[4096]{};
+    auto read_size = read(sock, buffer, sizeof(buffer));
+    if (read_size == -1) {
+      std::cerr << "Failed to read from the server." << std::endl;
+      return 1;
+    }
+
+    if (read_size == 0) {
+      std::cout << "Server disconnected." << std::endl;
+      break;
+    }
+
+    std::cout << "Server: " << buffer << " (" << read_size << " bytes)"
+              << std::endl;
+  }
+
   return 0;
 }

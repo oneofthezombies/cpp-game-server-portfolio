@@ -29,6 +29,8 @@ enum class Symbol : int32_t {
   kEventLoopLinuxEpollCtlAddFailed,
   kEventLoopLinuxEpollCtlDeleteFailed,
   kEventLoopLinuxEpollWaitFailed,
+  kEventLoopLinuxWriteFailed,
+  kEventLoopLinuxWriteClosed,
 
   kMainEventLoopLinuxServerSocketFailed,
   kMainEventLoopLinuxServerSocketBindFailed,
@@ -43,16 +45,6 @@ enum class Symbol : int32_t {
   kBattleEventLoopLinuxClientFdConversionFailed,
   kBattleEventLoopLinuxClientFdAlreadyExists,
   kBattleEventLoopLinuxHandlerNotFound,
-
-  kEngineLinuxClientSocketReadFailed,
-  kEngineLinuxClientSocketWriteFailed,
-  kEngineLinuxClientSocketClosed,
-  kEngineLinuxClientSocketCloseFailed,
-
-  kEngineLinuxSessionAlreadyExists,
-  kEngineLinuxSessionNotFound,
-
-  kEngineLinuxMessageParseFailed,
 
   kFileDescriptorLinuxGetStatusFailed,
   kFileDescriptorLinuxSetStatusFailed,

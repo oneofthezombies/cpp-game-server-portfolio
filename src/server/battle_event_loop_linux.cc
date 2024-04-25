@@ -1,6 +1,7 @@
 #include "battle_event_loop_linux.h"
 
 #include <iostream>
+#include <unistd.h>
 
 #include <sys/epoll.h>
 
@@ -124,11 +125,24 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
     }
   }};
 
-  if (auto res = AddClientFd(client_fd_1_res.Ok(), room_id); res.IsErr()) {
+  const auto client_fd_1 = client_fd_1_res.Ok();
+  if (auto res = AddClientFd(client_fd_1, room_id); res.IsErr()) {
     return res;
   }
 
   defer.Cancel();
+
+  {
+    auto count = write(client_fd_0, "battle start", 12);
+    std::cout << "write to client_fd_0: " << client_fd_0 << " " << count
+              << std::endl;
+  }
+  {
+    auto count = write(client_fd_1, "battle start", 12);
+    std::cout << "write to client_fd_1: " << client_fd_1 << " " << count
+              << std::endl;
+  }
+
   return ResultT{Void{}};
 }
 

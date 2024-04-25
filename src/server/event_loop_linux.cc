@@ -4,6 +4,8 @@
 
 #include <sys/epoll.h>
 
+#include "core/tiny_json.h"
+
 #include "mail_center.h"
 #include "utils_linux.h"
 
@@ -11,6 +13,12 @@ EventLoopLinux::Context::Context(MailBox &&mail_box, std::string &&name,
                                  FileDescriptorLinux &&epoll_fd) noexcept
     : mail_box{std::move(mail_box)}, name{std::move(name)},
       epoll_fd{std::move(epoll_fd)} {}
+
+auto EventLoopLinux::Context::SendMail(std::string &&to,
+                                       MailBody &&body) noexcept -> void {
+  auto from = name;
+  mail_box.tx.Send(Mail{std::move(from), std::move(to), std::move(body)});
+}
 
 auto EventLoopLinux::Context::Builder::Build(
     const std::string_view name) const noexcept -> Result<Context> {
@@ -74,6 +82,39 @@ auto EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
   if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
                          SB{}.Add(LinuxError::FromErrno()).Build()}};
+  }
+
+  return ResultT{Void{}};
+}
+
+auto EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
+                           const std::string_view data) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  const auto data_size = data.size();
+  const auto data_ptr = data.data();
+  ssize_t written = 0;
+  while (written < data_size) {
+    const auto count = write(fd, data_ptr + written, data_size - written);
+    if (count == -1) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        continue;
+      }
+
+      return ResultT{Error{Symbol::kEventLoopLinuxWriteFailed,
+                           TinyJson{}
+                               .Set("error", LinuxError::FromErrno())
+                               .Set("fd", fd)
+                               .ToString()}};
+    } else {
+      written += count;
+
+      if (count == 0) {
+        return ResultT{Error{Symbol::kEventLoopLinuxWriteClosed,
+                             SB{}.Add("fd", fd).Build()}};
+      }
+    }
   }
 
   return ResultT{Void{}};
