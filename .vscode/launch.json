@@ -18,7 +18,7 @@
       "request": "launch",
       "name": "Debug Client Without Build",
       "program": "${workspaceFolder}/build/src/client/client",
-      "args": ["--ip-port", "127.0.0.1:8000"],
+      "args": [],
       "cwd": "${workspaceFolder}"
     },
     {

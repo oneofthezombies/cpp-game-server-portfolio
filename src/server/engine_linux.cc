@@ -20,10 +20,9 @@ std::atomic<const MailBox *> signal_mail_box_ptr{nullptr};
 
 auto OnSignal(int signal) -> void {
   if (signal == SIGINT) {
-    // if (signal_mail_box_ptr != nullptr) {
-    //   signal_mail_box_ptr->tx.Send(Mail{"signal", "all", {{"shutdown",
-    //   ""}}});
-    // }
+    if (signal_mail_box_ptr != nullptr) {
+      (*signal_mail_box_ptr).tx.Send(Mail{"signal", "all", {{"shutdown", ""}}});
+    }
   }
 
   std::cout << "Signal received: " << signal << std::endl;
@@ -67,6 +66,7 @@ auto EngineLinux::Run() noexcept -> Result<Void> {
 
   battle_thread_.join();
   lobby_thread_.join();
+  MailCenter::Global().Shutdown();
   return ResultT{Void{}};
 }
 
@@ -94,6 +94,7 @@ auto EngineLinux::Builder::Build(const uint16_t port) const noexcept
                     if (auto res = lobby_event_loop.Run(); res.IsErr()) {
                       std::cout << res.Err() << std::endl;
                     }
+                    std::cout << "lobby thread exit" << std::endl;
                   },
                   std::move(lobby_event_loop)};
 
@@ -107,6 +108,7 @@ auto EngineLinux::Builder::Build(const uint16_t port) const noexcept
                     if (auto res = battle_event_loop.Run(); res.IsErr()) {
                       std::cout << res.Err() << std::endl;
                     }
+                    std::cout << "battle thread exit" << std::endl;
                   },
                   std::move(battle_event_loop)};
 

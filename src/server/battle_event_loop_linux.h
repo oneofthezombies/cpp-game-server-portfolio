@@ -34,6 +34,8 @@ private:
   [[nodiscard]] auto
   OnMatchedClientFds(const std::string &matched_client_fds) noexcept
       -> Result<Void>;
+  [[nodiscard]] auto OnShutdown(const std::string &value) noexcept
+      -> Result<Void>;
 
   std::unordered_map<FileDescriptorLinux::Raw, RoomId> client_fds_;
   std::unordered_map<std::string, EventHandler> event_handlers_;

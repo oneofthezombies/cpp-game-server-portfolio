@@ -10,6 +10,9 @@ BattleEventLoopLinux::BattleEventLoopLinux() noexcept : EventLoopLinux{} {
   event_handlers_.emplace(
       "matched_client_fds",
       [this](const std::string &value) { return OnMatchedClientFds(value); });
+  event_handlers_.emplace("shutdown", [this](const std::string &value) {
+    return OnShutdown(value);
+  });
 }
 
 auto BattleEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
@@ -17,7 +20,7 @@ auto BattleEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
   using ResultT = Result<Void>;
 
   for (const auto &[key, value] : mail.body) {
-    std::cout << "battlt mail body: " << key << " " << value << std::endl;
+    std::cout << "battle mail body: " << key << " " << value << std::endl;
 
     const auto found = event_handlers_.find(key);
     if (found == event_handlers_.end()) {
@@ -129,5 +132,14 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
   }
 
   defer.Cancel();
+  return ResultT{Void{}};
+}
+
+auto BattleEventLoopLinux::OnShutdown(const std::string &value) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  // noop
+
   return ResultT{Void{}};
 }

@@ -21,8 +21,6 @@ enum class Symbol : int32_t {
   kPortArgNotFound,
   kPortParsingFailed,
   kPortValueNotFound,
-  kRoomIdArgNotFound,
-  kRoomIdValueNotFound,
   kUnknownArgument,
 };
 
@@ -34,7 +32,6 @@ auto operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
 struct ClientOptions final {
   std::string ip;
   uint16_t port{kUndefinedPort};
-  std::string room_id;
 
   explicit ClientOptions() noexcept = default;
   ~ClientOptions() noexcept = default;
@@ -92,17 +89,6 @@ auto ParseArgs(Args &&args) noexcept -> Result<ClientOptions> {
       continue;
     }
 
-    if (token == "--room-id") {
-      const auto next = tokenizer.Next();
-      if (!next.has_value()) {
-        return ResultT{Error{Symbol::kRoomIdValueNotFound}};
-      }
-
-      options.room_id = *next;
-      tokenizer.Eat();
-      continue;
-    }
-
     return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
   }
 
@@ -112,10 +98,6 @@ auto ParseArgs(Args &&args) noexcept -> Result<ClientOptions> {
 
   if (options.port == ClientOptions::kUndefinedPort) {
     return ResultT{Error{Symbol::kPortArgNotFound}};
-  }
-
-  if (options.room_id.empty()) {
-    return ResultT{Error{Symbol::kRoomIdArgNotFound}};
   }
 
   return ResultT{std::move(options)};
@@ -139,10 +121,6 @@ auto main(int argc, char **argv) noexcept -> int {
       std::cout << "Error: --port argument value not found";
     } else if (error.code == Symbol::kPortParsingFailed) {
       std::cout << "Error: port parsing failed: " << error.message;
-    } else if (error.code == Symbol::kRoomIdArgNotFound) {
-      std::cout << "Error: --room-id argument not found";
-    } else if (error.code == Symbol::kRoomIdValueNotFound) {
-      std::cout << "Error: --room-id argument value not found";
     } else if (error.code == Symbol::kUnknownArgument) {
       std::cout << "Error: unknown argument";
     } else {
@@ -171,23 +149,5 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
-  const auto message =
-      Message::BuildRaw(MessageKind::kRequest, 0,
-                        TinyJson{}.Set("room_id", options.room_id).ToString());
-  if (send(sock, message.data(), message.size(), 0) == -1) {
-    std::cerr << "Failed to send data." << std::endl;
-    return 1;
-  }
-
-  char buffer[1024 * 8]{};
-  ssize_t count = recv(sock, buffer, sizeof(buffer), 0);
-  if (count == -1) {
-    const char *error_message = strerror(errno);
-    std::cerr << error_message << std::endl;
-    std::cerr << "Failed to receive data." << std::endl;
-    return 1;
-  }
-
-  std::cout << "Received message: " << buffer << std::endl;
   return 0;
 }
