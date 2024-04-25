@@ -13,6 +13,8 @@ struct ServerOptions final : private core::NonCopyable, core::Movable {
 };
 
 auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
+  using ResultT = Result<ServerOptions>;
+
   ServerOptions options;
   core::Tokenizer tokenizer{std::move(args)};
 
@@ -24,19 +26,19 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
     const auto token = *current;
 
     if (token == "--help") {
-      return Error{Symbol::kHelpRequested};
+      return ResultT{Error{Symbol::kHelpRequested}};
     }
 
     if (token == "--port") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return Error{Symbol::kPortValueNotFound};
+        return ResultT{Error{Symbol::kPortValueNotFound}};
       }
 
       auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
-        return Error{Symbol::kPortParsingFailed,
-                     std::make_error_code(result.Err()).message()};
+        return ResultT{Error{Symbol::kPortParsingFailed,
+                             std::make_error_code(result.Err()).message()}};
       }
 
       options.port = result.Ok();
@@ -44,14 +46,14 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ServerOptions> {
       continue;
     }
 
-    return Error{Symbol::kUnknownArgument, std::string{token}};
+    return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
   }
 
   if (options.port == ServerOptions::kUndefinedPort) {
-    return Error{Symbol::kPortArgNotFound};
+    return ResultT{Error{Symbol::kPortArgNotFound}};
   }
 
-  return options;
+  return ResultT{std::move(options)};
 }
 
 auto main(int argc, char **argv) noexcept -> int {
@@ -85,9 +87,7 @@ auto main(int argc, char **argv) noexcept -> int {
 
   auto &engine = engine_res.Ok();
   if (auto res = engine.Run(); res.IsErr()) {
-    for (const auto &error : res.Err()) {
-      std::cout << error << std::endl;
-    }
+    std::cout << res.Err() << std::endl;
     return 1;
   }
 

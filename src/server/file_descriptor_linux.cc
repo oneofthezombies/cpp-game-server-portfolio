@@ -44,25 +44,36 @@ auto LinuxFileDescriptor::operator=(LinuxFileDescriptor &&other) noexcept
 auto LinuxFileDescriptor::AsRaw() const noexcept -> Raw { return fd_; }
 
 auto LinuxFileDescriptor::IsValid() const noexcept -> bool {
-  return fd_ != kInvalidFd;
+  return IsValid(fd_);
 }
 
 auto LinuxFileDescriptor::UpdateNonBlocking() const noexcept
     -> Result<core::Void> {
-  const int opts = fcntl(fd_, F_GETFL);
+  return UpdateNonBlocking(fd_);
+}
+
+auto LinuxFileDescriptor::IsValid(const Raw fd) noexcept -> bool {
+  return fd != kInvalidFd;
+}
+
+auto LinuxFileDescriptor::UpdateNonBlocking(const Raw fd) noexcept
+    -> Result<core::Void> {
+  using ResultT = Result<core::Void>;
+
+  const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
-    return Error{
-        Symbol::kLinuxFileDescriptorGetStatusFailed,
-        SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd_).Build()};
+    return ResultT{
+        Error{Symbol::kLinuxFileDescriptorGetStatusFailed,
+              SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd).Build()}};
   }
 
-  if (fcntl(fd_, F_SETFL, (opts | O_NONBLOCK)) < 0) {
-    return Error{
-        Symbol::kLinuxFileDescriptorSetStatusFailed,
-        SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd_).Build()};
+  if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
+    return ResultT{
+        Error{Symbol::kLinuxFileDescriptorSetStatusFailed,
+              SB{}.Add(core::LinuxError::FromErrno()).Add("fd", fd).Build()}};
   }
 
-  return core::Void{};
+  return ResultT{core::Void{}};
 }
 
 auto LinuxFileDescriptor::RawToSessionId(const Raw fd) noexcept

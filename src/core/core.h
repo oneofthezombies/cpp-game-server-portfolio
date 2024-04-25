@@ -43,10 +43,10 @@ template <typename T, typename E>
   requires std::movable<T> && std::movable<E>
 class Result final : private NonCopyable, Movable {
 public:
-  Result(const T &value) : data_(value) {}
-  Result(T &&value) : data_(std::forward<T>(value)) {}
-  Result(const E &error) : data_(error) {}
-  Result(E &&error) : data_(std::forward<E>(error)) {}
+  explicit Result(const T &value) : data_(value) {}
+  explicit Result(T &&value) : data_(std::forward<T>(value)) {}
+  explicit Result(const E &error) : data_(error) {}
+  explicit Result(E &&error) : data_(std::forward<E>(error)) {}
 
   auto IsOk() const noexcept -> bool {
     return std::holds_alternative<T>(data_);

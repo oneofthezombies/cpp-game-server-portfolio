@@ -10,18 +10,9 @@
 #include <unistd.h>
 
 #include "core.h"
-#include "core/protocol.h"
-#include "core/tiny_json.h"
-#include "core/utils.h"
-
-class Defer final : private core::NonCopyable, core::NonMovable {
-public:
-  Defer(std::function<void()> &&fn) noexcept : fn_{std::move(fn)} {}
-  ~Defer() { fn_(); }
-
-private:
-  std::function<void()> fn_;
-};
+#include "protocol.h"
+#include "tiny_json.h"
+#include "utils.h"
 
 enum class Symbol : int32_t {
   kHelpRequested = 0,
@@ -53,6 +44,8 @@ using Error = core::Error<Symbol>;
 template <typename T> using Result = core::Result<T, Error>;
 
 auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
+  using ResultT = Result<ClientOptions>;
+
   ClientOptions options;
   core::Tokenizer tokenizer{std::move(args)};
 
@@ -64,13 +57,13 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
     const auto token = *current;
 
     if (token == "--help") {
-      return Error{Symbol::kHelpRequested};
+      return ResultT{Error{Symbol::kHelpRequested}};
     }
 
     if (token == "--ip") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return Error{Symbol::kIpValueNotFound};
+        return ResultT{Error{Symbol::kIpValueNotFound}};
       }
 
       options.ip = *next;
@@ -81,13 +74,13 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
     if (token == "--port") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return Error{Symbol::kPortValueNotFound};
+        return ResultT{Error{Symbol::kPortValueNotFound}};
       }
 
       auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
-        return Error{Symbol::kPortParsingFailed,
-                     std::make_error_code(result.Err()).message()};
+        return ResultT{Error{Symbol::kPortParsingFailed,
+                             std::make_error_code(result.Err()).message()}};
       }
 
       options.port = result.Ok();
@@ -98,7 +91,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
     if (token == "--room-id") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return Error{Symbol::kRoomIdValueNotFound};
+        return ResultT{Error{Symbol::kRoomIdValueNotFound}};
       }
 
       options.room_id = *next;
@@ -106,22 +99,22 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
       continue;
     }
 
-    return Error{Symbol::kUnknownArgument, std::string{token}};
+    return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
   }
 
   if (options.ip.empty()) {
-    return Error{Symbol::kIpArgNotFound};
+    return ResultT{Error{Symbol::kIpArgNotFound}};
   }
 
   if (options.port == ClientOptions::kUndefinedPort) {
-    return Error{Symbol::kPortArgNotFound};
+    return ResultT{Error{Symbol::kPortArgNotFound}};
   }
 
   if (options.room_id.empty()) {
-    return Error{Symbol::kRoomIdArgNotFound};
+    return ResultT{Error{Symbol::kRoomIdArgNotFound}};
   }
 
-  return options;
+  return ResultT{std::move(options)};
 }
 
 auto main(int argc, char **argv) noexcept -> int {
@@ -163,7 +156,7 @@ auto main(int argc, char **argv) noexcept -> int {
     std::cout << "Failed to create socket." << std::endl;
     return 1;
   }
-  Defer defer{[sock] { close(sock); }};
+  core::Defer defer{[sock] { close(sock); }};
 
   sockaddr_in server_addr{};
   server_addr.sin_family = AF_INET;
@@ -176,7 +169,7 @@ auto main(int argc, char **argv) noexcept -> int {
 
   const auto message = core::Message::BuildRaw(
       core::MessageKind::kRequest, 0,
-      core::TinyJsonBuilder{}.Add("room_id", options.room_id).Build());
+      core::TinyJsonStringBuilder{}.Add("room_id", options.room_id).Build());
   if (send(sock, message.data(), message.size(), 0) == -1) {
     std::cerr << "Failed to send data." << std::endl;
     return 1;

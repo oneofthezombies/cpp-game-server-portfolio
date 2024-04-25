@@ -2,6 +2,7 @@
 #define CORE_UTILS_H
 
 #include <charconv>
+#include <functional>
 #include <optional>
 #include <sstream>
 #include <string_view>
@@ -32,14 +33,16 @@ template <typename T>
   requires std::integral<T> || std::floating_point<T>
 [[nodiscard]] auto ParseNumberString(const std::string_view token) noexcept
     -> Result<T, std::errc> {
+  using ResultT = Result<T, std::errc>;
+
   T value{};
   auto [ptr, ec] =
       std::from_chars(token.data(), token.data() + token.size(), value);
   if (ec != std::errc{}) {
-    return ec;
+    return ResultT{ec};
   }
 
-  return value;
+  return ResultT{value};
 }
 
 class StringBuilder final : private NonCopyable, Movable {
@@ -65,6 +68,15 @@ public:
 
 private:
   std::ostringstream oss_;
+};
+
+class Defer final : private NonCopyable, NonMovable {
+public:
+  Defer(std::function<void()> &&fn) noexcept;
+  ~Defer() noexcept;
+
+private:
+  std::function<void()> fn_;
 };
 
 } // namespace core

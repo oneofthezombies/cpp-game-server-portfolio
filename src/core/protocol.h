@@ -40,19 +40,19 @@ enum class MessageKind : uint8_t {
 auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
 
 struct Message final : private NonCopyable, Movable {
-  using IdType = uint64_t;
+  using Id = uint64_t;
 
   MessageKind kind;
-  IdType id;
+  Id id;
   TinyJson json;
 
-  explicit Message(const MessageKind kind, const IdType id,
+  explicit Message(const MessageKind kind, const Id id,
                    TinyJson &&json) noexcept;
 
   [[nodiscard]] static auto FromRaw(const std::string_view raw)
       -> std::optional<Message>;
 
-  [[nodiscard]] static auto BuildRaw(const MessageKind kind, const IdType id,
+  [[nodiscard]] static auto BuildRaw(const MessageKind kind, const Id id,
                                      std::string &&tiny_json_str) noexcept
       -> std::string;
 };

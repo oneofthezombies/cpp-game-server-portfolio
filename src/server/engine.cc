@@ -1,5 +1,4 @@
 #include "engine.h"
-#include "server/thread_worker_pool.h"
 
 #include <cassert>
 
@@ -32,18 +31,18 @@ Engine::Engine(EngineImplPtr &&impl) noexcept : impl_{std::move(impl)} {
   assert(impl_.get() != nullptr && "impl must not be nullptr");
 }
 
-auto Engine::Run() noexcept -> ResultMany<core::Void> {
+auto Engine::Run() noexcept -> Result<core::Void> {
   return CastEngineImpl(impl_.get())->Run();
 }
 
 auto EngineBuilder::Build(const uint16_t port) const noexcept
     -> Result<Engine> {
-  auto thread_worker_pool =
-      ThreadWorkerPool{std::thread::hardware_concurrency()};
-  auto result = EngineImplBuilder{}.Build(port, std::move(thread_worker_pool));
+  using ResultT = Result<Engine>;
+
+  auto result = EngineImplBuilder{}.Build(port);
   if (result.IsErr()) {
-    return Error{std::move(result.Err())};
+    return ResultT{std::move(result.Err())};
   }
 
-  return Engine{EngineImplPtr{new EngineImpl{std::move(result.Ok())}}};
+  return ResultT{Engine{EngineImplPtr{new EngineImpl{std::move(result.Ok())}}}};
 }

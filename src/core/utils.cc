@@ -28,3 +28,7 @@ auto core::Tokenizer::Eat() noexcept -> void {
     index_ += 1;
   }
 }
+
+core::Defer::Defer(std::function<void()> &&fn) noexcept : fn_{std::move(fn)} {}
+
+core::Defer::~Defer() noexcept { fn_(); }

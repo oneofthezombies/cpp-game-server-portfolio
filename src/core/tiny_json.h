@@ -72,10 +72,11 @@ private:
   std::unordered_map<std::string_view, std::string_view> data_{};
 };
 
-class TinyJsonBuilder final : private NonCopyable, NonMovable {
+class TinyJsonStringBuilder final : private NonCopyable, NonMovable {
 public:
   template <typename T>
-  auto Add(std::string &&key, const T &value) noexcept -> TinyJsonBuilder & {
+  auto Add(std::string &&key, const T &value) noexcept
+      -> TinyJsonStringBuilder & {
     std::ostringstream oss;
     oss << value;
     data_.emplace(key, oss.str());

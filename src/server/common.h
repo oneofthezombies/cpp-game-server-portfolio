@@ -18,27 +18,37 @@ enum class Symbol : int32_t {
   kPortValueNotFound,
   kPortParsingFailed,
   kUnknownArgument,
-  kLinuxEngineEpollCreate1Failed,
-  kLinuxEngineEpollCtlAddServerFailed,
-  kLinuxEngineEpollCtlAddClientFailed,
-  kLinuxEngineEpollCtlDeleteClientFailed,
-  kLinuxEngineEpollWaitFailed,
-  kLinuxEngineServerSocketFailed,
-  kLinuxEngineServerSocketBindFailed,
-  kLinuxEngineServerSocketListenFailed,
-  kLinuxEngineServerSocketAcceptFailed,
+
+  kLinuxEventLoopEpollCreate1Failed,
+  kLinuxEventLoopEpollCtlAddFailed,
+  kLinuxEventLoopEpollCtlDeleteFailed,
+  kLinuxEventLoopEpollWaitFailed,
+
+  kLinuxMainEventLoopServerSocketFailed,
+  kLinuxMainEventLoopServerSocketBindFailed,
+  kLinuxMainEventLoopServerSocketListenFailed,
+  kLinuxMainEventLoopServerSocketAcceptFailed,
+  kLinuxMainEventLoopUnexpectedFd,
+
+  kLinuxLobbyEventLoopClientFdConversionFailed,
+
   kLinuxEngineClientSocketReadFailed,
   kLinuxEngineClientSocketWriteFailed,
   kLinuxEngineClientSocketClosed,
   kLinuxEngineClientSocketCloseFailed,
+
   kLinuxEngineSessionAlreadyExists,
   kLinuxEngineSessionNotFound,
+
   kLinuxEngineMessageParseFailed,
+
   kLinuxFileDescriptorGetStatusFailed,
   kLinuxFileDescriptorSetStatusFailed,
   kLinuxFileDescriptorCloseFailed,
+
   kLinuxSignalSetFailed,
   kLinuxSignalResetFailed,
+
   kThreadWorkerSessionAlreadyExists,
 
   // Add symbols before kEnd
@@ -51,7 +61,6 @@ auto operator<<(std::ostream &os, const Symbol symbol) noexcept
 using Error = core::Error<Symbol>;
 
 template <typename T> using Result = core::Result<T, Error>;
-template <typename T> using ResultMany = core::Result<T, std::vector<Error>>;
 
 using SB = core::StringBuilder;
 

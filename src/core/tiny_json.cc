@@ -248,7 +248,7 @@ auto core::TinyJsonParser::Log(
             << location.line() << ":" << location.column() << std::endl;
 }
 
-auto core::TinyJsonBuilder::Build() noexcept -> std::string {
+auto core::TinyJsonStringBuilder::Build() noexcept -> std::string {
   std::ostringstream oss;
   oss << '{';
 

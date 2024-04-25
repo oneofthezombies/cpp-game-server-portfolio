@@ -21,7 +21,13 @@ public:
 
   [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<core::Void>;
 
-  static auto RawToSessionId(const Raw fd) noexcept -> Session::IdType;
+  [[nodiscard]] static auto IsValid(const Raw fd) noexcept -> bool;
+
+  [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
+      -> Result<core::Void>;
+
+  [[nodiscard]] static auto RawToSessionId(const Raw fd) noexcept
+      -> Session::IdType;
 
 private:
   Raw fd_{kInvalidFd};

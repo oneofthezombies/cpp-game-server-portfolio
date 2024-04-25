@@ -14,7 +14,7 @@ using EngineImplPtr = std::unique_ptr<void, EngineImplDeleter>;
 
 class Engine final : private core::NonCopyable, core::Movable {
 public:
-  [[nodiscard]] auto Run() noexcept -> ResultMany<core::Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
 
 private:
   explicit Engine(EngineImplPtr &&impl) noexcept;
