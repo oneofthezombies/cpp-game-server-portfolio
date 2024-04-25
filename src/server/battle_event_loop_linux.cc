@@ -7,12 +7,9 @@
 #include "event_loop_linux.h"
 
 BattleEventLoopLinux::BattleEventLoopLinux() noexcept : EventLoopLinux{} {
-  event_handlers_.emplace(
-      "matched_client_fds",
-      [this](const std::string &value) { return OnMatchedClientFds(value); });
-  event_handlers_.emplace("shutdown", [this](const std::string &value) {
-    return OnShutdown(value);
-  });
+  event_handlers_.emplace("matched_client_fds",
+                          &BattleEventLoopLinux::OnMatchedClientFds);
+  event_handlers_.emplace("shutdown", &BattleEventLoopLinux::OnShutdown);
 }
 
 auto BattleEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
@@ -28,7 +25,7 @@ auto BattleEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
                            SB{}.Add("key", key).Add("value", value).Build()}};
     }
 
-    if (auto res = found->second(value); res.IsErr()) {
+    if (auto res = found->second(this, value); res.IsErr()) {
       return res;
     }
   }

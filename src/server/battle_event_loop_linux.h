@@ -9,7 +9,8 @@ class BattleEventLoopLinux final : public EventLoopLinux {
 public:
   using Super = EventLoopLinux;
   using RoomId = uint64_t;
-  using EventHandler = std::function<Result<Void>(const std::string &)>;
+  using EventHandler = std::function<Result<Void>(BattleEventLoopLinux *self,
+                                                  const std::string &)>;
 
   explicit BattleEventLoopLinux() noexcept;
   ~BattleEventLoopLinux() noexcept override = default;
