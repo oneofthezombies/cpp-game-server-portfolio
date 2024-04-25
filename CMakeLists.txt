@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(cpp_game_server_portfolio)
+project(rock_paper_scissors_lizard_spock)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)

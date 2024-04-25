@@ -1,8 +1,7 @@
-# C++ Game Server Portfolio
+# Rock, Paper, Scissors, Lizard, Spock
 
-This project is a simple "game server" and "game client" portfolio written in C++.  
-It simply implemented communication between the "game server" and the "game client".  
-It did not implement communication between servers or with relational databases and memory databases.
+The project is a 1:1 matching multiplayer __Rock, Paper, Scissors, Lizard, Spock__ game.  
+It was implemented using `C++ Standard 20` and `Linux epoll` without the use of third-party.
 
 # Prerequisites
 
