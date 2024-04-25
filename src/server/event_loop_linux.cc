@@ -26,8 +26,9 @@ auto EventLoopLinux::Context::Builder::Build(
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
-    return ResultT{Error{Symbol::kEventLoopLinuxEpollCreate1Failed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kEventLoopLinuxEpollCreate1Failed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   auto mail_box_res = MailCenter::Global().Create(name);
@@ -67,8 +68,9 @@ auto EventLoopLinux::Add(const FileDescriptorLinux::Raw fd,
   ev.events = events;
   ev.data.fd = fd;
   if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
-    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kEventLoopLinuxEpollCtlAddFailed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   return ResultT{Void{}};
@@ -80,8 +82,9 @@ auto EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
 
   AssertInit();
   if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
-    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   return ResultT{Void{}};
@@ -104,7 +107,7 @@ auto EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
 
       return ResultT{Error{Symbol::kEventLoopLinuxWriteFailed,
                            TinyJson{}
-                               .Set("error", LinuxError::FromErrno())
+                               .Set("linux_error", LinuxError::FromErrno())
                                .Set("fd", fd)
                                .ToString()}};
     } else {
@@ -112,7 +115,7 @@ auto EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
 
       if (count == 0) {
         return ResultT{Error{Symbol::kEventLoopLinuxWriteClosed,
-                             SB{}.Add("fd", fd).Build()}};
+                             TinyJson{}.Set("fd", fd).ToString()}};
       }
     }
   }
@@ -145,8 +148,9 @@ auto EventLoopLinux::Run() noexcept -> Result<Void> {
         continue;
       }
 
-      return ResultT{Error{Symbol::kEventLoopLinuxEpollWaitFailed,
-                           SB{}.Add(LinuxError::FromErrno()).Build()}};
+      return ResultT{Error{
+          Symbol::kEventLoopLinuxEpollWaitFailed,
+          TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
     }
 
     for (int i = 0; i < fd_count; ++i) {

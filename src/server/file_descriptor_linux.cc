@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 
+#include "core/tiny_json.h"
 #include "core/utils.h"
 #include "core/utils_linux.h"
 
@@ -21,7 +22,10 @@ FileDescriptorLinux::~FileDescriptorLinux() noexcept {
 
   if (close(fd_) == -1) {
     const Error error{Symbol::kFileDescriptorLinuxCloseFailed,
-                      SB{}.Add(LinuxError::FromErrno()).Add("fd", fd_).Build()};
+                      TinyJson{}
+                          .Set("linux_error", LinuxError::FromErrno())
+                          .Set("fd", fd_)
+                          .ToString()};
     std::cout << error << std::endl;
   }
 
@@ -60,15 +64,19 @@ auto FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
 
   const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
-    return ResultT{
-        Error{Symbol::kFileDescriptorLinuxGetStatusFailed,
-              SB{}.Add(LinuxError::FromErrno()).Add("fd", fd).Build()}};
+    return ResultT{Error{Symbol::kFileDescriptorLinuxGetStatusFailed,
+                         TinyJson{}
+                             .Set("linux_error", LinuxError::FromErrno())
+                             .Set("fd", fd)
+                             .ToString()}};
   }
 
   if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
-    return ResultT{
-        Error{Symbol::kFileDescriptorLinuxSetStatusFailed,
-              SB{}.Add(LinuxError::FromErrno()).Add("fd", fd).Build()}};
+    return ResultT{Error{Symbol::kFileDescriptorLinuxSetStatusFailed,
+                         TinyJson{}
+                             .Set("linux_error", LinuxError::FromErrno())
+                             .Set("fd", fd)
+                             .ToString()}};
   }
 
   return ResultT{Void{}};

@@ -4,6 +4,8 @@
 
 #include <sys/epoll.h>
 
+#include "core/tiny_json.h"
+
 #include "event_loop_linux.h"
 #include "file_descriptor_linux.h"
 
@@ -18,9 +20,10 @@ auto LobbyEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
     if (client_fd_res.IsErr()) {
       return ResultT{Error{
           Symbol::kLobbyEventLoopLinuxClientFdConversionFailed,
-          SB{}.Add("client_fd_str", client_fd_str)
-              .Add("errc", std::make_error_code(client_fd_res.Err()).message())
-              .Build()}};
+          TinyJson{}
+              .Set("client_fd_str", client_fd_str)
+              .Set("errc", std::make_error_code(client_fd_res.Err()).message())
+              .ToString()}};
     }
 
     const auto client_fd_raw = client_fd_res.Ok();
@@ -74,8 +77,10 @@ auto LobbyEventLoopLinux::OnClientFdMatched(
   context_->mail_box.tx.Send(
       Mail{"lobby",
            "battle",
-           {{"matched_client_fds",
-             SB{}.Add(client_fd_0).Add(",").Add(client_fd_1).Build()}}});
+           {{"matched_client_fds", TinyJson{}
+                                       .Set("client_fd_0", client_fd_0)
+                                       .Set("client_fd_1", client_fd_1)
+                                       .ToString()}}});
 
   return ResultT{Void{}};
 }
@@ -89,9 +94,11 @@ auto LobbyEventLoopLinux::AddClientFd(
   }
 
   if (client_fds_.find(client_fd) != client_fds_.end()) {
-    const Error error{
-        Symbol::kLobbyEventLoopLinuxClientFdAlreadyExists,
-        SB{}.Add("Delete old client fd").Add("client_fd", client_fd).Build()};
+    const Error error{Symbol::kLobbyEventLoopLinuxClientFdAlreadyExists,
+                      TinyJson{}
+                          .Set("reason", "Delete old client fd")
+                          .Set("client_fd", client_fd)
+                          .ToString()};
     std::cout << error << std::endl;
     client_fds_.erase(client_fd);
   }

@@ -6,11 +6,12 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
-#include "core.h"
+#include "core/core.h"
 #include "core/spsc_channel.h"
+#include "core/tiny_json.h"
 
 #include "event_loop_linux.h"
-#include "server/file_descriptor_linux.h"
+#include "file_descriptor_linux.h"
 #include "utils_linux.h"
 
 MainEventLoopLinux::MainEventLoopLinux(FileDescriptorLinux &&server_fd) noexcept
@@ -46,7 +47,7 @@ auto MainEventLoopLinux::OnEpollEventReceived(
 
   if (event.data.fd != server_fd_.AsRaw()) {
     return ResultT{Error{Symbol::kMainEventLoopLinuxUnexpectedFd,
-                         SB{}.Add("fd", event.data.fd).Build()}};
+                         TinyJson{}.Set("fd", event.data.fd).ToString()}};
   }
 
   struct sockaddr_in client_addr {};
@@ -54,8 +55,9 @@ auto MainEventLoopLinux::OnEpollEventReceived(
   auto client_fd_raw =
       accept(server_fd_.AsRaw(), (struct sockaddr *)&client_addr, &addrlen);
   if (!FileDescriptorLinux::IsValid(client_fd_raw)) {
-    return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketAcceptFailed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kMainEventLoopLinuxServerSocketAcceptFailed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   if (auto res = FileDescriptorLinux::UpdateNonBlocking(client_fd_raw);
@@ -74,8 +76,9 @@ auto MainEventLoopLinux::Builder::Build(const uint16_t port) const noexcept
 
   auto server_fd_raw = socket(AF_INET, SOCK_STREAM, 0);
   if (!FileDescriptorLinux::IsValid(server_fd_raw)) {
-    return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketFailed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kMainEventLoopLinuxServerSocketFailed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   auto server_fd = FileDescriptorLinux{server_fd_raw};
@@ -90,13 +93,15 @@ auto MainEventLoopLinux::Builder::Build(const uint16_t port) const noexcept
 
   if (bind(server_fd.AsRaw(), (struct sockaddr *)&server_addr,
            sizeof(server_addr)) < 0) {
-    return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketBindFailed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kMainEventLoopLinuxServerSocketBindFailed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   if (listen(server_fd.AsRaw(), SOMAXCONN) < 0) {
-    return ResultT{Error{Symbol::kMainEventLoopLinuxServerSocketListenFailed,
-                         SB{}.Add(LinuxError::FromErrno()).Build()}};
+    return ResultT{Error{
+        Symbol::kMainEventLoopLinuxServerSocketListenFailed,
+        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
   }
 
   return ResultT{MainEventLoopLinux{std::move(server_fd)}};

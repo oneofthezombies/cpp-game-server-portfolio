@@ -3,8 +3,10 @@
 #include <iostream>
 #include <mutex>
 
+#include "core/spsc_channel.h"
+#include "core/tiny_json.h"
+
 #include "common.h"
-#include "spsc_channel.h"
 
 Mail::Mail(std::string &&from, std::string &&to, MailBody &&body) noexcept
     : from{std::move(from)}, to{std::move(to)}, body{std::move(body)} {}
@@ -36,7 +38,7 @@ auto MailCenter::Create(const std::string_view name) noexcept
     std::lock_guard lock{mutex_};
     if (const auto it = mail_boxes_.find(name_str); it != mail_boxes_.end()) {
       return ResultT{Error{Symbol::kMailBoxAlreadyExists,
-                           SB{}.Add("name", name_str).Build()}};
+                           TinyJson{}.Set("name", name_str).ToString()}};
     }
 
     auto [from_peer_tx, to_office_rx] = Channel<Mail>::Builder{}.Build();
@@ -60,8 +62,8 @@ auto MailCenter::Delete(const std::string_view name) noexcept -> Result<Void> {
   {
     std::lock_guard lock{mutex_};
     if (const auto it = mail_boxes_.find(name_str); it == mail_boxes_.end()) {
-      return ResultT{
-          Error{Symbol::kMailBoxNotFound, SB{}.Add("name", name_str).Build()}};
+      return ResultT{Error{Symbol::kMailBoxNotFound,
+                           TinyJson{}.Set("name", name_str).ToString()}};
     }
 
     mail_boxes_.erase(name_str);
@@ -74,19 +76,19 @@ auto MailCenter::ValidateName(const std::string_view name) const noexcept
   using ResultT = Result<Void>;
 
   if (name.empty()) {
-    return ResultT{
-        Error{Symbol::kMailBoxNameEmpty, SB{}.Add("name", name).Build()}};
+    return ResultT{Error{Symbol::kMailBoxNameEmpty,
+                         TinyJson{}.Set("name", name).ToString()}};
   }
 
   if (name.size() > 64) {
-    return ResultT{
-        Error{Symbol::kMailBoxNameTooLong, SB{}.Add("name", name).Build()}};
+    return ResultT{Error{Symbol::kMailBoxNameTooLong,
+                         TinyJson{}.Set("name", name).ToString()}};
   }
 
   // "all" is reserved for broadcast
   if (name == "all") {
-    return ResultT{
-        Error{Symbol::kMailBoxNameAll, SB{}.Add("name", name).Build()}};
+    return ResultT{Error{Symbol::kMailBoxNameAll,
+                         TinyJson{}.Set("name", name).ToString()}};
   }
 
   return ResultT{Void{}};

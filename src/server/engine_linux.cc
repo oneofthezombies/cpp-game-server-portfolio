@@ -8,13 +8,15 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
+#include "core/tiny_json.h"
+#include "core/utils.h"
+#include "core/utils_linux.h"
+
 #include "battle_event_loop_linux.h"
 #include "common.h"
 #include "lobby_event_loop_linux.h"
 #include "mail_center.h"
 #include "main_event_loop_linux.h"
-#include "utils.h"
-#include "utils_linux.h"
 
 std::atomic<const MailBox *> signal_mail_box_ptr{nullptr};
 
@@ -50,8 +52,9 @@ auto EngineLinux::Run() noexcept -> Result<Void> {
     Defer reset_signal_mail_box_ptr{
         []() { signal_mail_box_ptr.store(nullptr); }};
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
-      return ResultT{Error{Symbol::kLinuxSignalSetFailed,
-                           SB{}.Add(LinuxError::FromErrno()).Build()}};
+      return ResultT{Error{
+          Symbol::kLinuxSignalSetFailed,
+          TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
     }
 
     if (auto res = main_event_loop_.Run(); res.IsErr()) {
@@ -59,8 +62,9 @@ auto EngineLinux::Run() noexcept -> Result<Void> {
     }
 
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
-      return ResultT{Error{Symbol::kLinuxSignalResetFailed,
-                           SB{}.Add(LinuxError::FromErrno()).Build()}};
+      return ResultT{Error{
+          Symbol::kLinuxSignalResetFailed,
+          TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
     }
   }
 

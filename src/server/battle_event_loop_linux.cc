@@ -5,6 +5,8 @@
 
 #include <sys/epoll.h>
 
+#include "core/tiny_json.h"
+
 #include "event_loop_linux.h"
 
 BattleEventLoopLinux::BattleEventLoopLinux() noexcept : EventLoopLinux{} {
@@ -22,8 +24,9 @@ auto BattleEventLoopLinux::OnMailReceived(const Mail &mail) noexcept
 
     const auto found = event_handlers_.find(key);
     if (found == event_handlers_.end()) {
-      return ResultT{Error{Symbol::kBattleEventLoopLinuxHandlerNotFound,
-                           SB{}.Add("key", key).Add("value", value).Build()}};
+      return ResultT{
+          Error{Symbol::kBattleEventLoopLinuxHandlerNotFound,
+                TinyJson{}.Set("key", key).Set("value", value).ToString()}};
     }
 
     if (auto res = found->second(this, value); res.IsErr()) {
@@ -51,9 +54,11 @@ auto BattleEventLoopLinux::AddClientFd(const FileDescriptorLinux::Raw client_fd,
   }
 
   if (client_fds_.find(client_fd) != client_fds_.end()) {
-    const Error error{
-        Symbol::kBattleEventLoopLinuxClientFdAlreadyExists,
-        SB{}.Add("Delete old client fd").Add("client_fd", client_fd).Build()};
+    const Error error{Symbol::kBattleEventLoopLinuxClientFdAlreadyExists,
+                      TinyJson{}
+                          .Set("reason", "Delete old client fd")
+                          .Set("client_fd", client_fd)
+                          .ToString()};
     std::cout << error << std::endl;
     client_fds_.erase(client_fd);
   }
@@ -85,9 +90,10 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
   const auto matched_client_fds_str = std::string_view{matched_client_fds};
   const auto comma = matched_client_fds_str.find(",");
   if (comma == std::string::npos) {
-    return ResultT{
-        Error{Symbol::kBattleEventLoopLinuxMatchedClientFdsNoComma,
-              SB{}.Add("matched_client_fds", matched_client_fds_str).Build()}};
+    return ResultT{Error{Symbol::kBattleEventLoopLinuxMatchedClientFdsNoComma,
+                         TinyJson{}
+                             .Set("matched_client_fds", matched_client_fds_str)
+                             .ToString()}};
   }
 
   const auto client_fd_0_str = matched_client_fds_str.substr(0, comma);
@@ -98,9 +104,10 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
   if (client_fd_0_res.IsErr()) {
     return ResultT{Error{
         Symbol::kBattleEventLoopLinuxClientFdConversionFailed,
-        SB{}.Add("client_fd_0", client_fd_0_str)
-            .Add("errc", std::make_error_code(client_fd_0_res.Err()).message())
-            .Build()}};
+        TinyJson{}
+            .Set("client_fd_0", client_fd_0_str)
+            .Set("errc", std::make_error_code(client_fd_0_res.Err()).message())
+            .ToString()}};
   }
 
   auto client_fd_1_res =
@@ -108,9 +115,10 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
   if (client_fd_1_res.IsErr()) {
     return ResultT{Error{
         Symbol::kBattleEventLoopLinuxClientFdConversionFailed,
-        SB{}.Add("client_fd_1", client_fd_1_str)
-            .Add("errc", std::make_error_code(client_fd_1_res.Err()).message())
-            .Build()}};
+        TinyJson{}
+            .Set("client_fd_1", client_fd_1_str)
+            .Set("errc", std::make_error_code(client_fd_1_res.Err()).message())
+            .ToString()}};
   }
 
   const auto room_id = NextRoomId();

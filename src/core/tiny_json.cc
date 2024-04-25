@@ -54,8 +54,9 @@ auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
   return os;
 }
 
-TinyJsonParser::TinyJsonParser(const std::string_view tiny_json) noexcept
-    : tiny_json_str_{tiny_json} {}
+TinyJsonParser::TinyJsonParser(const std::string_view tiny_json,
+                               TinyJsonParserOptions &&options) noexcept
+    : tiny_json_str_{tiny_json}, options_{std::move(options)} {}
 
 auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
   if (tiny_json_str_.empty()) {
@@ -79,6 +80,7 @@ auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
     }
   }
 
+  bool last_comma = false;
   while (true) {
     // parse trailing brace
     {
@@ -89,6 +91,11 @@ auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
       }
 
       if (*current == '}') {
+        if (!options_.allow_trailing_comma && last_comma) {
+          Log("Trailing comma is not allowed", std::source_location::current());
+          return std::nullopt;
+        }
+
         if (!Consume('}')) {
           return std::nullopt;
         }
@@ -115,18 +122,25 @@ auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
         return std::nullopt;
       }
 
-      // allow trailing comma
       if (*current == ',') {
-        if (!Consume(',')) {
-          return std::nullopt;
+        if (options_.allow_trailing_comma) {
+          if (!Consume(',')) {
+            return std::nullopt;
+          }
+
+          last_comma = false;
+        } else {
+          last_comma = true;
         }
+      } else {
+        last_comma = false;
       }
     }
   }
 }
 
 auto TinyJsonParser::ParseKeyValue() noexcept
-    -> std::optional<std::pair<std::string_view, std::string_view>> {
+    -> std::optional<std::pair<std::string, std::string>> {
   auto key = ParseKey();
   if (!key) {
     return std::nullopt;
@@ -154,15 +168,15 @@ auto TinyJsonParser::ParseKeyValue() noexcept
   return std::make_pair(*key, *value);
 }
 
-auto TinyJsonParser::ParseKey() noexcept -> std::optional<std::string_view> {
+auto TinyJsonParser::ParseKey() noexcept -> std::optional<std::string> {
   return ParseString();
 }
 
-auto TinyJsonParser::ParseValue() noexcept -> std::optional<std::string_view> {
+auto TinyJsonParser::ParseValue() noexcept -> std::optional<std::string> {
   return ParseString();
 }
 
-auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string_view> {
+auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string> {
   Trim();
   auto current = Current();
   if (!current) {
@@ -177,7 +191,9 @@ auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string_view> {
     return std::nullopt;
   }
 
+  std::string result;
   auto start = cursor_;
+
   while (true) {
     if (!Advance()) {
       return std::nullopt;
@@ -189,16 +205,53 @@ auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string_view> {
     }
 
     if (*current == '"') {
-      auto str = tiny_json_str_.substr(start, cursor_ - start);
       if (!Consume('"')) {
         return std::nullopt;
       }
-
-      return str;
+      break;
+    } else if (*current == '\\') {
+      if (!Advance()) {
+        return std::nullopt;
+      }
+      current = Current();
+      if (!current) {
+        return std::nullopt;
+      }
+      switch (*current) {
+      case '"':
+        result += '"';
+        break;
+      case '\\':
+        result += '\\';
+        break;
+      case '/':
+        result += '/';
+        break;
+      case 'b':
+        result += '\b';
+        break;
+      case 'f':
+        result += '\f';
+        break;
+      case 'n':
+        result += '\n';
+        break;
+      case 'r':
+        result += '\r';
+        break;
+      case 't':
+        result += '\t';
+        break;
+      default:
+        Log("Invalid escape sequence", std::source_location::current());
+        return std::nullopt;
+      }
+    } else {
+      result += *current;
     }
   }
 
-  return std::nullopt;
+  return result;
 }
 
 auto TinyJsonParser::Current(const std::source_location location) const noexcept

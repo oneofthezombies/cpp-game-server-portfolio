@@ -58,9 +58,19 @@ private:
 auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
     -> std::ostream &;
 
+struct TinyJsonParserOptions {
+  bool allow_trailing_comma{false};
+
+  explicit TinyJsonParserOptions() noexcept = default;
+  ~TinyJsonParserOptions() noexcept = default;
+  CLASS_KIND_COPYABLE(TinyJsonParserOptions);
+};
+
 class TinyJsonParser final {
 public:
-  explicit TinyJsonParser(const std::string_view tiny_json_str) noexcept;
+  explicit TinyJsonParser(
+      const std::string_view tiny_json_str,
+      TinyJsonParserOptions &&options = TinyJsonParserOptions{}) noexcept;
   ~TinyJsonParser() noexcept = default;
   CLASS_KIND_MOVABLE(TinyJsonParser);
 
@@ -68,10 +78,10 @@ public:
 
 private:
   [[nodiscard]] auto ParseKeyValue() noexcept
-      -> std::optional<std::pair<std::string_view, std::string_view>>;
-  [[nodiscard]] auto ParseKey() noexcept -> std::optional<std::string_view>;
-  [[nodiscard]] auto ParseValue() noexcept -> std::optional<std::string_view>;
-  [[nodiscard]] auto ParseString() noexcept -> std::optional<std::string_view>;
+      -> std::optional<std::pair<std::string, std::string>>;
+  [[nodiscard]] auto ParseKey() noexcept -> std::optional<std::string>;
+  [[nodiscard]] auto ParseValue() noexcept -> std::optional<std::string>;
+  [[nodiscard]] auto ParseString() noexcept -> std::optional<std::string>;
 
   [[nodiscard]] auto Current(const std::source_location location =
                                  std::source_location::current()) const noexcept
@@ -91,6 +101,7 @@ private:
   std::string_view tiny_json_str_;
   size_t cursor_{};
   TinyJson::Raw raw_;
+  TinyJsonParserOptions options_;
 };
 
 #endif // CORE_TINY_JSON_H

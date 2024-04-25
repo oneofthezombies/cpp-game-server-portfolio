@@ -66,6 +66,4 @@ using Error = ErrorBase<Symbol>;
 
 template <typename T> using Result = ResultBase<T, Error>;
 
-using SB = StringBuilder;
-
 #endif // SERVER_COMMON_H
