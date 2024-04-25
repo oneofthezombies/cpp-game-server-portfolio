@@ -19,6 +19,9 @@ enum class Symbol : int32_t {
   kPortParsingFailed,
   kUnknownArgument,
 
+  kMailBoxAlreadyExists,
+  kMailBoxNotFound,
+
   kEventLoopLinuxEpollCreate1Failed,
   kEventLoopLinuxEpollCtlAddFailed,
   kEventLoopLinuxEpollCtlDeleteFailed,

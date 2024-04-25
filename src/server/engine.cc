@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "server/mail_center.h"
 
 #include <cassert>
 
@@ -39,6 +40,7 @@ auto EngineBuilder::Build(const uint16_t port) const noexcept
     -> Result<Engine> {
   using ResultT = Result<Engine>;
 
+  MailCenter::Global();
   auto result = EngineImplBuilder{}.Build(port);
   if (result.IsErr()) {
     return ResultT{std::move(result.Err())};

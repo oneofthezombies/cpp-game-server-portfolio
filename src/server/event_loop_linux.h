@@ -8,8 +8,6 @@
 
 #include "file_descriptor_linux.h"
 
-using EventLoopLinuxEvent = std::unordered_map<std::string, std::string>;
-
 using OnEventLoopEvent =
     std::function<Result<Void>(const EventLoopLinuxEvent &)>;
 using OnEpollEvent = std::function<Result<Void>(const struct epoll_event &)>;

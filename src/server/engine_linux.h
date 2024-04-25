@@ -11,9 +11,8 @@ public:
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
-  EngineLinux(MainEventLoopLinux &&main_event_loop,
-              Tx<EventLoopLinuxEvent> &&signal_to_main_tx,
-              std::thread &&lobby_thread, std::thread &&battle_thread) noexcept;
+  EngineLinux(MainEventLoopLinux &&main_event_loop, std::thread &&lobby_thread,
+              std::thread &&battle_thread) noexcept;
 
   [[nodiscard]] auto OnServerFdEvent() noexcept -> Result<Void>;
   [[nodiscard]] auto
@@ -24,8 +23,8 @@ private:
       const FileDescriptorLinux::Raw client_fd) noexcept -> void;
 
   MainEventLoopLinux main_event_loop_;
-  Tx<EventLoopLinuxEvent> signal_to_main_tx_;
   std::thread lobby_thread_;
+  std::thread battle_thread_;
 
   friend class EngineLinuxBuilder;
 };

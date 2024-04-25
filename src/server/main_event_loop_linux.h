@@ -29,9 +29,7 @@ private:
 
 class MainEventLoopLinuxBuilder final : private NonCopyable, NonMovable {
 public:
-  [[nodiscard]] auto
-  Build(const uint16_t port, Rx<EventLoopLinuxEvent> &&signal_to_main_rx,
-        Tx<EventLoopLinuxEvent> &&main_to_lobby_tx) const noexcept
+  [[nodiscard]] auto Build(const uint16_t port) const noexcept
       -> Result<MainEventLoopLinux>;
 };
 

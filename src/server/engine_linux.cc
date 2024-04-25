@@ -12,16 +12,17 @@
 #include "common.h"
 #include "lobby_event_loop_linux.h"
 #include "main_event_loop_linux.h"
+#include "server/mail_center.h"
 #include "spsc_channel.h"
 #include "utils.h"
 #include "utils_linux.h"
 
-std::atomic<Tx<EventLoopLinuxEvent> *> signal_to_main_tx_ptr{};
+std::atomic<MailBox *> signal_mail_box_ptr{nullptr};
 
 auto OnSignal(int signal) -> void {
   if (signal == SIGINT) {
-    if (signal_to_main_tx_ptr) {
-      (*signal_to_main_tx_ptr).Send({{"shutdown", ""}});
+    if (signal_mail_box_ptr != nullptr) {
+      signal_mail_box_ptr->tx.Send({to : "main", body : {{"shutdown", ""}}});
     }
   }
 
@@ -29,19 +30,25 @@ auto OnSignal(int signal) -> void {
 }
 
 EngineLinux::EngineLinux(MainEventLoopLinux &&main_event_loop,
-                         Tx<EventLoopLinuxEvent> &&signal_to_main_tx,
                          std::thread &&lobby_thread,
                          std::thread &&battle_thread) noexcept
     : main_event_loop_{std::move(main_event_loop)},
-      signal_to_main_tx_{std::move(signal_to_main_tx)},
-      lobby_thread_{std::move(lobby_thread)} {}
+      lobby_thread_{std::move(lobby_thread)},
+      battle_thread_{std::move(battle_thread)} {}
 
 auto EngineLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  signal_to_main_tx_ptr = &signal_to_main_tx_;
+  const auto signal_mail_box_res = MailCenter::Global().Create("signal");
+  if (signal_mail_box_res.IsErr()) {
+    return ResultT{std::move(signal_mail_box_res.Err())};
+  }
+
+  const auto &signal_mail_box = signal_mail_box_res.Ok();
+  signal_mail_box_ptr = &signal_mail_box;
+
   {
-    Defer reset_tx_ptr{[]() { signal_to_main_tx_ptr = nullptr; }};
+    Defer reset_signal_mail_box_ptr{[]() { signal_mail_box_ptr = nullptr; }};
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
       return ResultT{Error{Symbol::kLinuxSignalSetFailed,
                            SB{}.Add(LinuxError::FromErrno()).Build()}};
@@ -57,6 +64,7 @@ auto EngineLinux::Run() noexcept -> Result<Void> {
     }
   }
 
+  battle_thread_.join();
   lobby_thread_.join();
   return ResultT{Void{}};
 }
@@ -160,24 +168,12 @@ auto EngineLinuxBuilder::Build(const uint16_t port) const noexcept
     -> Result<EngineLinux> {
   using ResultT = Result<EngineLinux>;
 
-  auto [signal_to_main_tx, signal_to_main_rx] =
-      Channel<EventLoopLinuxEvent>::Builder{}.Build();
-  auto [main_to_lobby_tx, main_to_lobby_rx] =
-      Channel<EventLoopLinuxEvent>::Builder{}.Build();
-  auto [lobby_to_battle_tx, lobby_to_battle_rx] =
-      Channel<EventLoopLinuxEvent>::Builder{}.Build();
-  auto [battle_to_lobby_tx, battle_to_lobby_rx] =
-      Channel<EventLoopLinuxEvent>::Builder{}.Build();
-
-  auto main_event_loop_res = MainEventLoopLinuxBuilder{}.Build(
-      port, std::move(signal_to_main_rx), std::move(main_to_lobby_tx));
+  auto main_event_loop_res = MainEventLoopLinuxBuilder{}.Build(port);
   if (main_event_loop_res.IsErr()) {
     return ResultT{std::move(main_event_loop_res.Err())};
   }
 
-  auto lobby_event_loop_res = LobbyEventLoopLinuxBuilder{}.Build(
-      std::move(main_to_lobby_rx), std::move(battle_to_lobby_rx),
-      std::move(lobby_to_battle_tx));
+  auto lobby_event_loop_res = LobbyEventLoopLinuxBuilder{}.Build();
   if (lobby_event_loop_res.IsErr()) {
     return ResultT{std::move(lobby_event_loop_res.Err())};
   }
