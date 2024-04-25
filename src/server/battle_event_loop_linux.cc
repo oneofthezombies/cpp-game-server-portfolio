@@ -88,6 +88,12 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
   using ResultT = Result<Void>;
 
   const auto matched_client_fds_str = std::string_view{matched_client_fds};
+  {
+    auto file = fopen("matched_client_fds.txt", "w");
+    fwrite(matched_client_fds_str.data(), 1, matched_client_fds_str.size(),
+           file);
+    fclose(file);
+  }
   const auto tiny_json = TinyJson::Parse(matched_client_fds_str);
 
   if (!tiny_json.has_value()) {

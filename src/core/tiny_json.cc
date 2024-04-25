@@ -123,15 +123,11 @@ auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
       }
 
       if (*current == ',') {
-        if (options_.allow_trailing_comma) {
-          if (!Consume(',')) {
-            return std::nullopt;
-          }
-
-          last_comma = false;
-        } else {
-          last_comma = true;
+        if (!Consume(',')) {
+          return std::nullopt;
         }
+
+        last_comma = true;
       } else {
         last_comma = false;
       }
@@ -195,10 +191,6 @@ auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string> {
   auto start = cursor_;
 
   while (true) {
-    if (!Advance()) {
-      return std::nullopt;
-    }
-
     current = Current();
     if (!current) {
       return std::nullopt;
@@ -248,6 +240,10 @@ auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string> {
       }
     } else {
       result += *current;
+    }
+
+    if (!Advance()) {
+      return std::nullopt;
     }
   }
 
