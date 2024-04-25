@@ -6,34 +6,34 @@
 #include "file_descriptor_linux.h"
 #include "server/main_event_loop_linux.h"
 
-class LinuxEngine final : private core::NonCopyable, core::Movable {
+class EngineLinux final : private core::NonCopyable, core::Movable {
 public:
   [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
 
 private:
-  LinuxEngine(LinuxMainEventLoop &&main_event_loop,
-              core::Tx<LinuxEventLoopEvent> &&signal_to_main_tx,
-              std::thread &&lobby_thread) noexcept;
+  EngineLinux(MainEventLoopLinux &&main_event_loop,
+              core::Tx<EventLoopLinuxEvent> &&signal_to_main_tx,
+              std::thread &&lobby_thread, std::thread &&battle_thread) noexcept;
 
   [[nodiscard]] auto OnServerFdEvent() noexcept -> Result<core::Void>;
   [[nodiscard]] auto
-  OnClientFdEvent(const LinuxFileDescriptor::Raw client_fd) noexcept
+  OnClientFdEvent(const FileDescriptorLinux::Raw client_fd) noexcept
       -> Result<core::Void>;
 
   auto DeleteConnectedSessionOrCloseFd(
-      const LinuxFileDescriptor::Raw client_fd) noexcept -> void;
+      const FileDescriptorLinux::Raw client_fd) noexcept -> void;
 
-  LinuxMainEventLoop main_event_loop_;
-  core::Tx<LinuxEventLoopEvent> signal_to_main_tx_;
+  MainEventLoopLinux main_event_loop_;
+  core::Tx<EventLoopLinuxEvent> signal_to_main_tx_;
   std::thread lobby_thread_;
 
-  friend class LinuxEngineBuilder;
+  friend class EngineLinuxBuilder;
 };
 
-class LinuxEngineBuilder final : private core::NonCopyable, core::NonMovable {
+class EngineLinuxBuilder final : private core::NonCopyable, core::NonMovable {
 public:
   [[nodiscard]] auto Build(const uint16_t port) const noexcept
-      -> Result<LinuxEngine>;
+      -> Result<EngineLinux>;
 };
 
 #endif // SERVER_ENGINE_LINUX_H

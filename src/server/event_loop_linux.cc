@@ -6,13 +6,15 @@
 
 #include "utils_linux.h"
 
-LinuxEventLoop::LinuxEventLoop(core::Rx<LinuxEventLoopEvent> &&event_loop_rx,
-                               LinuxFileDescriptor &&epoll_fd) noexcept
-    : event_loop_rx_{std::move(event_loop_rx)}, epoll_fd_{std::move(epoll_fd)} {
+EventLoopLinux::EventLoopLinux(
+    std::vector<core::Rx<EventLoopLinuxEvent>> &&event_loop_rxs,
+    FileDescriptorLinux &&epoll_fd) noexcept
+    : event_loop_rxs_{std::move(event_loop_rxs)},
+      epoll_fd_{std::move(epoll_fd)} {
   assert(epoll_fd_.IsValid() && "epoll fd must be valid");
 }
 
-auto LinuxEventLoop::Add(const LinuxFileDescriptor::Raw fd,
+auto EventLoopLinux::Add(const FileDescriptorLinux::Raw fd,
                          uint32_t events) noexcept -> Result<core::Void> {
   using ResultT = Result<core::Void>;
 
@@ -20,29 +22,26 @@ auto LinuxEventLoop::Add(const LinuxFileDescriptor::Raw fd,
   ev.events = events;
   ev.data.fd = fd;
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
-    return ResultT{Error{Symbol::kLinuxEventLoopEpollCtlAddFailed,
+    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
                          SB{}.Add(core::LinuxError::FromErrno()).Build()}};
   }
 
   return ResultT{core::Void{}};
 }
 
-auto LinuxEventLoop::Delete(const LinuxFileDescriptor::Raw fd,
-                            uint32_t events) noexcept -> Result<core::Void> {
+auto EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
+    -> Result<core::Void> {
   using ResultT = Result<core::Void>;
 
-  struct epoll_event ev {};
-  ev.events = events;
-  ev.data.fd = fd;
-  if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, &ev) == -1) {
-    return ResultT{Error{Symbol::kLinuxEventLoopEpollCtlDeleteFailed,
+  if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
+    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
                          SB{}.Add(core::LinuxError::FromErrno()).Build()}};
   }
 
   return ResultT{core::Void{}};
 }
 
-auto LinuxEventLoop::Run(OnEventLoopEvent &&on_event_loop_event,
+auto EventLoopLinux::Run(OnEventLoopEvent &&on_event_loop_event,
                          OnEpollEvent &&on_epoll_event) noexcept
     -> Result<core::Void> {
   using ResultT = Result<core::Void>;
@@ -50,14 +49,16 @@ auto LinuxEventLoop::Run(OnEventLoopEvent &&on_event_loop_event,
   struct epoll_event events[kMaxEvents]{};
   std::atomic<bool> shutdown{false};
   while (!shutdown) {
-    auto event_loop_event = event_loop_rx_.TryReceive();
-    if (event_loop_event) {
-      if (event_loop_event->find("shutdown") != event_loop_event->end()) {
-        shutdown = true;
-      }
+    for (const auto &event_loop_rx_ : event_loop_rxs_) {
+      const auto event_loop_event = event_loop_rx_.TryReceive();
+      if (event_loop_event) {
+        if (event_loop_event->find("shutdown") != event_loop_event->end()) {
+          shutdown = true;
+        }
 
-      if (auto res = on_event_loop_event(*event_loop_event); res.IsErr()) {
-        return res;
+        if (auto res = on_event_loop_event(*event_loop_event); res.IsErr()) {
+          return res;
+        }
       }
     }
 
@@ -67,7 +68,7 @@ auto LinuxEventLoop::Run(OnEventLoopEvent &&on_event_loop_event,
         continue;
       }
 
-      return ResultT{Error{Symbol::kLinuxEventLoopEpollWaitFailed,
+      return ResultT{Error{Symbol::kEventLoopLinuxEpollWaitFailed,
                            SB{}.Add(core::LinuxError::FromErrno()).Build()}};
     }
 
@@ -82,15 +83,17 @@ auto LinuxEventLoop::Run(OnEventLoopEvent &&on_event_loop_event,
   return ResultT{core::Void{}};
 }
 
-auto LinuxEventLoopBuilder::Build(core::Rx<LinuxEventLoopEvent> &&event_loop_rx)
-    const noexcept -> Result<LinuxEventLoop> {
-  using ResultT = Result<LinuxEventLoop>;
+auto EventLoopLinuxBuilder::Build(
+    std::vector<core::Rx<EventLoopLinuxEvent>> &&event_loop_rxs) const noexcept
+    -> Result<EventLoopLinux> {
+  using ResultT = Result<EventLoopLinux>;
 
-  auto epoll_fd = LinuxFileDescriptor{epoll_create1(0)};
+  auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
-    return ResultT{Error{Symbol::kLinuxEventLoopEpollCreate1Failed,
+    return ResultT{Error{Symbol::kEventLoopLinuxEpollCreate1Failed,
                          SB{}.Add(core::LinuxError::FromErrno()).Build()}};
   }
 
-  return ResultT{LinuxEventLoop{std::move(event_loop_rx), std::move(epoll_fd)}};
+  return ResultT{
+      EventLoopLinux{std::move(event_loop_rxs), std::move(epoll_fd)}};
 }

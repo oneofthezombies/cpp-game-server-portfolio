@@ -6,15 +6,15 @@
 #include "common.h"
 #include "session.h"
 
-class LinuxFileDescriptor final : private core::NonCopyable, core::Movable {
+class FileDescriptorLinux final : private core::NonCopyable, core::Movable {
 public:
   using Raw = int;
 
-  explicit LinuxFileDescriptor(const Raw fd) noexcept;
-  LinuxFileDescriptor(LinuxFileDescriptor &&other) noexcept;
-  ~LinuxFileDescriptor() noexcept;
+  explicit FileDescriptorLinux(const Raw fd) noexcept;
+  FileDescriptorLinux(FileDescriptorLinux &&other) noexcept;
+  ~FileDescriptorLinux() noexcept;
 
-  auto operator=(LinuxFileDescriptor &&other) noexcept -> LinuxFileDescriptor &;
+  auto operator=(FileDescriptorLinux &&other) noexcept -> FileDescriptorLinux &;
 
   auto IsValid() const noexcept -> bool;
   auto AsRaw() const noexcept -> Raw;
@@ -35,7 +35,7 @@ private:
   static constexpr int kInvalidFd{-1};
 };
 
-auto operator<<(std::ostream &os, const LinuxFileDescriptor &fd)
+auto operator<<(std::ostream &os, const FileDescriptorLinux &fd)
     -> std::ostream &;
 
 #endif // SERVER_FILE_DESCRIPTOR_LINUX_H

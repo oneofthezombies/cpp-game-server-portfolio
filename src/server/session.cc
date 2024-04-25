@@ -5,7 +5,7 @@
 
 #if defined(__linux__)
 #include "file_descriptor_linux.h"
-using SessionImpl = LinuxFileDescriptor;
+using SessionImpl = FileDescriptorLinux;
 #elif defined(_WIN32)
 #error "Not implemented"
 #elif defined(__APPLE__)

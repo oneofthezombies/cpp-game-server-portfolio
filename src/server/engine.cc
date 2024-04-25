@@ -4,8 +4,8 @@
 
 #if defined(__linux__)
 #include "engine_linux.h"
-using EngineImpl = LinuxEngine;
-using EngineImplBuilder = LinuxEngineBuilder;
+using EngineImpl = EngineLinux;
+using EngineImplBuilder = EngineLinuxBuilder;
 #elif defined(_WIN32)
 #error "Not implemented"
 #elif defined(__APPLE__)

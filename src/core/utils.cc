@@ -31,4 +31,10 @@ auto core::Tokenizer::Eat() noexcept -> void {
 
 core::Defer::Defer(std::function<void()> &&fn) noexcept : fn_{std::move(fn)} {}
 
-core::Defer::~Defer() noexcept { fn_(); }
+core::Defer::~Defer() noexcept {
+  if (fn_) {
+    fn_();
+  }
+}
+
+auto core::Defer::Cancel() noexcept -> void { fn_ = nullptr; }

@@ -72,8 +72,10 @@ private:
 
 class Defer final : private NonCopyable, NonMovable {
 public:
-  Defer(std::function<void()> &&fn) noexcept;
+  explicit Defer(std::function<void()> &&fn) noexcept;
   ~Defer() noexcept;
+
+  auto Cancel() noexcept -> void;
 
 private:
   std::function<void()> fn_;
