@@ -24,3 +24,7 @@ It's a simple build script, but I use Python.
 ```sh
 python dev.py build
 ```
+
+# Reference
+
+Rock, Paper, Scissors, Lizard, Spock - https://bigbangtheory.fandom.com/wiki/Rock,_Paper,_Scissors,_Lizard,_Spock
