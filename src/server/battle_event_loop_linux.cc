@@ -88,16 +88,23 @@ auto BattleEventLoopLinux::OnMatchedClientFds(
   using ResultT = Result<Void>;
 
   const auto matched_client_fds_str = std::string_view{matched_client_fds};
-  const auto comma = matched_client_fds_str.find(",");
-  if (comma == std::string::npos) {
-    return ResultT{Error{Symbol::kBattleEventLoopLinuxMatchedClientFdsNoComma,
-                         TinyJson{}
-                             .Set("matched_client_fds", matched_client_fds_str)
-                             .ToString()}};
+  const auto tiny_json = TinyJson::Parse(matched_client_fds_str);
+
+  if (!tiny_json.has_value()) {
+    return ResultT{Error{
+        Symbol::kBattleEventLoopLinuxMatchedClientFdsParseFailed,
+        TinyJson{}.Set("matched_client_fds", matched_client_fds).ToString()}};
   }
 
-  const auto client_fd_0_str = matched_client_fds_str.substr(0, comma);
-  const auto client_fd_1_str = matched_client_fds_str.substr(comma + 1);
+  const auto client_fd_0_opt = tiny_json->Get("client_fd_0");
+  const auto client_fd_1_opt = tiny_json->Get("client_fd_1");
+  if (!client_fd_0_opt.has_value() || !client_fd_1_opt.has_value()) {
+    return ResultT{Error{
+        Symbol::kBattleEventLoopLinuxMatchedClientFdsKeyNotFound,
+        TinyJson{}.Set("matched_client_fds", matched_client_fds).ToString()}};
+  }
+  const auto &client_fd_0_str = client_fd_0_opt.value();
+  const auto &client_fd_1_str = client_fd_1_opt.value();
 
   auto client_fd_0_res =
       ParseNumberString<FileDescriptorLinux::Raw>(client_fd_0_str);

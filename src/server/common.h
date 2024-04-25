@@ -41,7 +41,8 @@ enum class Symbol : int32_t {
   kLobbyEventLoopLinuxClientFdConversionFailed,
   kLobbyEventLoopLinuxClientFdAlreadyExists,
 
-  kBattleEventLoopLinuxMatchedClientFdsNoComma,
+  kBattleEventLoopLinuxMatchedClientFdsParseFailed,
+  kBattleEventLoopLinuxMatchedClientFdsKeyNotFound,
   kBattleEventLoopLinuxClientFdConversionFailed,
   kBattleEventLoopLinuxClientFdAlreadyExists,
   kBattleEventLoopLinuxHandlerNotFound,
