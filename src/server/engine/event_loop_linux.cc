@@ -7,32 +7,36 @@
 #include "core/tiny_json.h"
 
 #include "mail_center.h"
-#include "server/session_service.h"
+#include "session_service.h"
 #include "utils_linux.h"
 
-EventLoopLinux::Context::Context(MailBox &&mail_box, std::string &&name,
-                                 FileDescriptorLinux &&epoll_fd,
-                                 SessionServicePtr &&session_service) noexcept
+using namespace engine;
+
+engine::EventLoopLinux::Context::Context(
+    MailBox &&mail_box, std::string &&name, FileDescriptorLinux &&epoll_fd,
+    std::unique_ptr<SessionService<>> &&session_service) noexcept
     : mail_box{std::move(mail_box)}, name{std::move(name)},
       epoll_fd{std::move(epoll_fd)},
       session_service{std::move(session_service)} {}
 
-auto EventLoopLinux::Context::SendMail(std::string &&to,
-                                       MailBody &&body) noexcept -> void {
+auto engine::EventLoopLinux::Context::SendMail(
+    std::string &&to, MailBody &&body) noexcept -> void {
   auto from = name;
   mail_box.tx.Send(Mail{std::move(from), std::move(to), std::move(body)});
 }
 
-auto EventLoopLinux::Context::Builder::Build(
+auto engine::EventLoopLinux::Context::Builder::Build(
     const std::string_view name,
-    SessionServicePtr &&session_service) const noexcept -> Result<Context> {
+    std::unique_ptr<SessionService<>> &&session_service) const noexcept
+    -> Result<Context> {
   using ResultT = Result<Context>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
-    return ResultT{Error{
-        Symbol::kEventLoopLinuxEpollCreate1Failed,
-        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
+    return ResultT{Error{Symbol::kEventLoopLinuxEpollCreate1Failed,
+                         core::TinyJson{}
+                             .Set("linux_error", core::LinuxError::FromErrno())
+                             .ToString()}};
   }
 
   auto mail_box_res = MailCenter::Global().Create(name);
@@ -45,9 +49,9 @@ auto EventLoopLinux::Context::Builder::Build(
 }
 
 auto EventLoopLinux::Init(const std::string_view name,
-                          SessionServicePtr &&session_service) noexcept
-    -> Result<Void> {
-  using ResultT = Result<Void>;
+                          std::unique_ptr<SessionService<>> &&
+                              session_service) noexcept -> Result<core::Void> {
+  using ResultT = Result<core::Void>;
 
   assert(context_ == nullptr && "Must call Init() only once");
 
@@ -59,29 +63,31 @@ auto EventLoopLinux::Init(const std::string_view name,
   context_ = std::make_unique<Context>(std::move(context_res.Ok()));
 
   AssertInit();
-  return ResultT{Void{}};
+  return ResultT{core::Void{}};
 }
 
-auto EventLoopLinux::Add(const FileDescriptorLinux::Raw fd,
-                         uint32_t events) noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
+auto engine::EventLoopLinux::Add(const FileDescriptorLinux::Raw fd,
+                                 uint32_t events) noexcept
+    -> Result<core::Void> {
+  using ResultT = Result<core::Void>;
 
   AssertInit();
   struct epoll_event ev {};
   ev.events = events;
   ev.data.fd = fd;
   if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
-    return ResultT{Error{
-        Symbol::kEventLoopLinuxEpollCtlAddFailed,
-        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
+    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
+                         core::TinyJson{}
+                             .Set("linux_error", core::LinuxError::FromErrno())
+                             .ToString()}};
   }
 
-  return ResultT{Void{}};
+  return ResultT{core::Void{}};
 }
 
-auto EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
-    -> Result<Void> {
-  using ResultT = Result<Void>;
+auto engine::EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
+    -> Result<core::Void> {
+  using ResultT = Result<core::Void>;
 
   AssertInit();
   if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {

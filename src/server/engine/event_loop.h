@@ -34,7 +34,7 @@ public:
   ~EventLoop() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoop);
 
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
 
 private:
   explicit EventLoop(EventLoopImpl &&impl) noexcept;

@@ -1,9 +1,11 @@
-#ifndef SERVER_FILE_DESCRIPTOR_LINUX_H
-#define SERVER_FILE_DESCRIPTOR_LINUX_H
+#ifndef SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H
+#define SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H
 
 #include "core/core.h"
 
 #include "common.h"
+
+namespace engine {
 
 class FileDescriptorLinux final {
 public:
@@ -18,11 +20,11 @@ public:
   auto IsValid() const noexcept -> bool;
   auto AsRaw() const noexcept -> Raw;
 
-  [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<Void>;
+  [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<core::Void>;
 
   [[nodiscard]] static auto IsValid(const Raw fd) noexcept -> bool;
-  [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
-      -> Result<Void>;
+  [[nodiscard]] static auto
+  UpdateNonBlocking(const Raw fd) noexcept -> Result<core::Void>;
 
 private:
   Raw fd_{kInvalidFd};
@@ -30,7 +32,9 @@ private:
   static constexpr int kInvalidFd{-1};
 };
 
-auto operator<<(std::ostream &os, const FileDescriptorLinux &fd)
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const FileDescriptorLinux &fd) -> std::ostream &;
 
-#endif // SERVER_FILE_DESCRIPTOR_LINUX_H
+} // namespace engine
+
+#endif // SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H

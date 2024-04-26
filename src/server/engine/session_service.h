@@ -1,55 +1,61 @@
 #ifndef SERVER_ENGINE_SESSION_SERVICE_H
 #define SERVER_ENGINE_SESSION_SERVICE_H
 
+#include <unordered_set>
+
 #include "core/core.h"
 
 #include "common.h"
 #include "mail_center.h"
 #include "protocol.h"
-#include "session.h"
 
 namespace engine {
 
-template <typename T = Void> class SessionService {
+using SessionId = uint64_t;
+
+class SessionService {
 public:
-  virtual auto OnSessionToRegister(const SessionId session_id,
-                                   MailBody &&mail_body) noexcept -> T = 0;
+  [[nodiscard]] auto Name() const noexcept -> std::string_view { return name_; }
 
-  virtual auto OnSessionUnregistered(const SessionId session_id,
-                                     T &&data) noexcept -> void = 0;
+  virtual auto OnSessionRegistered(const SessionId session_id,
+                                   MailBody &&mail_body) noexcept -> void = 0;
 
-  virtual auto OnSessionClientEventReceived(const SessionId session_id,
-                                            MessageBody &&message_body) noexcept
-      -> void = 0;
+  virtual auto OnSessionClientEventReceived(
+      const SessionId session_id,
+      core::MessageBody &&message_body) noexcept -> void = 0;
 
 protected:
-  explicit SessionService() noexcept = default;
+  explicit SessionService(const std::string_view name) noexcept : name_{name} {}
+
   virtual ~SessionService() noexcept = default;
   CLASS_KIND_MOVABLE(SessionService);
 
   [[nodiscard]] auto
   IsSessionRegistered(const SessionId session_id) const noexcept -> bool;
 
-  [[nodiscard]] auto MoveSession(const SessionId session_id,
-                                 const std::string_view to) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  MoveSession(const SessionId session_id,
+              const std::string_view to) noexcept -> Result<core::Void>;
 
-  [[nodiscard]] auto SendServerEvent(const SessionId session_id,
-                                     MessageBody &&body) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  SendServerEvent(const SessionId session_id,
+                  core::MessageBody &&body) noexcept -> Result<core::Void>;
 
 private:
-  [[nodiscard]] auto RegisterSession(const SessionId session_id,
-                                     MailBody &&mail_body) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  RegisterSession(const SessionId session_id,
+                  MailBody &&mail_body) noexcept -> Result<core::Void>;
 
-  [[nodiscard]] auto UnregisterSession(const SessionId session_id) noexcept
-      -> Result<MailBody>;
+  [[nodiscard]] auto
+  UnregisterSession(const SessionId session_id) noexcept -> Result<MailBody>;
 
-  std::unordered_map<SessionId, T> sessions_;
+  std::unordered_set<SessionId> sessions_;
+  std::string name_;
 
   friend class EventLoop;
 };
+
+using SessionServicePtr = std::unique_ptr<SessionService>;
 
 } // namespace engine
 

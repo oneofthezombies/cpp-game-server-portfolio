@@ -4,6 +4,8 @@
 #include "core.h"
 #include <string_view>
 
+namespace core {
+
 struct LinuxError final {
   // `errno`
   int errno_value;
@@ -22,5 +24,7 @@ private:
 
 auto operator<<(std::ostream &os,
                 const LinuxError &error) noexcept -> std::ostream &;
+
+} // namespace core
 
 #endif // CORE_UTILS_LINUX_H

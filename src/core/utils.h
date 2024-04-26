@@ -9,6 +9,8 @@
 
 #include "core.h"
 
+namespace core {
+
 using Args = std::vector<std::string_view>;
 
 [[nodiscard]] auto ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
@@ -44,33 +46,6 @@ template <typename T>
   return ResultT{value};
 }
 
-// class StringBuilder final {
-// public:
-//   explicit StringBuilder() noexcept = default;
-//   ~StringBuilder() noexcept = default;
-//   CLASS_KIND_MOVABLE(StringBuilder);
-
-//   template <typename T>
-//   [[nodiscard]] auto Add(const T &value) noexcept -> StringBuilder & {
-//     oss_ << value;
-//     return *this;
-//   }
-
-//   template <typename T>
-//   [[nodiscard]] auto Add(const std::string_view key, const T &value) noexcept
-//       -> StringBuilder & {
-//     oss_ << key << "=" << value << " ";
-//     return *this;
-//   }
-
-//   [[nodiscard]] auto Build() const noexcept -> std::string {
-//     return oss_.str();
-//   }
-
-// private:
-//   std::ostringstream oss_;
-// };
-
 class Defer final {
 public:
   explicit Defer(std::function<void()> &&fn) noexcept;
@@ -82,5 +57,7 @@ public:
 private:
   std::function<void()> fn_;
 };
+
+} // namespace core
 
 #endif // CORE_UTILS_H

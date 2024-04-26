@@ -12,7 +12,7 @@
 
 namespace engine {
 
-using MailBody = TinyJson;
+using MailBody = core::TinyJson;
 
 struct Mail final {
   std::string from;
@@ -28,14 +28,14 @@ struct Mail final {
 };
 
 struct MailBox final {
-  Tx<Mail> tx;
-  Rx<Mail> rx;
+  core::Tx<Mail> tx;
+  core::Rx<Mail> rx;
 
   ~MailBox() noexcept = default;
   CLASS_KIND_MOVABLE(MailBox);
 
 private:
-  explicit MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept;
+  explicit MailBox(core::Tx<Mail> &&tx, core::Rx<Mail> &&rx) noexcept;
 
   friend class MailCenter;
 };
@@ -47,28 +47,29 @@ public:
 
   auto Shutdown() noexcept -> void;
 
-  [[nodiscard]] auto Create(const std::string_view name) noexcept
-      -> Result<MailBox>;
-  [[nodiscard]] auto Delete(const std::string_view name) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  Create(const std::string_view name) noexcept -> Result<MailBox>;
+  [[nodiscard]] auto
+  Delete(const std::string_view name) noexcept -> Result<core::Void>;
 
   static auto Global() noexcept -> MailCenter &;
 
 private:
-  explicit MailCenter(Tx<MailBody> &&run_tx) noexcept;
+  explicit MailCenter(core::Tx<MailBody> &&run_tx) noexcept;
 
-  auto ValidateName(const std::string_view name) const noexcept -> Result<Void>;
+  auto ValidateName(const std::string_view name) const noexcept
+      -> Result<core::Void>;
 
-  auto RunOnThread(Rx<MailBody> &&run_rx) noexcept -> void;
+  auto RunOnThread(core::Rx<MailBody> &&run_rx) noexcept -> void;
 
-  auto StartRunThread(Rx<MailBody> &&run_rx) noexcept -> void;
+  auto StartRunThread(core::Rx<MailBody> &&run_rx) noexcept -> void;
 
   static auto RunThreadMain(MailCenter &mail_center,
-                            Rx<MailBody> &&run_rx) noexcept -> void;
+                            core::Rx<MailBody> &&run_rx) noexcept -> void;
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;
-  Tx<MailBody> run_tx_;
+  core::Tx<MailBody> run_tx_;
   std::thread run_thread_;
 };
 

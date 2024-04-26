@@ -5,35 +5,37 @@
 #include <unistd.h>
 
 #include "core/tiny_json.h"
-#include "core/utils.h"
 #include "core/utils_linux.h"
 
-FileDescriptorLinux::FileDescriptorLinux(const Raw fd) noexcept : fd_{fd} {}
+using namespace engine;
 
-FileDescriptorLinux::FileDescriptorLinux(FileDescriptorLinux &&other) noexcept
+engine::FileDescriptorLinux::FileDescriptorLinux(const Raw fd) noexcept
+    : fd_{fd} {}
+
+engine::FileDescriptorLinux::FileDescriptorLinux(
+    FileDescriptorLinux &&other) noexcept
     : fd_{other.fd_} {
   other.fd_ = kInvalidFd;
 }
 
-FileDescriptorLinux::~FileDescriptorLinux() noexcept {
+engine::FileDescriptorLinux::~FileDescriptorLinux() noexcept {
   if (fd_ == kInvalidFd) {
     return;
   }
 
   if (close(fd_) == -1) {
-    const Error error{Symbol::kFileDescriptorLinuxCloseFailed,
-                      TinyJson{}
-                          .Set("linux_error", LinuxError::FromErrno())
-                          .Set("fd", fd_)
-                          .ToString()};
-    std::cout << error << std::endl;
+    core::TinyJson{}
+        .Set("symbol", Symbol::kFileDescriptorLinuxCloseFailed)
+        .Set("linux_error", core::LinuxError::FromErrno())
+        .Set("fd", fd_)
+        .LogLn();
   }
 
   fd_ = kInvalidFd;
 }
 
-auto FileDescriptorLinux::operator=(FileDescriptorLinux &&other) noexcept
-    -> FileDescriptorLinux & {
+auto engine::FileDescriptorLinux::operator=(
+    FileDescriptorLinux &&other) noexcept -> FileDescriptorLinux & {
   if (this == &other) {
     return *this;
   }
@@ -44,46 +46,47 @@ auto FileDescriptorLinux::operator=(FileDescriptorLinux &&other) noexcept
   return *this;
 }
 
-auto FileDescriptorLinux::AsRaw() const noexcept -> Raw { return fd_; }
+auto engine::FileDescriptorLinux::AsRaw() const noexcept -> Raw { return fd_; }
 
-auto FileDescriptorLinux::IsValid() const noexcept -> bool {
+auto engine::FileDescriptorLinux::IsValid() const noexcept -> bool {
   return IsValid(fd_);
 }
 
-auto FileDescriptorLinux::UpdateNonBlocking() const noexcept -> Result<Void> {
+auto engine::FileDescriptorLinux::UpdateNonBlocking() const noexcept
+    -> Result<core::Void> {
   return UpdateNonBlocking(fd_);
 }
 
-auto FileDescriptorLinux::IsValid(const Raw fd) noexcept -> bool {
+auto engine::FileDescriptorLinux::IsValid(const Raw fd) noexcept -> bool {
   return fd != kInvalidFd;
 }
 
-auto FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
-    -> Result<Void> {
-  using ResultT = Result<Void>;
+auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
+    -> Result<core::Void> {
+  using ResultT = Result<core::Void>;
 
   const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
     return ResultT{Error{Symbol::kFileDescriptorLinuxGetStatusFailed,
-                         TinyJson{}
-                             .Set("linux_error", LinuxError::FromErrno())
+                         core::TinyJson{}
+                             .Set("linux_error", core::LinuxError::FromErrno())
                              .Set("fd", fd)
                              .ToString()}};
   }
 
   if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
     return ResultT{Error{Symbol::kFileDescriptorLinuxSetStatusFailed,
-                         TinyJson{}
-                             .Set("linux_error", LinuxError::FromErrno())
+                         core::TinyJson{}
+                             .Set("linux_error", core::LinuxError::FromErrno())
                              .Set("fd", fd)
                              .ToString()}};
   }
 
-  return ResultT{Void{}};
+  return ResultT{core::Void{}};
 }
 
-auto operator<<(std::ostream &os, const FileDescriptorLinux &fd)
-    -> std::ostream & {
+auto engine::operator<<(std::ostream &os,
+                        const FileDescriptorLinux &fd) -> std::ostream & {
   os << "FileDescriptorLinux{";
   os << "fd=";
   if (fd.IsValid()) {

@@ -3,9 +3,11 @@
 #include <cctype>
 #include <iostream>
 
-TinyJson::TinyJson(TinyJson::Raw &&raw) noexcept : raw_{std::move(raw)} {}
+using namespace core;
 
-auto TinyJson::Get(const std::string_view key) const noexcept
+core::TinyJson::TinyJson(TinyJson::Raw &&raw) noexcept : raw_{std::move(raw)} {}
+
+auto core::TinyJson::Get(const std::string_view key) const noexcept
     -> std::optional<std::string_view> {
   auto found = raw_.find(std::string{key});
   if (found == raw_.end()) {
@@ -15,35 +17,41 @@ auto TinyJson::Get(const std::string_view key) const noexcept
   return found->second;
 }
 
-auto TinyJson::AsRaw() const noexcept -> const Raw & { return raw_; }
+auto core::TinyJson::AsRaw() const noexcept -> const Raw & { return raw_; }
 
-auto TinyJson::Clone() const noexcept -> TinyJson {
+auto core::TinyJson::Clone() const noexcept -> TinyJson {
   auto raw = raw_;
   return TinyJson{std::move(raw)};
 }
 
-auto TinyJson::ToString() const noexcept -> std::string {
+auto core::TinyJson::ToString() const noexcept -> std::string {
   std::ostringstream oss;
-  oss << '{';
-
-  for (const auto &[key, value] : raw_) {
-    oss << '"' << key << '"' << ':' << '"' << value << '"' << ',';
-  }
-
-  oss.seekp(-1, std::ios_base::end);
-
-  oss << '}';
+  Log(oss);
   return oss.str();
 }
 
-auto TinyJson::Parse(const std::string_view tiny_json) noexcept
+auto core::TinyJson::Log(std::ostream &os) const noexcept -> void {
+  os << '{';
+  for (const auto &[key, value] : raw_) {
+    os << '"' << key << '"' << ':' << '"' << value << '"' << ',';
+  }
+  os.seekp(-1, std::ios_base::end);
+  os << '}';
+}
+
+auto core::TinyJson::LogLn(std::ostream &os) const noexcept -> void {
+  Log(os);
+  os << '\n';
+}
+
+auto core::TinyJson::Parse(const std::string_view tiny_json) noexcept
     -> std::optional<TinyJson> {
   TinyJsonParser parser{tiny_json};
   return parser.Parse();
 }
 
-auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
-    -> std::ostream & {
+auto core::operator<<(std::ostream &os,
+                      const TinyJson &tiny_json) noexcept -> std::ostream & {
   os << "TinyJson{";
   auto it = tiny_json.AsRaw().begin();
   while (it != tiny_json.AsRaw().end()) {
@@ -59,11 +67,11 @@ auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
   return os;
 }
 
-TinyJsonParser::TinyJsonParser(const std::string_view tiny_json,
-                               TinyJsonParserOptions &&options) noexcept
+core::TinyJsonParser::TinyJsonParser(const std::string_view tiny_json,
+                                     TinyJsonParserOptions &&options) noexcept
     : tiny_json_str_{tiny_json}, options_{std::move(options)} {}
 
-auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
+auto core::TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
   if (tiny_json_str_.empty()) {
     return std::nullopt;
   }
@@ -140,7 +148,7 @@ auto TinyJsonParser::Parse() noexcept -> std::optional<TinyJson> {
   }
 }
 
-auto TinyJsonParser::ParseKeyValue() noexcept
+auto core::TinyJsonParser::ParseKeyValue() noexcept
     -> std::optional<std::pair<std::string, std::string>> {
   auto key = ParseKey();
   if (!key) {
@@ -169,15 +177,16 @@ auto TinyJsonParser::ParseKeyValue() noexcept
   return std::make_pair(*key, *value);
 }
 
-auto TinyJsonParser::ParseKey() noexcept -> std::optional<std::string> {
+auto core::TinyJsonParser::ParseKey() noexcept -> std::optional<std::string> {
   return ParseString();
 }
 
-auto TinyJsonParser::ParseValue() noexcept -> std::optional<std::string> {
+auto core::TinyJsonParser::ParseValue() noexcept -> std::optional<std::string> {
   return ParseString();
 }
 
-auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string> {
+auto core::TinyJsonParser::ParseString() noexcept
+    -> std::optional<std::string> {
   Trim();
   auto current = Current();
   if (!current) {
@@ -255,8 +264,8 @@ auto TinyJsonParser::ParseString() noexcept -> std::optional<std::string> {
   return result;
 }
 
-auto TinyJsonParser::Current(const std::source_location location) const noexcept
-    -> std::optional<char> {
+auto core::TinyJsonParser::Current(
+    const std::source_location location) const noexcept -> std::optional<char> {
   if (cursor_ >= tiny_json_str_.size()) {
     Log("Unexpected end of input", location);
     return std::nullopt;
@@ -265,9 +274,8 @@ auto TinyJsonParser::Current(const std::source_location location) const noexcept
   return tiny_json_str_[cursor_];
 }
 
-auto TinyJsonParser::Consume(const char c,
-                             const std::source_location location) noexcept
-    -> bool {
+auto core::TinyJsonParser::Consume(
+    const char c, const std::source_location location) noexcept -> bool {
   if (cursor_ >= tiny_json_str_.size()) {
     Log("Unexpected end of input", location);
     return false;
@@ -282,7 +290,7 @@ auto TinyJsonParser::Consume(const char c,
   return true;
 }
 
-auto TinyJsonParser::Advance(const std::source_location location) noexcept
+auto core::TinyJsonParser::Advance(const std::source_location location) noexcept
     -> bool {
   if (cursor_ >= tiny_json_str_.size()) {
     Log("Unexpected end of input", location);
@@ -293,16 +301,17 @@ auto TinyJsonParser::Advance(const std::source_location location) noexcept
   return true;
 }
 
-auto TinyJsonParser::Trim() noexcept -> void {
+auto core::TinyJsonParser::Trim() noexcept -> void {
   while (cursor_ < tiny_json_str_.size() &&
          isspace(static_cast<int>(tiny_json_str_[cursor_]))) {
     ++cursor_;
   }
 }
 
-auto TinyJsonParser::Log(const std::string_view message,
-                         const std::source_location location) const noexcept
-    -> void {
-  std::cout << "Log: " << message << " at " << location.file_name() << ":"
-            << location.line() << ":" << location.column() << std::endl;
+auto core::TinyJsonParser::Log(
+    const std::string_view message,
+    const std::source_location location) const noexcept -> void {
+  std::cout << "TinyJsonParser::Log: " << message << " at "
+            << location.file_name() << ":" << location.line() << ":"
+            << location.column() << std::endl;
 }

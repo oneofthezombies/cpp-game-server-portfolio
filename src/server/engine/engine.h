@@ -4,8 +4,7 @@
 #include <memory>
 
 #include "common.h"
-#include "options.h"
-#include "session_service.h"
+#include "config.h"
 
 namespace engine {
 
@@ -28,17 +27,12 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build(const Options &options) const noexcept
-        -> Result<Engine>;
+    [[nodiscard]] auto
+    Build(const Config &config) const noexcept -> Result<Engine>;
   };
 
   ~Engine() noexcept = default;
   CLASS_KIND_MOVABLE(Engine);
-
-  [[nodiscard]] auto AddSessionService(
-      const std::string_view name,
-      std::unique_ptr<SessionService<>> &&session_service) noexcept
-      -> Result<Void>;
 
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 

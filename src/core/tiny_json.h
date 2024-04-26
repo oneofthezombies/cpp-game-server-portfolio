@@ -3,12 +3,15 @@
 
 #include <iostream>
 #include <optional>
+#include <ostream>
 #include <source_location>
 #include <sstream>
 #include <string_view>
 #include <unordered_map>
 
 #include "core.h"
+
+namespace core {
 
 class TinyJson final {
 public:
@@ -47,6 +50,10 @@ public:
   [[nodiscard]] auto Clone() const noexcept -> TinyJson;
 
   [[nodiscard]] auto ToString() const noexcept -> std::string;
+
+  auto Log(std::ostream &os = std::cout) const noexcept -> void;
+
+  auto LogLn(std::ostream &os = std::cout) const noexcept -> void;
 
   [[nodiscard]] static auto Parse(const std::string_view tiny_json_str) noexcept
       -> std::optional<TinyJson>;
@@ -104,5 +111,7 @@ private:
   TinyJson::Raw raw_;
   TinyJsonParserOptions options_;
 };
+
+} // namespace core
 
 #endif // CORE_TINY_JSON_H

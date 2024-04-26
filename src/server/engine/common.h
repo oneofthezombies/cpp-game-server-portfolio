@@ -14,7 +14,8 @@ enum class Symbol : int32_t {
   kBegin = 1'000'000,
   // Add symbols after kBegin
 
-  kOptionsPortUndefined,
+  kConfigPortUndefined,
+  kConfigRootServiceNotFound,
 
   kHelpRequested,
   kPortArgNotFound,
@@ -66,9 +67,9 @@ enum class Symbol : int32_t {
 auto operator<<(std::ostream &os,
                 const Symbol symbol) noexcept -> std::ostream &;
 
-using Error = ErrorBase<Symbol>;
+using Error = core::ErrorBase<Symbol>;
 
-template <typename T> using Result = ResultBase<T, Error>;
+template <typename T> using Result = core::ResultBase<T, Error>;
 
 } // namespace engine
 

@@ -23,6 +23,8 @@
   auto operator=(const cls &)->cls & = delete;                                 \
   auto operator=(cls &&)->cls & = delete
 
+namespace core {
+
 template <typename T, typename E> class ResultBase final {
 public:
   explicit ResultBase(const T &value) : data_(value) {}
@@ -107,5 +109,7 @@ struct Void final {
 };
 
 auto operator<<(std::ostream &os, const Void &) -> std::ostream &;
+
+} // namespace core
 
 #endif // CORE_CORE_H

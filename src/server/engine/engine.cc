@@ -37,14 +37,6 @@ engine::Engine::Engine(EngineImpl &&impl) noexcept : impl_{std::move(impl)} {
   assert(impl_.get() != nullptr && "impl must not be nullptr");
 }
 
-auto engine::Engine::AddSessionService(
-    const std::string_view name,
-    std::unique_ptr<SessionService<>> &&session_service) noexcept
-    -> Result<Void> {
-  return CastEngineImplRaw(impl_.get())
-      ->AddSessionService(name, std::move(session_service));
-}
-
 auto engine::Engine::Run() noexcept -> Result<Void> {
   return CastEngineImplRaw(impl_.get())->Run();
 }

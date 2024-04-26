@@ -4,7 +4,7 @@
 
 #if defined(__linux__)
 #include "event_loop_linux.h"
-using EventLoopImpl = EventLoopLinux;
+using EventLoopImplRaw = EventLoopLinux;
 #elif defined(_WIN32)
 #error "Not implemented"
 #elif defined(__APPLE__)
@@ -13,11 +13,14 @@ using EventLoopImpl = EventLoopLinux;
 #error "Unsupported platform"
 #endif
 
-auto CastEventLoopImplRaw(void *impl_raw) noexcept -> EventLoopImpl * {
-  return static_cast<EventLoopImpl *>(impl_raw);
+using namespace engine;
+
+auto CastEventLoopImplRaw(void *impl_raw) noexcept -> engine::EventLoopImpl * {
+  return static_cast<engine::EventLoopImpl *>(impl_raw);
 }
 
-auto EventLoopImplDeleter::operator()(void *impl_raw) const noexcept -> void {
+auto engine::EventLoopImplRawDeleter::operator()(void *impl_raw) const noexcept
+    -> void {
   if (impl_raw == nullptr) {
     return;
   }
@@ -25,12 +28,12 @@ auto EventLoopImplDeleter::operator()(void *impl_raw) const noexcept -> void {
   delete CastEventLoopImplRaw(impl_raw);
 }
 
-EventLoop::EventLoop(EventLoopImplPtr &&impl) noexcept
+engine::EventLoop::EventLoop(EventLoopImpl &&impl) noexcept
     : impl_{std::move(impl)} {
   assert(impl_.get() != nullptr && "impl must not be nullptr");
 }
 
-auto EventLoop::Run() noexcept -> Result<Void> {
+auto engine::EventLoop::Run() noexcept -> Result<core::Void> {
   return CastEventLoopImpl(impl_.get())->Run();
 }
 
@@ -43,5 +46,5 @@ auto EventLoop::Builder::Build() const noexcept -> Result<EventLoop> {
   }
 
   return ResultT{
-      EventLoop{EventLoopImplPtr{new EventLoopImpl{std::move(result.Ok())}}}};
+      EventLoop{EventLoopImpl{new EventLoopImplRaw{std::move(result.Ok())}}}};
 }
