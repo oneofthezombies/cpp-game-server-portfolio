@@ -1,11 +1,12 @@
-#ifndef SERVER_EVENT_LOOP_H
-#define SERVER_EVENT_LOOP_H
+#ifndef SERVER_ENGINE_EVENT_LOOP_H
+#define SERVER_ENGINE_EVENT_LOOP_H
 
 #include <memory>
 
 #include "core/core.h"
 
 #include "common.h"
+#include "event_loop_handler.h"
 
 namespace engine {
 
@@ -18,7 +19,7 @@ public:
   auto operator()(void *impl_raw) const noexcept -> void;
 };
 
-using EventLoopImpl = std::unique_ptr<void, EventLoopImplRawDeleter>;
+using EventLoopImplPtr = std::unique_ptr<void, EventLoopImplRawDeleter>;
 
 class EventLoop final {
 public:
@@ -28,20 +29,22 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build() const noexcept -> Result<EventLoop>;
+    [[nodiscard]] auto Build(std::string &&name,
+                             EventLoopHandlerPtr &&handler) const noexcept
+        -> Result<EventLoop>;
   };
 
   ~EventLoop() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoop);
 
-  [[nodiscard]] auto Run() noexcept -> Result<core::Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
-  explicit EventLoop(EventLoopImpl &&impl) noexcept;
+  explicit EventLoop(EventLoopImplPtr &&impl) noexcept;
 
-  EventLoopImpl impl_;
+  EventLoopImplPtr impl_;
 };
 
 } // namespace engine
 
-#endif // SERVER_EVENT_LOOP_H
+#endif // SERVER_ENGINE_EVENT_LOOP_H

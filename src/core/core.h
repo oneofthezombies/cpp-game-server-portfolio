@@ -14,25 +14,25 @@
 #define CLASS_KIND_MOVABLE(cls)                                                \
   cls(const cls &) = delete;                                                   \
   cls(cls &&) noexcept = default;                                              \
-  auto operator=(const cls &)->cls & = delete;                                 \
+  auto operator=(const cls &) -> cls & = delete;                               \
   auto operator=(cls &&) noexcept -> cls & = default
 
 #define CLASS_KIND_PINNABLE(cls)                                               \
   cls(const cls &) = delete;                                                   \
   cls(cls &&) = delete;                                                        \
-  auto operator=(const cls &)->cls & = delete;                                 \
-  auto operator=(cls &&)->cls & = delete
+  auto operator=(const cls &) -> cls & = delete;                               \
+  auto operator=(cls &&) -> cls & = delete
 
 namespace core {
 
-template <typename T, typename E> class ResultBase final {
+template <typename T, typename E> class Result final {
 public:
-  explicit ResultBase(const T &value) : data_(value) {}
-  explicit ResultBase(T &&value) : data_(std::forward<T>(value)) {}
-  explicit ResultBase(const E &error) : data_(error) {}
-  explicit ResultBase(E &&error) : data_(std::forward<E>(error)) {}
-  ~ResultBase() noexcept = default;
-  CLASS_KIND_MOVABLE(ResultBase);
+  explicit Result(const T &value) : data_(value) {}
+  explicit Result(T &&value) : data_(std::forward<T>(value)) {}
+  explicit Result(const E &error) : data_(error) {}
+  explicit Result(E &&error) : data_(std::forward<E>(error)) {}
+  ~Result() noexcept = default;
+  CLASS_KIND_MOVABLE(Result);
 
   auto IsOk() const noexcept -> bool {
     return std::holds_alternative<T>(data_);
@@ -59,8 +59,8 @@ private:
 };
 
 template <typename T, typename E>
-auto operator<<(std::ostream &os,
-                const ResultBase<T, E> &result) -> std::ostream & {
+auto operator<<(std::ostream &os, const Result<T, E> &result)
+    -> std::ostream & {
   os << "Result{";
   if (result.IsOk()) {
     os << "Ok{";
@@ -79,19 +79,19 @@ auto operator<<(std::ostream &os,
 
 template <typename T>
   requires std::is_enum_v<T>
-struct ErrorBase final {
+struct Error final {
   T code;
   std::string message;
 
-  explicit ErrorBase(const T code) noexcept : code(code) {}
-  explicit ErrorBase(const T code, std::string &&message) noexcept
+  explicit Error(const T code) noexcept : code(code) {}
+  explicit Error(const T code, std::string &&message) noexcept
       : code(code), message(std::move(message)) {}
-  ~ErrorBase() noexcept = default;
-  CLASS_KIND_MOVABLE(ErrorBase);
+  ~Error() noexcept = default;
+  CLASS_KIND_MOVABLE(Error);
 };
 
 template <typename T>
-auto operator<<(std::ostream &os, const ErrorBase<T> &error) -> std::ostream & {
+auto operator<<(std::ostream &os, const Error<T> &error) -> std::ostream & {
   os << "Error{";
   os << "code=";
   os << error.code;

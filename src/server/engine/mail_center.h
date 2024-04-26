@@ -47,18 +47,15 @@ public:
 
   auto Shutdown() noexcept -> void;
 
-  [[nodiscard]] auto
-  Create(const std::string_view name) noexcept -> Result<MailBox>;
-  [[nodiscard]] auto
-  Delete(const std::string_view name) noexcept -> Result<core::Void>;
+  [[nodiscard]] auto Create(std::string &&name) noexcept -> Result<MailBox>;
+  [[nodiscard]] auto Delete(std::string &&name) noexcept -> Result<Void>;
 
   static auto Global() noexcept -> MailCenter &;
 
 private:
   explicit MailCenter(core::Tx<MailBody> &&run_tx) noexcept;
 
-  auto ValidateName(const std::string_view name) const noexcept
-      -> Result<core::Void>;
+  auto ValidateName(const std::string_view name) const noexcept -> Result<Void>;
 
   auto RunOnThread(core::Rx<MailBody> &&run_rx) noexcept -> void;
 

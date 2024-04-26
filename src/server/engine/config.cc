@@ -2,16 +2,16 @@
 
 using namespace engine;
 
-auto engine::Config::Validate() const noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+auto engine::Config::Validate() const noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
   if (port == kUndefinedPort) {
     return ResultT{Error{Symbol::kConfigPortUndefined}};
   }
 
-  if (root_service == nullptr) {
-    return ResultT{Error{Symbol::kConfigRootServiceNotFound}};
+  if (primary_session_service == nullptr) {
+    return ResultT{Error{Symbol::kConfigPrimarySessionServiceNotFound}};
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }

@@ -15,7 +15,7 @@ enum class Symbol : int32_t {
   // Add symbols after kBegin
 
   kConfigPortUndefined,
-  kConfigRootServiceNotFound,
+  kConfigPrimarySessionServiceNotFound,
 
   kHelpRequested,
   kPortArgNotFound,
@@ -64,12 +64,14 @@ enum class Symbol : int32_t {
   kEnd
 };
 
-auto operator<<(std::ostream &os,
-                const Symbol symbol) noexcept -> std::ostream &;
+auto operator<<(std::ostream &os, const Symbol symbol) noexcept
+    -> std::ostream &;
 
-using Error = core::ErrorBase<Symbol>;
+using Error = core::Error<Symbol>;
 
-template <typename T> using Result = core::ResultBase<T, Error>;
+template <typename T> using Result = core::Result<T, Error>;
+
+using Void = core::Void;
 
 } // namespace engine
 

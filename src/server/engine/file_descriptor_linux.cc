@@ -1,7 +1,6 @@
 #include "file_descriptor_linux.h"
 
 #include <fcntl.h>
-#include <iostream>
 #include <unistd.h>
 
 #include "core/tiny_json.h"
@@ -53,7 +52,7 @@ auto engine::FileDescriptorLinux::IsValid() const noexcept -> bool {
 }
 
 auto engine::FileDescriptorLinux::UpdateNonBlocking() const noexcept
-    -> Result<core::Void> {
+    -> Result<Void> {
   return UpdateNonBlocking(fd_);
 }
 
@@ -62,8 +61,8 @@ auto engine::FileDescriptorLinux::IsValid(const Raw fd) noexcept -> bool {
 }
 
 auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
   const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
@@ -82,11 +81,11 @@ auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
                              .ToString()}};
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
-auto engine::operator<<(std::ostream &os,
-                        const FileDescriptorLinux &fd) -> std::ostream & {
+auto engine::operator<<(std::ostream &os, const FileDescriptorLinux &fd)
+    -> std::ostream & {
   os << "FileDescriptorLinux{";
   os << "fd=";
   if (fd.IsValid()) {

@@ -1,35 +1,25 @@
 #include "event_loop_linux.h"
 
-#include <cassert>
-
 #include <sys/epoll.h>
 
 #include "core/tiny_json.h"
 
+#include "event_loop_handler.h"
 #include "mail_center.h"
-#include "session_service.h"
 #include "utils_linux.h"
 
 using namespace engine;
 
-engine::EventLoopLinux::Context::Context(
-    MailBox &&mail_box, std::string &&name, FileDescriptorLinux &&epoll_fd,
-    std::unique_ptr<SessionService<>> &&session_service) noexcept
-    : mail_box{std::move(mail_box)}, name{std::move(name)},
-      epoll_fd{std::move(epoll_fd)},
-      session_service{std::move(session_service)} {}
+engine::EventLoopLinux::EventLoopLinux(MailBox &&mail_box, std::string &&name,
+                                       FileDescriptorLinux &&epoll_fd,
+                                       EventLoopHandlerPtr &&handler) noexcept
+    : mail_box_{std::move(mail_box)}, name_{std::move(name)},
+      epoll_fd_{std::move(epoll_fd)}, handler_{std::move(handler)} {}
 
-auto engine::EventLoopLinux::Context::SendMail(
-    std::string &&to, MailBody &&body) noexcept -> void {
-  auto from = name;
-  mail_box.tx.Send(Mail{std::move(from), std::move(to), std::move(body)});
-}
-
-auto engine::EventLoopLinux::Context::Builder::Build(
-    const std::string_view name,
-    std::unique_ptr<SessionService<>> &&session_service) const noexcept
-    -> Result<Context> {
-  using ResultT = Result<Context>;
+auto engine::EventLoopLinux::Builder::Build(
+    std::string &&name, EventLoopHandlerPtr &&handler) const noexcept
+    -> Result<EventLoopLinux> {
+  using ResultT = Result<EventLoopLinux>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
@@ -39,92 +29,73 @@ auto engine::EventLoopLinux::Context::Builder::Build(
                              .ToString()}};
   }
 
-  auto mail_box_res = MailCenter::Global().Create(name);
+  auto mail_box_res = MailCenter::Global().Create(std::string{name});
   if (mail_box_res.IsErr()) {
     return ResultT{std::move(mail_box_res.Err())};
   }
 
-  return ResultT{Context{std::move(mail_box_res.Ok()), std::string{name},
-                         std::move(epoll_fd), std::move(session_service)}};
-}
-
-auto EventLoopLinux::Init(const std::string_view name,
-                          std::unique_ptr<SessionService<>> &&
-                              session_service) noexcept -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
-
-  assert(context_ == nullptr && "Must call Init() only once");
-
-  auto context_res = Context::Builder{}.Build(name, std::move(session_service));
-  if (context_res.IsErr()) {
-    return ResultT{std::move(context_res.Err())};
-  }
-
-  context_ = std::make_unique<Context>(std::move(context_res.Ok()));
-
-  AssertInit();
-  return ResultT{core::Void{}};
+  return ResultT{EventLoopLinux{std::move(mail_box_res.Ok()), std::move(name),
+                                std::move(epoll_fd), std::move(handler)}};
 }
 
 auto engine::EventLoopLinux::Add(const FileDescriptorLinux::Raw fd,
-                                 uint32_t events) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+                                 const uint32_t events) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
-  AssertInit();
   struct epoll_event ev {};
   ev.events = events;
   ev.data.fd = fd;
-  if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
+  if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
                              .ToString()}};
   }
 
-  return ResultT{core::Void{}};
+  return ResultT{Void{}};
 }
 
 auto engine::EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
-    -> Result<core::Void> {
-  using ResultT = Result<core::Void>;
+    -> Result<Void> {
+  using ResultT = Result<Void>;
 
-  AssertInit();
-  if (epoll_ctl(context_->epoll_fd.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
-    return ResultT{Error{
-        Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
-        TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
+  if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
+    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
+                         core::TinyJson{}
+                             .Set("linux_error", core::LinuxError::FromErrno())
+                             .ToString()}};
   }
 
   return ResultT{Void{}};
 }
 
-auto EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
-                           const std::string_view data) noexcept
+auto engine::EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
+                                   const std::string_view data) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
   const auto data_size = data.size();
-  const auto data_ptr = data.data();
   ssize_t written = 0;
   while (written < data_size) {
-    const auto count = write(fd, data_ptr + written, data_size - written);
+    const auto count = write(fd, data.data() + written, data_size - written);
     if (count == -1) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
         continue;
       }
 
-      return ResultT{Error{Symbol::kEventLoopLinuxWriteFailed,
-                           TinyJson{}
-                               .Set("linux_error", LinuxError::FromErrno())
-                               .Set("fd", fd)
-                               .ToString()}};
+      return ResultT{
+          Error{Symbol::kEventLoopLinuxWriteFailed,
+                core::TinyJson{}
+                    .Set("linux_error", core::LinuxError::FromErrno())
+                    .Set("fd", fd)
+                    .ToString()}};
     } else {
       written += count;
 
       if (count == 0) {
         return ResultT{Error{Symbol::kEventLoopLinuxWriteClosed,
-                             TinyJson{}.Set("fd", fd).ToString()}};
+                             core::TinyJson{}.Set("fd", fd).ToString()}};
       }
     }
   }
@@ -132,14 +103,13 @@ auto EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
   return ResultT{Void{}};
 }
 
-auto EventLoopLinux::Run() noexcept -> Result<Void> {
+auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  AssertInit();
   struct epoll_event events[kMaxEvents]{};
   std::atomic<bool> shutdown{false};
   while (!shutdown) {
-    auto mail = context_->mail_box.rx.TryReceive();
+    auto mail = mail_box_.rx.TryReceive();
     if (mail) {
       if (auto value = mail->body.Get("shutdown"); value) {
         shutdown = true;
@@ -150,16 +120,17 @@ auto EventLoopLinux::Run() noexcept -> Result<Void> {
       }
     }
 
-    const auto fd_count =
-        epoll_wait(context_->epoll_fd.AsRaw(), events, kMaxEvents, 0);
+    const auto fd_count = epoll_wait(epoll_fd_.AsRaw(), events, kMaxEvents, 0);
     if (fd_count == -1) {
       if (errno == EINTR) {
         continue;
       }
 
-      return ResultT{Error{
-          Symbol::kEventLoopLinuxEpollWaitFailed,
-          TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
+      return ResultT{
+          Error{Symbol::kEventLoopLinuxEpollWaitFailed,
+                core::TinyJson{}
+                    .Set("linux_error", core::LinuxError::FromErrno())
+                    .ToString()}};
     }
 
     for (int i = 0; i < fd_count; ++i) {
@@ -173,6 +144,16 @@ auto EventLoopLinux::Run() noexcept -> Result<Void> {
   return ResultT{Void{}};
 }
 
-auto EventLoopLinux::AssertInit() const noexcept -> void {
-  assert(context_ != nullptr && "Must call Init() first");
+auto engine::EventLoopLinux::OnMailReceived(const Mail &mail) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  return ResultT{Void{}};
+}
+
+auto engine::EventLoopLinux::OnEpollEventReceived(
+    const struct epoll_event &event) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  return ResultT{Void{}};
 }

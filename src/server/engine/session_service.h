@@ -15,17 +15,18 @@ using SessionId = uint64_t;
 
 class SessionService {
 public:
-  [[nodiscard]] auto Name() const noexcept -> std::string_view { return name_; }
+  [[nodiscard]] auto Name() const noexcept -> std::string_view;
 
   virtual auto OnSessionRegistered(const SessionId session_id,
                                    MailBody &&mail_body) noexcept -> void = 0;
 
-  virtual auto OnSessionClientEventReceived(
-      const SessionId session_id,
-      core::MessageBody &&message_body) noexcept -> void = 0;
+  virtual auto
+  OnSessionClientEventReceived(const SessionId session_id,
+                               core::MessageBody &&message_body) noexcept
+      -> void = 0;
 
 protected:
-  explicit SessionService(const std::string_view name) noexcept : name_{name} {}
+  explicit SessionService(const std::string_view name) noexcept;
 
   virtual ~SessionService() noexcept = default;
   CLASS_KIND_MOVABLE(SessionService);
@@ -33,21 +34,21 @@ protected:
   [[nodiscard]] auto
   IsSessionRegistered(const SessionId session_id) const noexcept -> bool;
 
-  [[nodiscard]] auto
-  MoveSession(const SessionId session_id,
-              const std::string_view to) noexcept -> Result<core::Void>;
+  [[nodiscard]] auto MoveSession(const SessionId session_id,
+                                 const std::string_view to) noexcept
+      -> Result<Void>;
 
-  [[nodiscard]] auto
-  SendServerEvent(const SessionId session_id,
-                  core::MessageBody &&body) noexcept -> Result<core::Void>;
+  [[nodiscard]] auto SendServerEvent(const SessionId session_id,
+                                     core::MessageBody &&body) noexcept
+      -> Result<Void>;
 
 private:
-  [[nodiscard]] auto
-  RegisterSession(const SessionId session_id,
-                  MailBody &&mail_body) noexcept -> Result<core::Void>;
+  [[nodiscard]] auto RegisterSession(const SessionId session_id,
+                                     MailBody &&mail_body) noexcept
+      -> Result<Void>;
 
-  [[nodiscard]] auto
-  UnregisterSession(const SessionId session_id) noexcept -> Result<MailBody>;
+  [[nodiscard]] auto UnregisterSession(const SessionId session_id) noexcept
+      -> Result<MailBody>;
 
   std::unordered_set<SessionId> sessions_;
   std::string name_;

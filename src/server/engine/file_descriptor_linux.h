@@ -1,8 +1,6 @@
 #ifndef SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H
 #define SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H
 
-#include "core/core.h"
-
 #include "common.h"
 
 namespace engine {
@@ -20,11 +18,11 @@ public:
   auto IsValid() const noexcept -> bool;
   auto AsRaw() const noexcept -> Raw;
 
-  [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<core::Void>;
+  [[nodiscard]] auto UpdateNonBlocking() const noexcept -> Result<Void>;
 
   [[nodiscard]] static auto IsValid(const Raw fd) noexcept -> bool;
-  [[nodiscard]] static auto
-  UpdateNonBlocking(const Raw fd) noexcept -> Result<core::Void>;
+  [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
+      -> Result<Void>;
 
 private:
   Raw fd_{kInvalidFd};
@@ -32,8 +30,8 @@ private:
   static constexpr int kInvalidFd{-1};
 };
 
-auto operator<<(std::ostream &os,
-                const FileDescriptorLinux &fd) -> std::ostream &;
+auto operator<<(std::ostream &os, const FileDescriptorLinux &fd)
+    -> std::ostream &;
 
 } // namespace engine
 

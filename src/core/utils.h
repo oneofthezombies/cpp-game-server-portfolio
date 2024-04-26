@@ -33,8 +33,8 @@ private:
 template <typename T>
   requires std::integral<T> || std::floating_point<T>
 [[nodiscard]] auto ParseNumberString(const std::string_view token) noexcept
-    -> ResultBase<T, std::errc> {
-  using ResultT = ResultBase<T, std::errc>;
+    -> Result<T, std::errc> {
+  using ResultT = Result<T, std::errc>;
 
   T value{};
   auto [ptr, ec] =
