@@ -17,7 +17,7 @@ public:
   void operator()(void *impl_raw) const noexcept;
 };
 
-using EngineImpl = std::unique_ptr<void, EngineImplRawDeleter>;
+using EngineImplPtr = std::unique_ptr<void, EngineImplRawDeleter>;
 
 class Engine final {
 public:
@@ -27,8 +27,8 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto
-    Build(const Config &config) const noexcept -> Result<Engine>;
+    [[nodiscard]] auto Build(const Config &config) const noexcept
+        -> Result<Engine>;
   };
 
   ~Engine() noexcept = default;
@@ -37,9 +37,9 @@ public:
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
-  explicit Engine(EngineImpl &&impl) noexcept;
+  explicit Engine(EngineImplPtr &&impl) noexcept;
 
-  EngineImpl impl_;
+  EngineImplPtr impl_;
 };
 
 } // namespace engine

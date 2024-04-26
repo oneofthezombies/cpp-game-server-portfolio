@@ -9,12 +9,15 @@
 
 namespace engine {
 
+struct Config;
+class EventLoop;
+
 class EventLoopHandler {
 public:
   virtual ~EventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoopHandler);
 
-  [[nodiscard]] virtual auto OnInit(const Options &options,
+  [[nodiscard]] virtual auto OnInit(const Config &config,
                                     const EventLoop &event_loop) noexcept
       -> Result<Void> = 0;
 };

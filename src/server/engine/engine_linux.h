@@ -3,9 +3,9 @@
 
 #include <thread>
 
+#include "config.h"
 #include "file_descriptor_linux.h"
 #include "main_event_loop_linux.h"
-#include "options.h"
 #include "session_service.h"
 
 namespace engine {
@@ -18,8 +18,8 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto
-    Build(const Options &options) const noexcept -> Result<EngineLinux>;
+    [[nodiscard]] auto Build(const Config &config) const noexcept
+        -> Result<EngineLinux>;
   };
 
   ~EngineLinux() noexcept = default;
@@ -37,8 +37,9 @@ private:
               std::thread &&battle_thread) noexcept;
 
   [[nodiscard]] auto OnServerFdEvent() noexcept -> Result<Void>;
-  [[nodiscard]] auto OnClientFdEvent(
-      const FileDescriptorLinux::Raw client_fd) noexcept -> Result<Void>;
+  [[nodiscard]] auto
+  OnClientFdEvent(const FileDescriptorLinux::Raw client_fd) noexcept
+      -> Result<Void>;
 
   auto DeleteConnectedSessionOrCloseFd(
       const FileDescriptorLinux::Raw client_fd) noexcept -> void;

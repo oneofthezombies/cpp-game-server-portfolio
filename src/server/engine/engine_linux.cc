@@ -12,9 +12,7 @@
 #include "core/utils.h"
 #include "core/utils_linux.h"
 
-#include "battle_event_loop_linux.h"
 #include "common.h"
-#include "lobby_event_loop_linux.h"
 #include "mail_center.h"
 #include "main_event_loop_linux.h"
 
@@ -48,7 +46,7 @@ auto engine::EngineLinux::AddSessionService(
   return ResultT{Void{}};
 }
 
-auto EngineLinux::Run() noexcept -> Result<Void> {
+auto engine::EngineLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto signal_mail_box_res = MailCenter::Global().Create("signal");
@@ -60,7 +58,7 @@ auto EngineLinux::Run() noexcept -> Result<Void> {
   signal_mail_box_ptr.store(&signal_mail_box);
 
   {
-    Defer reset_signal_mail_box_ptr{
+    core::Defer reset_signal_mail_box_ptr{
         []() { signal_mail_box_ptr.store(nullptr); }};
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
       return ResultT{Error{
@@ -85,7 +83,7 @@ auto EngineLinux::Run() noexcept -> Result<Void> {
   return ResultT{Void{}};
 }
 
-auto EngineLinux::Builder::Build(const uint16_t port) const noexcept
+auto engine::EngineLinux::Builder::Build(const Config &config) const noexcept
     -> Result<EngineLinux> {
   using ResultT = Result<EngineLinux>;
 

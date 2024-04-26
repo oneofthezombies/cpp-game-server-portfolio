@@ -13,8 +13,6 @@ namespace engine {
 
 struct Config final {
   uint16_t port{kUndefinedPort};
-  SessionServicePtr primary_session_service;
-  std::vector<SessionServicePtr> session_services;
 
   static constexpr uint16_t kUndefinedPort{0};
 

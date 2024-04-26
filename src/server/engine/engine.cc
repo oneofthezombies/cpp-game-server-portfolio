@@ -2,9 +2,11 @@
 
 #include <cassert>
 
+using namespace engine;
+
 #if defined(__linux__)
 #include "engine_linux.h"
-using EngineImplRaw = EngineLinux;
+using EngineImpl = EngineLinux;
 #elif defined(_WIN32)
 #error "Not implemented"
 #elif defined(__APPLE__)
@@ -13,13 +15,11 @@ using EngineImplRaw = EngineLinux;
 #error "Unsupported platform"
 #endif
 
-using namespace engine;
-
 namespace {
 
-auto CastEngineImplRaw(void *impl_raw) noexcept -> EngineImplRaw * {
+auto CastEngineImpl(void *impl_raw) noexcept -> EngineImpl * {
   assert(impl_raw != nullptr && "impl must not be nullptr");
-  return reinterpret_cast<EngineImplRaw *>(impl_raw);
+  return reinterpret_cast<EngineImpl *>(impl_raw);
 }
 
 } // namespace
@@ -30,25 +30,25 @@ auto engine::EngineImplRawDeleter::operator()(void *impl_raw) const noexcept
     return;
   }
 
-  delete CastEngineImplRaw(impl_raw);
+  delete CastEngineImpl(impl_raw);
 }
 
-engine::Engine::Engine(EngineImpl &&impl) noexcept : impl_{std::move(impl)} {
+engine::Engine::Engine(EngineImplPtr &&impl) noexcept : impl_{std::move(impl)} {
   assert(impl_.get() != nullptr && "impl must not be nullptr");
 }
 
 auto engine::Engine::Run() noexcept -> Result<Void> {
-  return CastEngineImplRaw(impl_.get())->Run();
+  return CastEngineImpl(impl_.get())->Run();
 }
 
-auto engine::Engine::Builder::Build(const Options &options) const noexcept
+auto engine::Engine::Builder::Build(const Config &config) const noexcept
     -> Result<Engine> {
   using ResultT = Result<Engine>;
 
-  auto result = EngineImplRaw::Builder{}.Build(options);
+  auto result = EngineImpl::Builder{}.Build(config);
   if (result.IsErr()) {
     return ResultT{std::move(result.Err())};
   }
 
-  return ResultT{Engine{EngineImpl{new EngineImplRaw{std::move(result.Ok())}}}};
+  return ResultT{Engine{EngineImplPtr{new EngineImpl{std::move(result.Ok())}}}};
 }
