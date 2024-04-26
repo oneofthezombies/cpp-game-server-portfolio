@@ -15,6 +15,10 @@ RUN apt-get install -y libncurses5-dev
 RUN apt-get install -y libreadline-dev
 RUN apt-get install -y liblzma-dev
 RUN apt-get install -y unzip
+RUN apt-get install -y llvm
+RUN apt-get install -y clang
+RUN apt-get install -y lld
+RUN apt-get install -y clangd
 RUN rm -rf /var/lib/apt/lists/*
 
 # python
