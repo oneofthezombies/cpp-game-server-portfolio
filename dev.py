@@ -44,72 +44,12 @@ def build():
         run(f, ["cmake", "--install", "build"])
 
 
-def docker_build():
-    with open("build.log", "w") as f:
-        run(f, ["docker", "build", "-t", "rpsls-linux-dev", "."])
-        # run(
-        #     f,
-        #     [
-        #         "docker",
-        #         "run",
-        #         "--rm",
-        #         "-v",
-        #         f"{os.getcwd()}:/app",
-        #         "-w",
-        #         "/app",
-        #         "conanio/gcc10",
-        #         "cmake",
-        #         "-S",
-        #         ".",
-        #         "-B",
-        #         "build",
-        #         "-G",
-        #         "Ninja",
-        #         "-DCMAKE_BUILD_TYPE=Debug",
-        #         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-        #         f"-DCMAKE_INSTALL_PREFIX={os.path.join(os.getcwd(), 'local')}",
-        #     ],
-        # )
-        # run(
-        #     f,
-        #     [
-        #         "docker",
-        #         "run",
-        #         "--rm",
-        #         "-v",
-        #         f"{os.getcwd()}:/app",
-        #         "-w",
-        #         "/app",
-        #         "conanio/gcc10",
-        #         "cmake",
-        #         "--build",
-        #         "build",
-        #     ],
-        # )
-        # run(
-        #     f,
-        #     [
-        #         "docker",
-        #         "run",
-        #         "--rm",
-        #         "-v",
-        #         f"{os.getcwd()}:/app",
-        #         "-w",
-        #         "/app",
-        #         "conanio/gcc10",
-        #         "cmake",
-        #         "--install",
-        #         "build",
-        #     ],
-        # )
-
 
 def print_help():
     print("Usage: python dev.py <command>")
     print("Commands:")
     print("  clean        - Clean the project")
     print("  build        - Build the project")
-    print("  docker-build - Build the project using docker")
 
 
 def main():
@@ -120,8 +60,6 @@ def main():
         clean()
     elif command == "build":
         build()
-    elif command == "docker-build":
-        docker_build()
     else:
         print_help()
         sys.exit(1)
