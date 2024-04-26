@@ -10,42 +10,44 @@ enum class MessageKind : uint8_t {
   // undefined message kind
   kUndefined = 0,
 
-  // client to server, a RequestSccess or RequestFailure is expected
-  kRequest = 1,
+  // client to server, a success or failure is expected
+  kClientRequest = 1,
 
   // server to client, after processing request with success
-  kRequestSuccess = 2,
+  kClientRequestSuccess = 2,
 
   // server to client, after processing request with failure
-  kRequestFailure = 3,
+  kClientRequestFailure = 3,
 
   // client to server, no reply expected
-  kRequestNoReply = 4,
+  kClientEvent = 4,
 
-  // server to client, a CommandSuccess or CommandFailure is expected
-  kCommand = 5,
+  // server to client, a success or failure is expected
+  kServerRequest = 5,
 
   // client to server, after processing command with success
-  kCommandSuccess = 6,
+  kServerRequestSuccess = 6,
 
   // client to server, after processing command with failure
-  kCommandFailure = 7,
+  kServerRequestFailure = 7,
 
   // server to client, no reply expected
-  kCommandNoReply = 8,
+  kServerEvent = 8,
 };
 
 auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
+
+using MessageBody = TinyJson;
 
 struct Message final {
   using Id = uint64_t;
 
   MessageKind kind;
   Id id;
-  TinyJson tiny_json;
+  MessageBody body;
 
   explicit Message(const MessageKind kind, const Id id,
-                   TinyJson &&json) noexcept;
+                   MessageBody &&body) noexcept;
   ~Message() noexcept = default;
   CLASS_KIND_MOVABLE(Message);
 

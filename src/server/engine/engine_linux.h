@@ -1,10 +1,14 @@
-#ifndef SERVER_ENGINE_LINUX_H
-#define SERVER_ENGINE_LINUX_H
+#ifndef SERVER_ENGINE_ENGINE_LINUX_H
+#define SERVER_ENGINE_ENGINE_LINUX_H
 
 #include <thread>
 
 #include "file_descriptor_linux.h"
 #include "main_event_loop_linux.h"
+#include "options.h"
+#include "session_service.h"
+
+namespace engine {
 
 class EngineLinux final {
 public:
@@ -14,12 +18,17 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build(const uint16_t port) const noexcept
+    [[nodiscard]] auto Build(const Options &options) const noexcept
         -> Result<EngineLinux>;
   };
 
   ~EngineLinux() noexcept = default;
   CLASS_KIND_MOVABLE(EngineLinux);
+
+  [[nodiscard]] auto AddSessionService(
+      const std::string_view name,
+      std::unique_ptr<SessionService<>> &&session_service) noexcept
+      -> Result<Void>;
 
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
@@ -36,8 +45,9 @@ private:
       const FileDescriptorLinux::Raw client_fd) noexcept -> void;
 
   MainEventLoopLinux main_event_loop_;
-  std::thread lobby_thread_;
-  std::thread battle_thread_;
+  std::unordered_map<std::string, std::thread> session_threads_;
 };
 
-#endif // SERVER_ENGINE_LINUX_H
+} // namespace engine
+
+#endif // SERVER_ENGINE_ENGINE_LINUX_H

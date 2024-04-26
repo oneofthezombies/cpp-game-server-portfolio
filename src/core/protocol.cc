@@ -6,37 +6,37 @@ auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream & {
   case MessageKind::kUndefined:
     os << "Undefined";
     break;
-  case MessageKind::kRequest:
-    os << "Request";
+  case MessageKind::kClientRequest:
+    os << "ClientRequest";
     break;
-  case MessageKind::kRequestSuccess:
-    os << "RequestSuccess";
+  case MessageKind::kClientRequestSuccess:
+    os << "ClientRequestSuccess";
     break;
-  case MessageKind::kRequestFailure:
-    os << "RequestFailure";
+  case MessageKind::kClientRequestFailure:
+    os << "ClientRequestFailure";
     break;
-  case MessageKind::kRequestNoReply:
-    os << "RequestNoReply";
+  case MessageKind::kClientEvent:
+    os << "ClientEvent";
     break;
-  case MessageKind::kCommand:
-    os << "Command";
+  case MessageKind::kServerRequest:
+    os << "ServerRequest";
     break;
-  case MessageKind::kCommandSuccess:
-    os << "CommandSuccess";
+  case MessageKind::kServerRequestSuccess:
+    os << "ServerRequestSuccess";
     break;
-  case MessageKind::kCommandFailure:
-    os << "CommandFailure";
+  case MessageKind::kServerRequestFailure:
+    os << "ServerRequestFailure";
     break;
-  case MessageKind::kCommandNoReply:
-    os << "CommandNoReply";
+  case MessageKind::kServerEvent:
+    os << "ServerEvent";
     break;
   }
   return os;
 }
 
 Message::Message(const MessageKind kind, const Id id,
-                 TinyJson &&tiny_json) noexcept
-    : kind{kind}, id{id}, tiny_json{std::move(tiny_json)} {}
+                 MessageBody &&body) noexcept
+    : kind{kind}, id{id}, body{std::move(body)} {}
 
 auto Message::FromRaw(const std::string_view raw) -> std::optional<Message> {
   if (raw.size() < sizeof(MessageKind)) {
@@ -80,8 +80,8 @@ auto operator<<(std::ostream &os, const Message &message) noexcept
   os << "id=";
   os << message.id;
   os << ", ";
-  os << "tiny_json=";
-  os << message.tiny_json;
+  os << "body=";
+  os << message.body;
   os << "}";
   return os;
 }

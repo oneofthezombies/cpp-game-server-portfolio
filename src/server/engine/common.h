@@ -1,10 +1,11 @@
-#ifndef SERVER_COMMON_H
-#define SERVER_COMMON_H
+#ifndef SERVER_ENGINE_COMMON_H
+#define SERVER_ENGINE_COMMON_H
 
 #include <cstdint>
 
 #include "core/core.h"
-#include "core/utils.h"
+
+namespace engine {
 
 /**
  * Server symbols start from 1,000,000
@@ -12,6 +13,8 @@
 enum class Symbol : int32_t {
   kBegin = 1'000'000,
   // Add symbols after kBegin
+
+  kOptionsPortUndefined,
 
   kHelpRequested,
   kPortArgNotFound,
@@ -67,4 +70,6 @@ using Error = ErrorBase<Symbol>;
 
 template <typename T> using Result = ResultBase<T, Error>;
 
-#endif // SERVER_COMMON_H
+} // namespace engine
+
+#endif // SERVER_ENGINE_COMMON_H

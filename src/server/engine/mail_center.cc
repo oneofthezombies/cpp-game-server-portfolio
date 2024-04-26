@@ -8,28 +8,31 @@
 
 #include "common.h"
 
-Mail::Mail(std::string &&from, std::string &&to, MailBody &&body) noexcept
+using namespace engine;
+
+engine::Mail::Mail(std::string &&from, std::string &&to,
+                   MailBody &&body) noexcept
     : from{std::move(from)}, to{std::move(to)}, body{std::move(body)} {}
 
-auto Mail::Clone() const noexcept -> Mail {
+auto engine::Mail::Clone() const noexcept -> Mail {
   auto from = this->from;
   auto to = this->to;
-  auto body = this->body;
+  auto body = this->body.Clone();
   return Mail{std::move(from), std::move(to), std::move(body)};
 }
 
-MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
+engine::MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
     : tx(std::move(tx)), rx(std::move(rx)) {}
 
-MailCenter::MailCenter(Tx<MailBody> &&run_tx) noexcept
+engine::MailCenter::MailCenter(Tx<MailBody> &&run_tx) noexcept
     : run_tx_{std::move(run_tx)} {}
 
-auto MailCenter::Shutdown() noexcept -> void {
-  run_tx_.Send({{"shutdown", ""}});
+auto engine::MailCenter::Shutdown() noexcept -> void {
+  run_tx_.Send(std::move(TinyJson{}.Set("shutdown", "")));
   run_thread_.join();
 }
 
-auto MailCenter::Create(const std::string_view name) noexcept
+auto engine::MailCenter::Create(const std::string_view name) noexcept
     -> Result<MailBox> {
   using ResultT = Result<MailBox>;
 
@@ -55,7 +58,8 @@ auto MailCenter::Create(const std::string_view name) noexcept
   }
 }
 
-auto MailCenter::Delete(const std::string_view name) noexcept -> Result<Void> {
+auto engine::MailCenter::Delete(const std::string_view name) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
   std::string name_str{name};
@@ -71,8 +75,8 @@ auto MailCenter::Delete(const std::string_view name) noexcept -> Result<Void> {
   return ResultT{Void{}};
 }
 
-auto MailCenter::ValidateName(const std::string_view name) const noexcept
-    -> Result<Void> {
+auto engine::MailCenter::ValidateName(
+    const std::string_view name) const noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (name.empty()) {
@@ -94,12 +98,11 @@ auto MailCenter::ValidateName(const std::string_view name) const noexcept
   return ResultT{Void{}};
 }
 
-auto MailCenter::RunOnThread(Rx<MailBody> &&run_rx) noexcept -> void {
+auto engine::MailCenter::RunOnThread(Rx<MailBody> &&run_rx) noexcept -> void {
   while (true) {
     auto run_event = run_rx.TryReceive();
     if (run_event) {
-      if (auto shutdown = run_event->find("shutdown");
-          shutdown != run_event->end()) {
+      if (auto value = run_event->Get("shutdown"); value) {
         break;
       }
     }
@@ -136,16 +139,17 @@ auto MailCenter::RunOnThread(Rx<MailBody> &&run_rx) noexcept -> void {
   }
 }
 
-auto MailCenter::StartRunThread(Rx<MailBody> &&run_rx) noexcept -> void {
+auto engine::MailCenter::StartRunThread(Rx<MailBody> &&run_rx) noexcept
+    -> void {
   run_thread_ = std::thread{RunThreadMain, std::ref(*this), std::move(run_rx)};
 }
 
-auto MailCenter::RunThreadMain(MailCenter &mail_center,
-                               Rx<MailBody> &&run_rx) noexcept -> void {
+auto engine::MailCenter::RunThreadMain(MailCenter &mail_center,
+                                       Rx<MailBody> &&run_rx) noexcept -> void {
   mail_center.RunOnThread(std::move(run_rx));
 }
 
-auto MailCenter::Global() noexcept -> MailCenter & {
+auto engine::MailCenter::Global() noexcept -> MailCenter & {
   static std::unique_ptr<MailCenter> instance{nullptr};
   static std::once_flag flag;
   std::call_once(flag, [] {

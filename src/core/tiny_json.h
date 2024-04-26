@@ -44,7 +44,9 @@ public:
 
   auto AsRaw() const noexcept -> const Raw &;
 
-  auto ToString() const noexcept -> std::string;
+  [[nodiscard]] auto Clone() const noexcept -> TinyJson;
+
+  [[nodiscard]] auto ToString() const noexcept -> std::string;
 
   [[nodiscard]] static auto Parse(const std::string_view tiny_json_str) noexcept
       -> std::optional<TinyJson>;

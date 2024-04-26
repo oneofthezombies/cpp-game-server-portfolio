@@ -1,15 +1,18 @@
-#ifndef SERVER_MAIL_CENTER_H
-#define SERVER_MAIL_CENTER_H
+#ifndef SERVER_ENGINE_MAIL_CENTER_H
+#define SERVER_ENGINE_MAIL_CENTER_H
 
 #include <thread>
 #include <unordered_map>
 
 #include "core/core.h"
 #include "core/spsc_channel.h"
+#include "core/tiny_json.h"
 
 #include "common.h"
 
-using MailBody = std::unordered_map<std::string, std::string>;
+namespace engine {
+
+using MailBody = TinyJson;
 
 struct Mail final {
   std::string from;
@@ -69,4 +72,6 @@ private:
   std::thread run_thread_;
 };
 
-#endif // SERVER_MAIL_CENTER_H
+} // namespace engine
+
+#endif // SERVER_ENGINE_MAIL_CENTER_H

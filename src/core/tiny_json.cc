@@ -17,6 +17,11 @@ auto TinyJson::Get(const std::string_view key) const noexcept
 
 auto TinyJson::AsRaw() const noexcept -> const Raw & { return raw_; }
 
+auto TinyJson::Clone() const noexcept -> TinyJson {
+  auto raw = raw_;
+  return TinyJson{std::move(raw)};
+}
+
 auto TinyJson::ToString() const noexcept -> std::string {
   std::ostringstream oss;
   oss << '{';

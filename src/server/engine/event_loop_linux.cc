@@ -7,12 +7,15 @@
 #include "core/tiny_json.h"
 
 #include "mail_center.h"
+#include "server/session_service.h"
 #include "utils_linux.h"
 
 EventLoopLinux::Context::Context(MailBox &&mail_box, std::string &&name,
-                                 FileDescriptorLinux &&epoll_fd) noexcept
+                                 FileDescriptorLinux &&epoll_fd,
+                                 SessionServicePtr &&session_service) noexcept
     : mail_box{std::move(mail_box)}, name{std::move(name)},
-      epoll_fd{std::move(epoll_fd)} {}
+      epoll_fd{std::move(epoll_fd)},
+      session_service{std::move(session_service)} {}
 
 auto EventLoopLinux::Context::SendMail(std::string &&to,
                                        MailBody &&body) noexcept -> void {
@@ -21,7 +24,8 @@ auto EventLoopLinux::Context::SendMail(std::string &&to,
 }
 
 auto EventLoopLinux::Context::Builder::Build(
-    const std::string_view name) const noexcept -> Result<Context> {
+    const std::string_view name,
+    SessionServicePtr &&session_service) const noexcept -> Result<Context> {
   using ResultT = Result<Context>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
@@ -36,19 +40,18 @@ auto EventLoopLinux::Context::Builder::Build(
     return ResultT{std::move(mail_box_res.Err())};
   }
 
-  return ResultT{
-      Context{std::move(mail_box_res.Ok()), std::string{name},
-              std::move(epoll_fd)},
-  };
+  return ResultT{Context{std::move(mail_box_res.Ok()), std::string{name},
+                         std::move(epoll_fd), std::move(session_service)}};
 }
 
-auto EventLoopLinux::Init(const std::string_view name) noexcept
+auto EventLoopLinux::Init(const std::string_view name,
+                          SessionServicePtr &&session_service) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(context_ == nullptr && "Must call Init() only once");
 
-  auto context_res = Context::Builder{}.Build(name);
+  auto context_res = Context::Builder{}.Build(name, std::move(session_service));
   if (context_res.IsErr()) {
     return ResultT{std::move(context_res.Err())};
   }
@@ -132,7 +135,7 @@ auto EventLoopLinux::Run() noexcept -> Result<Void> {
   while (!shutdown) {
     auto mail = context_->mail_box.rx.TryReceive();
     if (mail) {
-      if (mail->body.find("shutdown") != mail->body.end()) {
+      if (auto value = mail->body.Get("shutdown"); value) {
         shutdown = true;
       }
 

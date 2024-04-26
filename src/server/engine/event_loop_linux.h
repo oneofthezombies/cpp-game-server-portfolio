@@ -5,6 +5,7 @@
 
 #include "file_descriptor_linux.h"
 #include "mail_center.h"
+#include "session_service.h"
 
 class EventLoopLinux {
 public:
@@ -15,16 +16,20 @@ public:
       ~Builder() noexcept = default;
       CLASS_KIND_PINNABLE(Builder);
 
-      [[nodiscard]] auto Build(const std::string_view name) const noexcept
+      [[nodiscard]] auto
+      Build(const std::string_view name,
+            SessionServicePtr &&session_service) const noexcept
           -> Result<Context>;
     };
 
     MailBox mail_box;
     std::string name;
     FileDescriptorLinux epoll_fd;
+    SessionServicePtr session_service;
 
     explicit Context(MailBox &&mail_box, std::string &&name,
-                     FileDescriptorLinux &&epoll_fd) noexcept;
+                     FileDescriptorLinux &&epoll_fd,
+                     SessionServicePtr &&session_service) noexcept;
     ~Context() noexcept = default;
     CLASS_KIND_MOVABLE(Context);
 
@@ -44,10 +49,11 @@ public:
                            const std::string_view data) noexcept
       -> Result<Void>;
 
-  [[nodiscard]] virtual auto Init(const std::string_view name) noexcept
+  [[nodiscard]] virtual auto Init(const std::string_view name,
+                                  SessionServicePtr &&session_service) noexcept
       -> Result<Void>;
 
-  [[nodiscard]] virtual auto Run() noexcept -> Result<Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
   [[nodiscard]] virtual auto OnMailReceived(const Mail &mail) noexcept
       -> Result<Void> = 0;

@@ -18,6 +18,8 @@
 #include "mail_center.h"
 #include "main_event_loop_linux.h"
 
+using namespace engine;
+
 std::atomic<const MailBox *> signal_mail_box_ptr{nullptr};
 
 auto OnSignal(int signal) -> void {
@@ -30,12 +32,21 @@ auto OnSignal(int signal) -> void {
   std::cout << "Signal received: " << signal << std::endl;
 }
 
-EngineLinux::EngineLinux(MainEventLoopLinux &&main_event_loop,
-                         std::thread &&lobby_thread,
-                         std::thread &&battle_thread) noexcept
+engine::EngineLinux::EngineLinux(MainEventLoopLinux &&main_event_loop,
+                                 std::thread &&lobby_thread,
+                                 std::thread &&battle_thread) noexcept
     : main_event_loop_{std::move(main_event_loop)},
       lobby_thread_{std::move(lobby_thread)},
       battle_thread_{std::move(battle_thread)} {}
+
+auto engine::EngineLinux::AddSessionService(
+    const std::string_view name,
+    std::unique_ptr<SessionService<>> &&session_service) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  return ResultT{Void{}};
+}
 
 auto EngineLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
