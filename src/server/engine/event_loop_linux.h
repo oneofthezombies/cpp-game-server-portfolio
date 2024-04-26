@@ -27,10 +27,13 @@ public:
   ~EventLoopLinux() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoopLinux);
 
+  [[nodiscard]] auto Init(const Config &config) noexcept -> Result<Void>;
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
+  [[nodiscard]] auto Name() const noexcept -> std::string_view;
 
-  [[nodiscard]] auto Add(const FileDescriptorLinux::Raw fd,
-                         const uint32_t events) noexcept -> Result<Void>;
+  [[nodiscard]] auto Add(const SessionId session_id,
+                         const uint32_t events) const noexcept -> Result<Void>;
+
   [[nodiscard]] auto Delete(const FileDescriptorLinux::Raw fd) noexcept
       -> Result<Void>;
   [[nodiscard]] auto Write(const FileDescriptorLinux::Raw fd,
@@ -54,6 +57,10 @@ private:
   explicit EventLoopLinux(MailBox &&mail_box, std::string &&name,
                           FileDescriptorLinux &&epoll_fd,
                           EventLoopHandlerPtr &&handler) noexcept;
+
+  [[nodiscard]] auto
+  ParseSessionIdToFd(const SessionId session_id) const noexcept
+      -> Result<FileDescriptorLinux::Raw>;
 };
 
 } // namespace engine

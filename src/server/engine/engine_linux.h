@@ -2,11 +2,11 @@
 #define SERVER_ENGINE_ENGINE_LINUX_H
 
 #include <thread>
+#include <unordered_map>
 
 #include "config.h"
+#include "event_loop_handler.h"
 #include "file_descriptor_linux.h"
-#include "main_event_loop_linux.h"
-#include "session_service.h"
 
 namespace engine {
 
@@ -18,23 +18,21 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build(const Config &config) const noexcept
+    [[nodiscard]] auto Build(Config &&config) const noexcept
         -> Result<EngineLinux>;
   };
 
   ~EngineLinux() noexcept = default;
   CLASS_KIND_MOVABLE(EngineLinux);
 
-  [[nodiscard]] auto AddSessionService(
-      const std::string_view name,
-      std::unique_ptr<SessionService<>> &&session_service) noexcept
+  [[nodiscard]] auto AddEventLoop(std::string &&name,
+                                  EventLoopHandlerPtr &&handler) noexcept
       -> Result<Void>;
 
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
 private:
-  EngineLinux(MainEventLoopLinux &&main_event_loop, std::thread &&lobby_thread,
-              std::thread &&battle_thread) noexcept;
+  explicit EngineLinux(Config &&config) noexcept;
 
   [[nodiscard]] auto OnServerFdEvent() noexcept -> Result<Void>;
   [[nodiscard]] auto
@@ -44,8 +42,10 @@ private:
   auto DeleteConnectedSessionOrCloseFd(
       const FileDescriptorLinux::Raw client_fd) noexcept -> void;
 
-  MainEventLoopLinux main_event_loop_;
-  std::unordered_map<std::string, std::thread> session_threads_;
+  static auto EventLoopThreadMain(EventLoop &event_loop) noexcept -> void;
+
+  std::unordered_map<std::string, std::thread> event_loop_threads_;
+  Config config_;
 };
 
 } // namespace engine

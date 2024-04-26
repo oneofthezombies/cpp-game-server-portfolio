@@ -37,15 +37,22 @@ engine::Engine::Engine(EngineImplPtr &&impl) noexcept : impl_{std::move(impl)} {
   assert(impl_.get() != nullptr && "impl must not be nullptr");
 }
 
+auto engine::Engine::AddEventLoop(std::string &&name,
+                                  EventLoopHandlerPtr &&handler) noexcept
+    -> Result<Void> {
+  return CastEngineImpl(impl_.get())
+      ->AddEventLoop(std::move(name), std::move(handler));
+}
+
 auto engine::Engine::Run() noexcept -> Result<Void> {
   return CastEngineImpl(impl_.get())->Run();
 }
 
-auto engine::Engine::Builder::Build(const Config &config) const noexcept
+auto engine::Engine::Builder::Build(Config &&config) const noexcept
     -> Result<Engine> {
   using ResultT = Result<Engine>;
 
-  auto result = EngineImpl::Builder{}.Build(config);
+  auto result = EngineImpl::Builder{}.Build(std::move(config));
   if (result.IsErr()) {
     return ResultT{std::move(result.Err())};
   }

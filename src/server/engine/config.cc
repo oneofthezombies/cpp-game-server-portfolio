@@ -9,9 +9,5 @@ auto engine::Config::Validate() const noexcept -> Result<Void> {
     return ResultT{Error{Symbol::kConfigPortUndefined}};
   }
 
-  if (primary_session_service == nullptr) {
-    return ResultT{Error{Symbol::kConfigPrimarySessionServiceNotFound}};
-  }
-
   return ResultT{Void{}};
 }

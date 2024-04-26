@@ -1,10 +1,9 @@
 #include "engine_linux.h"
 
 #include <atomic>
-#include <iostream>
-#include <signal.h>
 
 #include <netinet/in.h>
+#include <signal.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
@@ -13,8 +12,8 @@
 #include "core/utils_linux.h"
 
 #include "common.h"
+#include "event_loop.h"
 #include "mail_center.h"
-#include "main_event_loop_linux.h"
 
 using namespace engine;
 
@@ -23,26 +22,53 @@ std::atomic<const MailBox *> signal_mail_box_ptr{nullptr};
 auto OnSignal(int signal) -> void {
   if (signal == SIGINT) {
     if (signal_mail_box_ptr != nullptr) {
-      (*signal_mail_box_ptr).tx.Send(Mail{"signal", "all", {{"shutdown", ""}}});
+      (*signal_mail_box_ptr)
+          .tx.Send(Mail{"signal", "all",
+                        std::move(core::TinyJson{}.Set("shutdown", ""))});
     }
   }
 
-  std::cout << "Signal received: " << signal << std::endl;
+  core::TinyJson{}
+      .Set("reason", "signal_received")
+      .Set("signal", signal)
+      .LogLn();
 }
 
-engine::EngineLinux::EngineLinux(MainEventLoopLinux &&main_event_loop,
-                                 std::thread &&lobby_thread,
-                                 std::thread &&battle_thread) noexcept
-    : main_event_loop_{std::move(main_event_loop)},
-      lobby_thread_{std::move(lobby_thread)},
-      battle_thread_{std::move(battle_thread)} {}
+auto engine::EngineLinux::Builder::Build(Config &&config) const noexcept
+    -> Result<EngineLinux> {
+  using ResultT = Result<EngineLinux>;
 
-auto engine::EngineLinux::AddSessionService(
-    const std::string_view name,
-    std::unique_ptr<SessionService<>> &&session_service) noexcept
+  return ResultT{EngineLinux{std::move(config)}};
+}
+
+engine::EngineLinux::EngineLinux(Config &&config) noexcept
+    : config_{std::move(config)} {}
+
+auto engine::EngineLinux::AddEventLoop(std::string &&name,
+                                       EventLoopHandlerPtr &&handler) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
+  if (auto it = event_loop_threads_.find(name);
+      it != event_loop_threads_.end()) {
+    return ResultT{Error{Symbol::kEngineEventLoopAlreadyExists,
+                         core::TinyJson{}.Set("name", name).ToString()}};
+  }
+
+  auto event_loop_res =
+      EventLoop::Builder{}.Build(std::string{name}, std::move(handler));
+  if (event_loop_res.IsErr()) {
+    return ResultT{std::move(event_loop_res.Err())};
+  }
+
+  auto &event_loop = event_loop_res.Ok();
+  if (auto res = event_loop.Init(config_); res.IsErr()) {
+    return ResultT{std::move(res.Err())};
+  }
+
+  event_loop_threads_.emplace(
+      std::move(name),
+      std::thread{EngineLinux::EventLoopThreadMain, std::move(event_loop)});
   return ResultT{Void{}};
 }
 
@@ -61,9 +87,11 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
     core::Defer reset_signal_mail_box_ptr{
         []() { signal_mail_box_ptr.store(nullptr); }};
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
-      return ResultT{Error{
-          Symbol::kLinuxSignalSetFailed,
-          TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
+      return ResultT{
+          Error{Symbol::kLinuxSignalSetFailed,
+                core::TinyJson{}
+                    .Set("linux_error", core::LinuxError::FromErrno())
+                    .ToString()}};
     }
 
     if (auto res = main_event_loop_.Run(); res.IsErr()) {
@@ -71,61 +99,25 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
     }
 
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
-      return ResultT{Error{
-          Symbol::kLinuxSignalResetFailed,
-          TinyJson{}.Set("linux_error", LinuxError::FromErrno()).ToString()}};
+      return ResultT{
+          Error{Symbol::kLinuxSignalResetFailed,
+                core::TinyJson{}
+                    .Set("linux_error", core::LinuxError::FromErrno())
+                    .ToString()}};
     }
   }
 
-  battle_thread_.join();
-  lobby_thread_.join();
   MailCenter::Global().Shutdown();
   return ResultT{Void{}};
 }
 
-auto engine::EngineLinux::Builder::Build(const Config &config) const noexcept
-    -> Result<EngineLinux> {
-  using ResultT = Result<EngineLinux>;
-
-  auto main_event_loop_res = MainEventLoopLinux::Builder{}.Build(port);
-  if (main_event_loop_res.IsErr()) {
-    return ResultT{std::move(main_event_loop_res.Err())};
+auto engine::EngineLinux::EventLoopThreadMain(EventLoop &event_loop) noexcept
+    -> void {
+  if (auto res = event_loop.Run(); res.IsErr()) {
+    core::TinyJson{}
+        .Set("reason", "event_loop_thread_main_failed")
+        .Set("name", event_loop.Name())
+        .Set("error", res.Err())
+        .LogLn();
   }
-
-  auto &main_event_loop = main_event_loop_res.Ok();
-  if (auto res = main_event_loop.Init("main"); res.IsErr()) {
-    return ResultT{std::move(res.Err())};
-  }
-
-  auto lobby_event_loop = LobbyEventLoopLinux{};
-  if (auto res = lobby_event_loop.Init("lobby"); res.IsErr()) {
-    return ResultT{std::move(res.Err())};
-  }
-
-  auto lobby_thread =
-      std::thread{[](LobbyEventLoopLinux &&lobby_event_loop) {
-                    if (auto res = lobby_event_loop.Run(); res.IsErr()) {
-                      std::cout << res.Err() << std::endl;
-                    }
-                    std::cout << "lobby thread exit" << std::endl;
-                  },
-                  std::move(lobby_event_loop)};
-
-  auto battle_event_loop = BattleEventLoopLinux{};
-  if (auto res = battle_event_loop.Init("battle"); res.IsErr()) {
-    return ResultT{std::move(res.Err())};
-  }
-
-  auto battle_thread =
-      std::thread{[](BattleEventLoopLinux &&battle_event_loop) {
-                    if (auto res = battle_event_loop.Run(); res.IsErr()) {
-                      std::cout << res.Err() << std::endl;
-                    }
-                    std::cout << "battle thread exit" << std::endl;
-                  },
-                  std::move(battle_event_loop)};
-
-  return ResultT{EngineLinux{std::move(main_event_loop),
-                             std::move(lobby_thread),
-                             std::move(battle_thread)}};
 }

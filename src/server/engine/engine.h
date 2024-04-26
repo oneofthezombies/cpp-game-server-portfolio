@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "event_loop_handler.h"
 
 namespace engine {
 
@@ -27,12 +28,15 @@ public:
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build(const Config &config) const noexcept
-        -> Result<Engine>;
+    [[nodiscard]] auto Build(Config &&config) const noexcept -> Result<Engine>;
   };
 
   ~Engine() noexcept = default;
   CLASS_KIND_MOVABLE(Engine);
+
+  [[nodiscard]] auto AddEventLoop(std::string &&name,
+                                  EventLoopHandlerPtr &&handler) noexcept
+      -> Result<Void>;
 
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 

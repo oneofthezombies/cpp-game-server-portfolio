@@ -29,15 +29,6 @@ auto engine::EventLoopImplRawDeleter::operator()(void *impl_raw) const noexcept
   delete CastEventLoopImpl(impl_raw);
 }
 
-engine::EventLoop::EventLoop(EventLoopImplPtr &&impl) noexcept
-    : impl_{std::move(impl)} {
-  assert(impl_.get() != nullptr && "impl must not be nullptr");
-}
-
-auto engine::EventLoop::Run() noexcept -> Result<Void> {
-  return CastEventLoopImpl(impl_.get())->Run();
-}
-
 auto EventLoop::Builder::Build(std::string &&name,
                                EventLoopHandlerPtr &&handler) const noexcept
     -> Result<EventLoop> {
@@ -51,4 +42,27 @@ auto EventLoop::Builder::Build(std::string &&name,
 
   return ResultT{
       EventLoop{EventLoopImplPtr{new EventLoopImpl{std::move(result.Ok())}}}};
+}
+
+engine::EventLoop::EventLoop(EventLoopImplPtr &&impl) noexcept
+    : impl_{std::move(impl)} {
+  assert(impl_.get() != nullptr && "impl must not be nullptr");
+}
+
+auto engine::EventLoop::Init(const Config &config) noexcept -> Result<Void> {
+  return CastEventLoopImpl(impl_.get())->Init(config);
+}
+
+auto engine::EventLoop::Run() noexcept -> Result<Void> {
+  return CastEventLoopImpl(impl_.get())->Run();
+}
+
+auto engine::EventLoop::Name() const noexcept -> std::string_view {
+  return CastEventLoopImpl(impl_.get())->Name();
+}
+
+auto engine::EventLoop::Add(const SessionId session_id,
+                            const uint32_t events) const noexcept
+    -> Result<Void> {
+  return CastEventLoopImpl(impl_.get())->Add(session_id, events);
 }

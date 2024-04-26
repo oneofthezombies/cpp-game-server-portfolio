@@ -17,6 +17,12 @@ enum class Symbol : int32_t {
   kConfigPortUndefined,
   kConfigPrimarySessionServiceNotFound,
 
+  kEngineEventLoopAlreadyExists,
+
+  kMainEventLoopHandlerServerSocketFailed,
+  kMainEventLoopHandlerServerSocketBindFailed,
+  kMainEventLoopHandlerServerSocketListenFailed,
+
   kHelpRequested,
   kPortArgNotFound,
   kPortValueNotFound,
@@ -35,21 +41,7 @@ enum class Symbol : int32_t {
   kEventLoopLinuxEpollWaitFailed,
   kEventLoopLinuxWriteFailed,
   kEventLoopLinuxWriteClosed,
-
-  kMainEventLoopLinuxServerSocketFailed,
-  kMainEventLoopLinuxServerSocketBindFailed,
-  kMainEventLoopLinuxServerSocketListenFailed,
-  kMainEventLoopLinuxServerSocketAcceptFailed,
-  kMainEventLoopLinuxUnexpectedFd,
-
-  kLobbyEventLoopLinuxClientFdConversionFailed,
-  kLobbyEventLoopLinuxClientFdAlreadyExists,
-
-  kBattleEventLoopLinuxMatchedClientFdsParseFailed,
-  kBattleEventLoopLinuxMatchedClientFdsKeyNotFound,
-  kBattleEventLoopLinuxClientFdConversionFailed,
-  kBattleEventLoopLinuxClientFdAlreadyExists,
-  kBattleEventLoopLinuxHandlerNotFound,
+  kEventLoopLinuxParseSessionIdToFdFailed,
 
   kFileDescriptorLinuxGetStatusFailed,
   kFileDescriptorLinuxSetStatusFailed,
@@ -57,8 +49,6 @@ enum class Symbol : int32_t {
 
   kLinuxSignalSetFailed,
   kLinuxSignalResetFailed,
-
-  kThreadWorkerSessionAlreadyExists,
 
   // Add symbols before kEnd
   kEnd
@@ -72,6 +62,8 @@ using Error = core::Error<Symbol>;
 template <typename T> using Result = core::Result<T, Error>;
 
 using Void = core::Void;
+
+using SessionId = uint64_t;
 
 } // namespace engine
 

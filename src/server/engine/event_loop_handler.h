@@ -14,6 +14,7 @@ class EventLoop;
 
 class EventLoopHandler {
 public:
+  explicit EventLoopHandler() noexcept = default;
   virtual ~EventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoopHandler);
 
