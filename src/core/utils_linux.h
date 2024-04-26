@@ -20,7 +20,7 @@ private:
   LinuxError(const int code, const std::string_view message) noexcept;
 };
 
-auto operator<<(std::ostream &os, const LinuxError &error) noexcept
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const LinuxError &error) noexcept -> std::ostream &;
 
 #endif // CORE_UTILS_LINUX_H

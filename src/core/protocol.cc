@@ -71,8 +71,8 @@ auto Message::BuildRaw(const MessageKind kind, const Id id,
   return raw;
 }
 
-auto operator<<(std::ostream &os, const Message &message) noexcept
-    -> std::ostream & {
+auto operator<<(std::ostream &os,
+                const Message &message) noexcept -> std::ostream & {
   os << "Message{";
   os << "kind=";
   os << message.kind;

@@ -1,5 +1,7 @@
-file(GLOB_RECURSE SERVER_SOURCES "*.cc")
-add_executable(server ${SERVER_SOURCES})
+file(GLOB_RECURSE SERVER_ENGINE_SOURCES "*.cc")
+add_library(server_engine STATIC ${SERVER_ENGINE_SOURCES})
 
-target_include_directories(server PRIVATE ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(server core)
+target_include_directories(server_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_include_directories(server_engine PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(server_engine core)

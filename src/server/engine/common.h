@@ -63,8 +63,8 @@ enum class Symbol : int32_t {
   kEnd
 };
 
-auto operator<<(std::ostream &os, const Symbol symbol) noexcept
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const Symbol symbol) noexcept -> std::ostream &;
 
 using Error = ErrorBase<Symbol>;
 

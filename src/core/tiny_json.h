@@ -57,8 +57,8 @@ private:
   friend class TinyJsonParser;
 };
 
-auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const TinyJson &tiny_json) noexcept -> std::ostream &;
 
 struct TinyJsonParserOptions {
   bool allow_trailing_comma{false};
@@ -85,16 +85,15 @@ private:
   [[nodiscard]] auto ParseValue() noexcept -> std::optional<std::string>;
   [[nodiscard]] auto ParseString() noexcept -> std::optional<std::string>;
 
-  [[nodiscard]] auto Current(const std::source_location location =
-                                 std::source_location::current()) const noexcept
-      -> std::optional<char>;
-  [[nodiscard]] auto Consume(const char c,
-                             const std::source_location location =
-                                 std::source_location::current()) noexcept
-      -> bool;
-  [[nodiscard]] auto Advance(const std::source_location location =
-                                 std::source_location::current()) noexcept
-      -> bool;
+  [[nodiscard]] auto
+  Current(const std::source_location location = std::source_location::current())
+      const noexcept -> std::optional<char>;
+  [[nodiscard]] auto
+  Consume(const char c, const std::source_location location =
+                            std::source_location::current()) noexcept -> bool;
+  [[nodiscard]] auto
+  Advance(const std::source_location location =
+              std::source_location::current()) noexcept -> bool;
   auto Trim() noexcept -> void;
 
   auto Log(const std::string_view message,

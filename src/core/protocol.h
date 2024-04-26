@@ -1,6 +1,7 @@
 #ifndef CORE_PROTOCOL_H
 #define CORE_PROTOCOL_H
 
+#include <cstdint>
 #include <optional>
 
 #include "core.h"
@@ -51,15 +52,15 @@ struct Message final {
   ~Message() noexcept = default;
   CLASS_KIND_MOVABLE(Message);
 
-  [[nodiscard]] static auto FromRaw(const std::string_view raw)
-      -> std::optional<Message>;
+  [[nodiscard]] static auto
+  FromRaw(const std::string_view raw) -> std::optional<Message>;
 
-  [[nodiscard]] static auto BuildRaw(const MessageKind kind, const Id id,
-                                     std::string &&tiny_json_str) noexcept
-      -> std::string;
+  [[nodiscard]] static auto
+  BuildRaw(const MessageKind kind, const Id id,
+           std::string &&tiny_json_str) noexcept -> std::string;
 };
 
-auto operator<<(std::ostream &os, const Message &message) noexcept
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const Message &message) noexcept -> std::ostream &;
 
 #endif // CORE_PROTOCOL_H

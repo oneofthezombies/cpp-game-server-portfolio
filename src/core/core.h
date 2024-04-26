@@ -1,5 +1,5 @@
-#ifndef CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H
-#define CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H
+#ifndef CORE_CORE_H
+#define CORE_CORE_H
 
 #include <ostream>
 #include <string>
@@ -14,14 +14,14 @@
 #define CLASS_KIND_MOVABLE(cls)                                                \
   cls(const cls &) = delete;                                                   \
   cls(cls &&) noexcept = default;                                              \
-  auto operator=(const cls &) -> cls & = delete;                               \
+  auto operator=(const cls &)->cls & = delete;                                 \
   auto operator=(cls &&) noexcept -> cls & = default
 
 #define CLASS_KIND_PINNABLE(cls)                                               \
   cls(const cls &) = delete;                                                   \
   cls(cls &&) = delete;                                                        \
-  auto operator=(const cls &) -> cls & = delete;                               \
-  auto operator=(cls &&) -> cls & = delete
+  auto operator=(const cls &)->cls & = delete;                                 \
+  auto operator=(cls &&)->cls & = delete
 
 template <typename T, typename E> class ResultBase final {
 public:
@@ -57,8 +57,8 @@ private:
 };
 
 template <typename T, typename E>
-auto operator<<(std::ostream &os, const ResultBase<T, E> &result)
-    -> std::ostream & {
+auto operator<<(std::ostream &os,
+                const ResultBase<T, E> &result) -> std::ostream & {
   os << "Result{";
   if (result.IsOk()) {
     os << "Ok{";
@@ -108,4 +108,4 @@ struct Void final {
 
 auto operator<<(std::ostream &os, const Void &) -> std::ostream &;
 
-#endif // CPP_GAME_SERVER_PORTFOLIO_CORE_CORE_H
+#endif // CORE_CORE_H
