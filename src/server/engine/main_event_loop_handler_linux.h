@@ -17,6 +17,10 @@ public:
                                     const EventLoop &event_loop) noexcept
       -> Result<Void> override;
 
+  [[nodiscard]] virtual auto OnMail(const EventLoopContext &context,
+                                    Mail &&mail) noexcept
+      -> Result<Void> override;
+
   [[nodiscard]] virtual auto OnSessionEvent(const EventLoopContext &context,
                                             const SessionId session_id,
                                             const uint32_t events) noexcept

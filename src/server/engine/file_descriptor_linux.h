@@ -25,6 +25,9 @@ public:
   [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
       -> Result<Void>;
 
+  [[nodiscard]] static auto ParseFdToSessionId(const Raw fd) noexcept
+      -> Result<SessionId>;
+
   [[nodiscard]] static auto
   ParseSessionIdToFd(const SessionId session_id) noexcept
       -> Result<FileDescriptorLinux::Raw>;

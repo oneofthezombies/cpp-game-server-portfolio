@@ -44,6 +44,7 @@ enum class Symbol : int32_t {
   kFileDescriptorLinuxGetStatusFailed,
   kFileDescriptorLinuxSetStatusFailed,
   kFileDescriptorLinuxCloseFailed,
+  kFileDescriptorLinuxParseFdToSessionIdFailed,
   kFileDescriptorLinuxParseSessionIdToFdFailed,
 
   kLinuxSignalSetFailed,

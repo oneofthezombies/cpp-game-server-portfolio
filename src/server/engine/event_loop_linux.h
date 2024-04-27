@@ -7,7 +7,6 @@
 
 #include "event_loop.h"
 #include "file_descriptor_linux.h"
-#include "mail_center.h"
 
 namespace engine {
 
@@ -40,11 +39,6 @@ public:
       -> Result<Void>;
   [[nodiscard]] auto Write(const FileDescriptorLinux::Raw fd,
                            const std::string_view data) noexcept
-      -> Result<Void>;
-
-  [[nodiscard]] auto OnMailReceived(const Mail &mail) noexcept -> Result<Void>;
-  [[nodiscard]] auto
-  OnEpollEventReceived(const struct epoll_event &event) noexcept
       -> Result<Void>;
 
 private:

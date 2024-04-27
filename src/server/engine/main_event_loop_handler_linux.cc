@@ -67,6 +67,14 @@ auto engine::MainEventLoopHandlerLinux::OnInit(
   return ResultT{Void{}};
 }
 
+auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoopContext &context,
+                                               Mail &&mail) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  return ResultT{Void{}};
+}
+
 auto engine::MainEventLoopHandlerLinux::OnSessionEvent(
     const EventLoopContext &context, const SessionId session_id,
     const uint32_t events) noexcept -> Result<Void> {

@@ -26,7 +26,7 @@ auto OnSignal(int signal) -> void {
     if (signal_mail_box_ptr != nullptr) {
       (*signal_mail_box_ptr)
           .tx.Send(Mail{"signal", "all",
-                        std::move(core::TinyJson{}.Set("shutdown", ""))});
+                        std::move(core::TinyJson{}.Set("__shutdown", ""))});
     }
   }
 

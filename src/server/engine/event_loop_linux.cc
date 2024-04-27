@@ -127,15 +127,16 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   struct epoll_event events[kMaxEvents]{};
-  std::atomic<bool> shutdown{false};
+  auto shutdown{false};
   while (!shutdown) {
     auto mail = context_.mail_box.rx.TryReceive();
     if (mail) {
-      if (auto value = mail->body.Get("shutdown"); value) {
+      if (auto value = mail->body.Get("__shutdown"); value) {
         shutdown = true;
       }
 
-      if (auto res = OnMailReceived(*mail); res.IsErr()) {
+      if (auto res = handler_->OnMail(context_, std::move(*mail));
+          res.IsErr()) {
         return res;
       }
     }
@@ -155,7 +156,16 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
     for (int i = 0; i < fd_count; ++i) {
       const auto &event = events[i];
-      if (auto res = OnEpollEventReceived(event); res.IsErr()) {
+      auto session_id_res =
+          FileDescriptorLinux::ParseFdToSessionId(event.data.fd);
+      if (session_id_res.IsErr()) {
+        return ResultT{std::move(session_id_res.Err())};
+      }
+
+      const auto session_id = session_id_res.Ok();
+      if (auto res =
+              handler_->OnSessionEvent(context_, session_id, event.events);
+          res.IsErr()) {
         return res;
       }
     }
@@ -166,18 +176,4 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
 auto engine::EventLoopLinux::Name() const noexcept -> std::string_view {
   return context_.name;
-}
-
-auto engine::EventLoopLinux::OnMailReceived(const Mail &mail) noexcept
-    -> Result<Void> {
-  using ResultT = Result<Void>;
-
-  return ResultT{Void{}};
-}
-
-auto engine::EventLoopLinux::OnEpollEventReceived(
-    const struct epoll_event &event) noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
-
-  return ResultT{Void{}};
 }
