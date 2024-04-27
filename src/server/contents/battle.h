@@ -2,6 +2,7 @@
 #define SERVER_CONTENTS_BATTLE_H
 
 #include "core/core.h"
+
 #include "server/engine/socket.h"
 #include "server/engine/socket_event_loop_handler.h"
 
