@@ -33,7 +33,7 @@ public:
                                  const uint32_t events) const noexcept
       -> Result<Void> override;
   [[nodiscard]] auto Delete(const SocketId socket_id) const noexcept
-      -> Result<Void>;
+      -> Result<Void> override;
   [[nodiscard]] auto Write(const SocketId socket_id,
                            const std::string_view data) const noexcept
       -> Result<Void> override;
