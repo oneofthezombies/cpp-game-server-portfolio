@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <variant>
 
 #define CLASS_KIND_COPYABLE(cls)                                               \
@@ -78,7 +79,7 @@ auto operator<<(std::ostream &os, const Result<T, E> &result)
 }
 
 template <typename T>
-  requires std::is_enum_v<T>
+  requires std::is_integral_v<T>
 struct Error final {
   T code;
   std::string message;

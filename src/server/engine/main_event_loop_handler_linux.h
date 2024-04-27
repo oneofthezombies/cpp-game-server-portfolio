@@ -18,7 +18,7 @@ public:
       -> Result<Void> override;
 
   [[nodiscard]] virtual auto OnMail(const EventLoop &event_loop,
-                                    Mail &&mail) noexcept
+                                    const Mail &mail) noexcept
       -> Result<Void> override;
 
   [[nodiscard]] virtual auto OnSocketIn(const EventLoop &event_loop,

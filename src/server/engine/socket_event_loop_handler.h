@@ -15,16 +15,8 @@ public:
   virtual ~SocketEventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(SocketEventLoopHandler);
 
-  [[nodiscard]] virtual auto OnInit(const EventLoop &event_loop,
-                                    const Config &config) noexcept
-      -> Result<Void> override;
-
   [[nodiscard]] virtual auto OnMail(const EventLoop &event_loop,
-                                    Mail &&mail) noexcept
-      -> Result<Void> override;
-
-  [[nodiscard]] virtual auto OnSocketIn(const EventLoop &event_loop,
-                                        const SocketId socket_id) noexcept
+                                    const Mail &mail) noexcept
       -> Result<Void> override;
 
   [[nodiscard]] virtual auto OnSocketHangUp(const EventLoop &event_loop,
@@ -36,8 +28,21 @@ public:
                 const int code, const std::string_view description) noexcept
       -> Result<Void> override;
 
+  [[nodiscard]] auto RegisterSocket(const EventLoop &event_loop,
+                                    const SocketId socket_id) noexcept
+      -> Result<Void>;
+  [[nodiscard]] auto UnregisterSocket(const EventLoop &event_loop,
+                                      const SocketId socket_id) noexcept
+      -> Result<Void>;
+
 private:
-  std::unordered_set<SocketId> sessions_;
+  [[nodiscard]] auto AddSocketToSet(const SocketId socket_id) noexcept
+      -> Result<Void>;
+  [[nodiscard]] auto RemoveSocketFromSet(const SocketId socket_id) noexcept
+      -> Result<Void>;
+
+protected:
+  std::unordered_set<SocketId> sockets_;
 };
 
 } // namespace engine

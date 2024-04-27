@@ -8,10 +8,10 @@
 namespace engine {
 
 /**
- * Server symbols start from 1,000,000
+ * Server engine symbols start from 1,000,000
  */
-enum class Symbol : int32_t {
-  kBegin = 1'000'000,
+enum Symbol : int32_t {
+  kServerEngineBegin = 1'000'000,
   // Add symbols after kBegin
 
   kConfigPortUndefined,
@@ -54,17 +54,16 @@ enum class Symbol : int32_t {
   kLinuxSignalResetFailed,
 
   // Add symbols before kEnd
-  kEnd
+  kServerEngineEnd
 };
 
 auto operator<<(std::ostream &os, const Symbol symbol) noexcept
     -> std::ostream &;
 
-using Error = core::Error<Symbol>;
+using Void = core::Void;
+using Error = core::Error<int32_t>;
 
 template <typename T> using Result = core::Result<T, Error>;
-
-using Void = core::Void;
 
 } // namespace engine
 

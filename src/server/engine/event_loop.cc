@@ -14,3 +14,9 @@ auto engine::EventLoop::GetMailBox() const noexcept -> const MailBox & {
 auto engine::EventLoop::GetName() const noexcept -> std::string_view {
   return name_;
 }
+
+auto engine::EventLoop::SendMail(const std::string_view to,
+                                 MailBody &&mail_body) const noexcept -> void {
+  mail_box_.tx.Send(
+      Mail{std::string{GetName()}, std::string{to}, std::move(mail_body)});
+}

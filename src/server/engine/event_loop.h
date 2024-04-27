@@ -23,7 +23,8 @@ public:
       -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto OnMail(const EventLoop &event_loop,
-                                    Mail &&mail) noexcept -> Result<Void> = 0;
+                                    const Mail &mail) noexcept
+      -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto OnSocketIn(const EventLoop &event_loop,
                                         const SocketId socket_id) noexcept
@@ -50,6 +51,9 @@ public:
 
   [[nodiscard]] auto GetMailBox() const noexcept -> const MailBox &;
   [[nodiscard]] auto GetName() const noexcept -> std::string_view;
+
+  auto SendMail(const std::string_view to, MailBody &&mail_body) const noexcept
+      -> void;
 
   [[nodiscard]] virtual auto Init(const Config &config) noexcept
       -> Result<Void> = 0;

@@ -68,7 +68,7 @@ auto engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
 }
 
 auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoop &event_loop,
-                                               Mail &&mail) noexcept
+                                               const Mail &mail) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -113,9 +113,8 @@ auto engine::MainEventLoopHandlerLinux::OnSocketIn(
     return ResultT{std::move(res.Err())};
   }
 
-  event_loop.GetMailBox().tx.Send(Mail{
-      std::string{event_loop.GetName()}, std::string{primary_event_loop_name_},
-      std::move(core::TinyJson{}.Set("socket_id", std::to_string(socket_id)))});
+  event_loop.SendMail(std::string{primary_event_loop_name_},
+                      std::move(core::TinyJson{}.Set("socket_id", socket_id)));
   return ResultT{Void{}};
 }
 
