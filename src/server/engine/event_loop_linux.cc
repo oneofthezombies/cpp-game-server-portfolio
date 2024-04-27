@@ -76,10 +76,16 @@ auto engine::EventLoopLinux::Add(const SocketId socket_id,
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
+auto engine::EventLoopLinux::Delete(const SocketId socket_id) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
+  if (fd_res.IsErr()) {
+    return ResultT{std::move(fd_res.Err())};
+  }
+
+  const auto fd = fd_res.Ok();
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
                          core::TinyJson{}
@@ -90,11 +96,17 @@ auto engine::EventLoopLinux::Delete(const FileDescriptorLinux::Raw fd) noexcept
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Write(const FileDescriptorLinux::Raw fd,
-                                   const std::string_view data) noexcept
+auto engine::EventLoopLinux::Write(const SocketId socket_id,
+                                   const std::string_view data) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
+  if (fd_res.IsErr()) {
+    return ResultT{std::move(fd_res.Err())};
+  }
+
+  const auto fd = fd_res.Ok();
   const auto data_size = data.size();
   ssize_t written = 0;
   while (written < data_size) {

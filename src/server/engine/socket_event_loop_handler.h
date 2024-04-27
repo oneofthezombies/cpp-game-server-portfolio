@@ -10,8 +10,8 @@
 namespace engine {
 
 class SocketEventLoopHandler : public EventLoopHandler {
-protected:
-  explicit SocketEventLoopHandler() noexcept = default;
+public:
+  explicit SocketEventLoopHandler() noexcept;
   virtual ~SocketEventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(SocketEventLoopHandler);
 

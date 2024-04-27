@@ -48,14 +48,19 @@ public:
   virtual ~EventLoop() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoop);
 
-  [[nodiscard]] virtual auto GetMailBox() const noexcept -> const MailBox &;
-  [[nodiscard]] virtual auto GetName() const noexcept -> std::string_view;
+  [[nodiscard]] auto GetMailBox() const noexcept -> const MailBox &;
+  [[nodiscard]] auto GetName() const noexcept -> std::string_view;
 
   [[nodiscard]] virtual auto Init(const Config &config) noexcept
       -> Result<Void> = 0;
   [[nodiscard]] virtual auto Run() noexcept -> Result<Void> = 0;
   [[nodiscard]] virtual auto Add(const SocketId socket_id,
                                  const uint32_t events) const noexcept
+      -> Result<Void> = 0;
+  [[nodiscard]] virtual auto Delete(const SocketId socket_id) const noexcept
+      -> Result<Void> = 0;
+  [[nodiscard]] virtual auto Write(const SocketId socket_id,
+                                   const std::string_view data) const noexcept
       -> Result<Void> = 0;
 
 protected:

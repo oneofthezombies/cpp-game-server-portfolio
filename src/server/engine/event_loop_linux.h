@@ -29,16 +29,14 @@ public:
   [[nodiscard]] virtual auto Init(const Config &config) noexcept
       -> Result<Void> override;
   [[nodiscard]] virtual auto Run() noexcept -> Result<Void> override;
-
   [[nodiscard]] virtual auto Add(const SocketId socket_id,
                                  const uint32_t events) const noexcept
       -> Result<Void> override;
-
-  [[nodiscard]] auto Delete(const FileDescriptorLinux::Raw fd) noexcept
+  [[nodiscard]] auto Delete(const SocketId socket_id) const noexcept
       -> Result<Void>;
-  [[nodiscard]] auto Write(const FileDescriptorLinux::Raw fd,
-                           const std::string_view data) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto Write(const SocketId socket_id,
+                           const std::string_view data) const noexcept
+      -> Result<Void> override;
 
 private:
   FileDescriptorLinux epoll_fd_;
