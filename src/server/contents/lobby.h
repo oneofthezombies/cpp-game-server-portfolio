@@ -15,20 +15,20 @@ public:
   virtual ~Lobby() noexcept override = default;
   CLASS_KIND_MOVABLE(Lobby);
 
-  [[nodiscard]] virtual auto OnInit(const engine::EventLoop &event_loop,
-                                    const engine::Config &config) noexcept
-      -> Result<Void> override;
-
-  [[nodiscard]] virtual auto OnMail(const engine::EventLoop &event_loop,
-                                    const engine::Mail &mail) noexcept
-      -> Result<Void> override;
+  [[nodiscard]] virtual auto
+  OnInit(const engine::EventLoop &event_loop,
+         const engine::Config &config) noexcept -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnSocketIn(const engine::EventLoop &event_loop,
-             const engine::SocketId socket_id) noexcept
-      -> Result<Void> override;
+  OnMail(const engine::EventLoop &event_loop,
+         const engine::Mail &mail) noexcept -> Result<Void> override;
+
+  [[nodiscard]] virtual auto OnSocketIn(
+      const engine::EventLoop &event_loop,
+      const engine::SocketId socket_id) noexcept -> Result<Void> override;
 
 private:
+  auto HasTwoSocket() const noexcept -> bool;
   auto NextBattleId() noexcept -> uint64_t;
 
   uint64_t next_battle_id_{};

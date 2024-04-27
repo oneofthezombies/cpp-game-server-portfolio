@@ -19,7 +19,7 @@ auto contents::Lobby::OnMail(const engine::EventLoop &event_loop,
     return res;
   }
 
-  if (sockets_.size() >= 2) {
+  if (HasTwoSocket()) {
     const auto first = *sockets_.begin();
     const auto second = *std::next(sockets_.begin());
     if (auto res = UnregisterSocket(event_loop, first); res.IsErr()) {
@@ -47,6 +47,10 @@ auto contents::Lobby::OnSocketIn(const engine::EventLoop &event_loop,
   using ResultT = Result<Void>;
 
   return ResultT{Void{}};
+}
+
+auto contents::Lobby::HasTwoSocket() const noexcept -> bool {
+  return sockets_.size() >= 2;
 }
 
 auto contents::Lobby::NextBattleId() noexcept -> uint64_t {
