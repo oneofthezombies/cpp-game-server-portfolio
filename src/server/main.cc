@@ -7,7 +7,6 @@
 #include "core/utils.h"
 
 #include "engine/engine.h"
-#include "session_service.h"
 
 // struct ServerOptions final {
 //   uint16_t port{kUndefinedPort};
@@ -64,16 +63,6 @@
 // }
 
 auto main(int argc, char **argv) noexcept -> int {
-  struct B {};
-  class A : public engine::SessionService<B> {
-  public:
-    explicit A() : engine::SessionService<B>{"A"} {}
-  };
-
-  std::unique_ptr<A> root_service{std::make_unique<A>()};
-  std::vector<std::unique_ptr<engine::SessionService<>>> services;
-  services.push_back(std::move(root_service));
-
   // auto args_res = ParseArgs(ParseArgcArgv(argc, argv));
   // if (args_res.IsErr()) {
   //   const auto &error = args_res.Err();

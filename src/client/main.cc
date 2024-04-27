@@ -40,15 +40,15 @@ struct ClientOptions final {
   static constexpr uint16_t kUndefinedPort{0};
 };
 
-using Error = ErrorBase<Symbol>;
+using Error = core::Error<Symbol>;
 
-template <typename T> using Result = ResultBase<T, Error>;
+template <typename T> using Result = core::Result<T, Error>;
 
-auto ParseArgs(Args &&args) noexcept -> Result<ClientOptions> {
+auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
   using ResultT = Result<ClientOptions>;
 
   ClientOptions options;
-  Tokenizer tokenizer{std::move(args)};
+  core::Tokenizer tokenizer{std::move(args)};
 
   // Skip the first argument which is the program name
   tokenizer.Eat();
@@ -78,7 +78,7 @@ auto ParseArgs(Args &&args) noexcept -> Result<ClientOptions> {
         return ResultT{Error{Symbol::kPortValueNotFound}};
       }
 
-      auto result = ParseNumberString<uint16_t>(*next);
+      auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
         return ResultT{Error{Symbol::kPortParsingFailed,
                              std::make_error_code(result.Err()).message()}};
@@ -104,7 +104,7 @@ auto ParseArgs(Args &&args) noexcept -> Result<ClientOptions> {
 }
 
 auto main(int argc, char **argv) noexcept -> int {
-  auto args = ParseArgcArgv(argc, argv);
+  auto args = core::ParseArgcArgv(argc, argv);
   auto options_res = ParseArgs(std::move(args));
   if (options_res.IsErr()) {
     const auto &error = options_res.Err();
@@ -138,7 +138,7 @@ auto main(int argc, char **argv) noexcept -> int {
     std::cout << "Failed to create socket." << std::endl;
     return 1;
   }
-  Defer defer{[sock] { close(sock); }};
+  core::Defer defer{[sock] { close(sock); }};
 
   sockaddr_in server_addr{};
   server_addr.sin_family = AF_INET;

@@ -84,7 +84,7 @@ auto engine::MainEventLoopHandlerLinux::OnSessionEvent(
                   .ToString()}};
   }
 
-  const auto fd_res = FileDescriptorLinux::ParseSessionIdToFd(session_id);
+  auto fd_res = FileDescriptorLinux::ParseSessionIdToFd(session_id);
   if (fd_res.IsErr()) {
     return ResultT{std::move(fd_res.Err())};
   }

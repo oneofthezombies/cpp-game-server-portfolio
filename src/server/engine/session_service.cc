@@ -1,10 +1,10 @@
-#include "session_service.h"
+// #include "session_service.h"
 
-using namespace engine;
+// using namespace engine;
 
-engine::SessionService::SessionService(const std::string_view name) noexcept
-    : name_(name) {}
+// engine::SessionService::SessionService(const std::string_view name) noexcept
+//     : name_(name) {}
 
-auto engine::SessionService::Name() const noexcept -> std::string_view {
-  return name_;
-}
+// auto engine::SessionService::Name() const noexcept -> std::string_view {
+//   return name_;
+// }

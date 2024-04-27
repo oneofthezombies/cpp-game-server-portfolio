@@ -106,7 +106,7 @@ auto engine::FileDescriptorLinux::FromSessionId(
     const SessionId session_id) noexcept -> Result<FileDescriptorLinux> {
   using ResultT = Result<FileDescriptorLinux>;
 
-  const auto res = ParseSessionIdToFd(session_id);
+  auto res = ParseSessionIdToFd(session_id);
   if (res.IsErr()) {
     return ResultT{std::move(res.Err())};
   }
