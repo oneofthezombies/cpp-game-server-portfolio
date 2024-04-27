@@ -1,101 +1,125 @@
-#include <iostream>
-#include <memory>
-#include <system_error>
-#include <vector>
-
-#include "core/core.h"
+#include "core/tiny_json.h"
 #include "core/utils.h"
-
+#include "engine/config.h"
 #include "engine/engine.h"
 
-// struct ServerOptions final {
-//   uint16_t port{kUndefinedPort};
+enum class Symbol : int32_t {
+  kHelpRequested = 0,
+  kPortArgNotFound,
+  kPortValueNotFound,
+  kPortParsingFailed,
+  kUnknownArgument,
+};
 
-//   explicit ServerOptions() noexcept = default;
-//   ~ServerOptions() noexcept = default;
-//   CLASS_KIND_MOVABLE(ServerOptions);
+auto operator<<(std::ostream &os, const Symbol &symbol) -> std::ostream & {
+  os << "Symbol{";
+  os << static_cast<int32_t>(symbol);
+  os << "}";
+  return os;
+}
 
-//   static constexpr uint16_t kUndefinedPort{0};
-// };
+using Error = core::Error<Symbol>;
 
-// auto ParseArgs(Args &&args) noexcept -> Result<ServerOptions> {
-//   using ResultT = Result<ServerOptions>;
+template <typename T> using Result = core::Result<T, Error>;
 
-//   ServerOptions options;
-//   Tokenizer tokenizer{std::move(args)};
-
-//   // Skip the first argument which is the program name
-//   tokenizer.Eat();
-
-//   for (auto current = tokenizer.Current(); current.has_value();
-//        tokenizer.Eat(), current = tokenizer.Current()) {
-//     const auto token = *current;
-
-//     if (token == "--help") {
-//       return ResultT{Error{Symbol::kHelpRequested}};
-//     }
-
-//     if (token == "--port") {
-//       const auto next = tokenizer.Next();
-//       if (!next.has_value()) {
-//         return ResultT{Error{Symbol::kPortValueNotFound}};
-//       }
-
-//       auto result = ParseNumberString<uint16_t>(*next);
-//       if (result.IsErr()) {
-//         return ResultT{Error{Symbol::kPortParsingFailed,
-//                              std::make_error_code(result.Err()).message()}};
-//       }
-
-//       options.port = result.Ok();
-//       tokenizer.Eat();
-//       continue;
-//     }
-
-//     return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
-//   }
-
-//   if (options.port == ServerOptions::kUndefinedPort) {
-//     return ResultT{Error{Symbol::kPortArgNotFound}};
-//   }
-
-//   return ResultT{std::move(options)};
-// }
+auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config>;
 
 auto main(int argc, char **argv) noexcept -> int {
-  // auto args_res = ParseArgs(ParseArgcArgv(argc, argv));
-  // if (args_res.IsErr()) {
-  //   const auto &error = args_res.Err();
-  //   if (error.code == Symbol::kHelpRequested) {
-  //     std::cout << "Usage: server [--port <port>]";
-  //   } else if (error.code == Symbol::kPortArgNotFound) {
-  //     std::cout << "Error: --port argument not found";
-  //   } else if (error.code == Symbol::kPortValueNotFound) {
-  //     std::cout << "Error: --port argument value not found";
-  //   } else if (error.code == Symbol::kPortParsingFailed) {
-  //     std::cout << "Error: port parsing failed: " << error.message;
-  //   } else if (error.code == Symbol::kUnknownArgument) {
-  //     std::cout << "Error: unknown argument";
-  //   } else {
-  //     std::cout << "Error: " << error;
-  //   }
+  auto args_res = ParseArgs(core::ParseArgcArgv(argc, argv));
+  if (args_res.IsErr()) {
+    const auto &error = args_res.Err();
+    switch (error.code) {
+    case Symbol::kHelpRequested:
+      // noop
+      break;
+    case Symbol::kPortArgNotFound:
+      core::TinyJson{}
+          .Set("reason", "port argument not found")
+          .Set("error", error)
+          .LogLn();
+      break;
+    case Symbol::kPortValueNotFound:
+      core::TinyJson{}
+          .Set("reason", "port value not found")
+          .Set("error", error)
+          .LogLn();
+      break;
+    case Symbol::kPortParsingFailed:
+      core::TinyJson{}
+          .Set("reason", "port parsing failed")
+          .Set("error", error)
+          .LogLn();
+      break;
+    case Symbol::kUnknownArgument:
+      core::TinyJson{}
+          .Set("reason", "unknown argument")
+          .Set("error", error)
+          .LogLn();
+      break;
+    }
 
-  //   std::cout << std::endl;
-  //   return 1;
-  // }
+    core::TinyJson{}.Set("usage", "server [--port <port>]").LogLn();
+    return 1;
+  }
 
-  // const auto &options = args_res.Ok();
-  // auto engine_res = Engine::Builder{}.Build(options.port);
-  // if (engine_res.IsErr()) {
-  //   std::cout << engine_res.Err() << std::endl;
-  //   return 1;
-  // }
+  auto engine_res = engine::Engine::Builder{}.Build(std::move(args_res.Ok()));
+  if (engine_res.IsErr()) {
+    core::TinyJson{}
+        .Set("reason", "engine build failed")
+        .Set("error", engine_res.Err())
+        .LogLn();
+    return 1;
+  }
 
-  // auto &engine = engine_res.Ok();
-  // if (auto res = engine.Run(); res.IsErr()) {
-  //   std::cout << res.Err() << std::endl;
-  //   return 1;
-  // }
+  auto &engine = engine_res.Ok();
+  if (auto res = engine.Run(); res.IsErr()) {
+    std::cout << res.Err() << std::endl;
+    return 1;
+  }
 
   return 0;
+}
+
+auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
+  using ResultT = Result<engine::Config>;
+
+  engine::Config config{};
+  core::Tokenizer tokenizer{std::move(args)};
+
+  // Skip the first argument which is the program name
+  tokenizer.Eat();
+
+  for (auto current = tokenizer.Current(); current.has_value();
+       tokenizer.Eat(), current = tokenizer.Current()) {
+    const auto token = *current;
+
+    if (token == "--help") {
+      return ResultT{Error{Symbol::kHelpRequested}};
+    }
+
+    if (token == "--port") {
+      const auto next = tokenizer.Next();
+      if (!next.has_value()) {
+        return ResultT{Error{Symbol::kPortValueNotFound}};
+      }
+
+      auto result = core::ParseNumberString<uint16_t>(*next);
+      if (result.IsErr()) {
+        return ResultT{Error{Symbol::kPortParsingFailed,
+                             std::make_error_code(result.Err()).message()}};
+      }
+
+      config.port = result.Ok();
+      tokenizer.Eat();
+      continue;
+    }
+
+    return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
+  }
+
+  if (config.port == engine::Config::kUndefinedPort) {
+    return ResultT{Error{Symbol::kPortArgNotFound}};
+  }
+
+  return ResultT{std::move(config)};
 }

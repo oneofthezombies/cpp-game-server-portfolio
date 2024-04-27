@@ -89,7 +89,7 @@ auto engine::MailCenter::ValidateName(
 
   // "all" is reserved for broadcast
   if (name == "all") {
-    return ResultT{Error{Symbol::kMailBoxNameAll,
+    return ResultT{Error{Symbol::kMailBoxNameAllReserved,
                          core::TinyJson{}.Set("name", name).ToString()}};
   }
 

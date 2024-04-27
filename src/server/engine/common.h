@@ -28,17 +28,11 @@ enum class Symbol : int32_t {
 
   MainEventLoopHandlerBuilderPrimaryEventLoopNameEmpty,
 
-  kHelpRequested,
-  kPortArgNotFound,
-  kPortValueNotFound,
-  kPortParsingFailed,
-  kUnknownArgument,
-
   kMailBoxAlreadyExists,
   kMailBoxNotFound,
   kMailBoxNameEmpty,
   kMailBoxNameTooLong,
-  kMailBoxNameAll,
+  kMailBoxNameAllReserved,
 
   kEventLoopLinuxEpollCreate1Failed,
   kEventLoopLinuxEpollCtlAddFailed,
