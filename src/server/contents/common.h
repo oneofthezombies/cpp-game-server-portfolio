@@ -15,8 +15,11 @@ enum Symbol : int32_t {
   kBattleMailKindNotFound,
   kBattleMailUnexpectedKind,
   kBattleMailBattleIdNotFound,
+  kBattleMailBattleIdParsingFailed,
   kBattleMailFirstSocketIdNotFound,
+  kBattleMailFirstSocketIdParsingFailed,
   kBattleMailSecondSocketIdNotFound,
+  kBattleMailSecondSocketIdParsingFailed,
 
   // Add symbols before kEnd
   kServerContentsEnd

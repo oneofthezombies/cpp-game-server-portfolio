@@ -1,6 +1,7 @@
 #ifndef SERVER_CONTENTS_BATTLE_H
 #define SERVER_CONTENTS_BATTLE_H
 
+#include "core/core.h"
 #include "server/engine/socket.h"
 #include "server/engine/socket_event_loop_handler.h"
 
@@ -10,6 +11,10 @@ namespace contents {
 
 struct BattleState {
   uint64_t battle_id{};
+
+  explicit BattleState() noexcept = default;
+  ~BattleState() noexcept = default;
+  CLASS_KIND_MOVABLE(BattleState);
 };
 
 class Battle final : public engine::SocketEventLoopHandler {
