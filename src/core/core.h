@@ -15,14 +15,14 @@
 #define CLASS_KIND_MOVABLE(cls)                                                \
   cls(const cls &) = delete;                                                   \
   cls(cls &&) noexcept = default;                                              \
-  auto operator=(const cls &) -> cls & = delete;                               \
+  auto operator=(const cls &)->cls & = delete;                                 \
   auto operator=(cls &&) noexcept -> cls & = default
 
 #define CLASS_KIND_PINNABLE(cls)                                               \
   cls(const cls &) = delete;                                                   \
   cls(cls &&) = delete;                                                        \
-  auto operator=(const cls &) -> cls & = delete;                               \
-  auto operator=(cls &&) -> cls & = delete
+  auto operator=(const cls &)->cls & = delete;                                 \
+  auto operator=(cls &&)->cls & = delete
 
 namespace core {
 
@@ -60,8 +60,8 @@ private:
 };
 
 template <typename T, typename E>
-auto operator<<(std::ostream &os, const Result<T, E> &result)
-    -> std::ostream & {
+auto operator<<(std::ostream &os,
+                const Result<T, E> &result) -> std::ostream & {
   os << "Result{";
   if (result.IsOk()) {
     os << "Ok{";
@@ -79,7 +79,7 @@ auto operator<<(std::ostream &os, const Result<T, E> &result)
 }
 
 template <typename T>
-  requires std::is_integral_v<T>
+  requires std::is_integral_v<T> || std::is_enum_v<T>
 struct Error final {
   T code;
   std::string message;

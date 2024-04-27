@@ -7,6 +7,7 @@
     "ms-python.debugpy",
     "ms-python.python",
     "ms-vscode-remote.remote-containers",
-    "cheshirekow.cmake-format"
+    "cheshirekow.cmake-format",
+    "ms-vscode.cmake-tools"
   ]
 }

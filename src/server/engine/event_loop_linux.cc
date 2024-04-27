@@ -6,17 +6,17 @@
 #include <sys/socket.h>
 
 #include "core/tiny_json.h"
+#include "core/utils.h"
+#include "core/utils_linux.h"
 
 #include "file_descriptor_linux.h"
 #include "mail_center.h"
-#include "utils.h"
-#include "utils_linux.h"
 
 using namespace engine;
 
 auto engine::EventLoopLinux::Builder::Build(
-    std::string &&name, EventLoopHandlerPtr &&handler) const noexcept
-    -> Result<EventLoopPtr> {
+    std::string &&name,
+    EventLoopHandlerPtr &&handler) const noexcept -> Result<EventLoopPtr> {
   using ResultT = Result<EventLoopPtr>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};

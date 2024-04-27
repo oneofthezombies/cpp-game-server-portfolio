@@ -9,10 +9,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "core.h"
-#include "protocol.h"
-#include "tiny_json.h"
-#include "utils.h"
+#include "core/core.h"
+#include "core/utils.h"
 
 enum Symbol : int32_t {
   kHelpRequested = 0,
