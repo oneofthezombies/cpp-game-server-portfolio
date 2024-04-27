@@ -20,5 +20,9 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
+  },
+  "[cmake]": {
+    "editor.defaultFormatter": "cheshirekow.cmake-format",
+    "editor.formatOnSave": true
   }
 }

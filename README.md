@@ -19,7 +19,15 @@ It's a simple build script, but I use Python.
 
 `ninja` >= 1.10
 
-# How to Build and Install
+# cmake-format
+
+`cmake-format` >= 0.6
+
+```sh
+pip install cmake_format
+```
+
+# How to Build
 
 ```sh
 python dev.py build

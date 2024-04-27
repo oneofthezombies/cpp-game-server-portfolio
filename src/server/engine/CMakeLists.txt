@@ -1,5 +1,5 @@
-file(GLOB_RECURSE SERVER_ENGINE_SOURCES "*.cc")
-add_library(server_engine STATIC ${SERVER_ENGINE_SOURCES})
+file(GLOB_RECURSE SOURCES "*.cc")
+add_library(server_engine STATIC ${SOURCES})
 
 target_include_directories(server_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
