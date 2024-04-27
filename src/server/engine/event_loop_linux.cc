@@ -1,6 +1,9 @@
 #include "event_loop_linux.h"
 
+#include <cstring>
+
 #include <sys/epoll.h>
+#include <sys/socket.h>
 
 #include "core/tiny_json.h"
 
@@ -28,36 +31,33 @@ auto engine::EventLoopLinux::Builder::Build(
   }
 
   return ResultT{EventLoopPtr{
-      new EventLoopLinux{EventLoopContext{
-                             std::move(mail_box_res.Ok()),
-                             std::move(name),
-                         },
+      new EventLoopLinux{std::move(mail_box_res.Ok()), std::move(name),
                          std::move(handler), std::move(epoll_fd)}}};
 }
 
-engine::EventLoopLinux::EventLoopLinux(EventLoopContext &&context,
+engine::EventLoopLinux::EventLoopLinux(MailBox &&mail_box, std::string &&name,
                                        EventLoopHandlerPtr &&handler,
                                        FileDescriptorLinux &&epoll_fd) noexcept
-    : EventLoop{std::move(context), std::move(handler)},
+    : EventLoop{std::move(mail_box), std::move(name), std::move(handler)},
       epoll_fd_{std::move(epoll_fd)} {}
 
 auto engine::EventLoopLinux::Init(const Config &config) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (auto res = handler_->OnInit(config, *this); res.IsErr()) {
+  if (auto res = handler_->OnInit(*this, config); res.IsErr()) {
     return res;
   }
 
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Add(const SessionId session_id,
+auto engine::EventLoopLinux::Add(const SocketId socket_id,
                                  const uint32_t events) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
-  auto fd_res = FileDescriptorLinux::ParseSessionIdToFd(session_id);
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
     return ResultT{std::move(fd_res.Err())};
   }
@@ -129,14 +129,13 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   struct epoll_event events[kMaxEvents]{};
   auto shutdown{false};
   while (!shutdown) {
-    auto mail = context_.mail_box.rx.TryReceive();
+    auto mail = mail_box_.rx.TryReceive();
     if (mail) {
       if (auto value = mail->body.Get("__shutdown"); value) {
         shutdown = true;
       }
 
-      if (auto res = handler_->OnMail(context_, std::move(*mail));
-          res.IsErr()) {
+      if (auto res = handler_->OnMail(*this, std::move(*mail)); res.IsErr()) {
         return res;
       }
     }
@@ -156,24 +155,57 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
     for (int i = 0; i < fd_count; ++i) {
       const auto &event = events[i];
-      auto session_id_res =
-          FileDescriptorLinux::ParseFdToSessionId(event.data.fd);
-      if (session_id_res.IsErr()) {
-        return ResultT{std::move(session_id_res.Err())};
+      auto socket_id_res =
+          FileDescriptorLinux::ParseFdToSocketId(event.data.fd);
+      if (socket_id_res.IsErr()) {
+        return ResultT{std::move(socket_id_res.Err())};
       }
 
-      const auto session_id = session_id_res.Ok();
-      if (auto res =
-              handler_->OnSessionEvent(context_, session_id, event.events);
-          res.IsErr()) {
-        return res;
+      const auto socket_id = socket_id_res.Ok();
+      if (event.events & EPOLLERR) {
+        int code{};
+        socklen_t code_size = sizeof(code);
+        if (getsockopt(event.data.fd, SOL_SOCKET, SO_ERROR, &code, &code_size) <
+            0) {
+          return ResultT{
+              Error{Symbol::kEventLoopLinuxGetSocketOptionFailed,
+                    core::TinyJson{}
+                        .Set("linux_error", core::LinuxError::FromErrno())
+                        .Set("fd", event.data.fd)
+                        .Set("socket_id", socket_id)
+                        .ToString()}};
+        }
+
+        if (code == 0) {
+          return ResultT{Error{Symbol::kEventLoopLinuxSocketErrorZero,
+                               core::TinyJson{}
+                                   .Set("fd", event.data.fd)
+                                   .Set("socket_id", socket_id)
+                                   .ToString()}};
+        }
+
+        const auto description = std::string_view{strerror(code)};
+        if (auto res =
+                handler_->OnSocketError(*this, socket_id, code, description);
+            res.IsErr()) {
+          return res;
+        }
+      }
+
+      if (event.events & EPOLLHUP) {
+        if (auto res = handler_->OnSocketHangUp(*this, socket_id);
+            res.IsErr()) {
+          return res;
+        }
+      }
+
+      if (event.events & EPOLLIN) {
+        if (auto res = handler_->OnSocketIn(*this, socket_id); res.IsErr()) {
+          return res;
+        }
       }
     }
   }
 
   return ResultT{Void{}};
-}
-
-auto engine::EventLoopLinux::Name() const noexcept -> std::string_view {
-  return context_.name;
 }

@@ -84,47 +84,47 @@ auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
   return ResultT{Void{}};
 }
 
-auto engine::FileDescriptorLinux::ParseFdToSessionId(const Raw fd) noexcept
-    -> Result<SessionId> {
-  using ResultT = Result<SessionId>;
+auto engine::FileDescriptorLinux::ParseFdToSocketId(const Raw fd) noexcept
+    -> Result<SocketId> {
+  using ResultT = Result<SocketId>;
 
-  const auto casted_session_id = static_cast<SessionId>(fd);
-  const auto restored_fd = static_cast<Raw>(casted_session_id);
+  const auto casted_socket_id = static_cast<SocketId>(fd);
+  const auto restored_fd = static_cast<Raw>(casted_socket_id);
   if (fd != restored_fd) {
-    return ResultT{Error{Symbol::kFileDescriptorLinuxParseFdToSessionIdFailed,
+    return ResultT{Error{Symbol::kFileDescriptorLinuxParseFdToSocketIdFailed,
                          core::TinyJson{}
                              .Set("fd", fd)
-                             .Set("casted_session_id", casted_session_id)
+                             .Set("casted_socket_id", casted_socket_id)
                              .Set("restored_fd", restored_fd)
                              .ToString()}};
   }
 
-  return ResultT{casted_session_id};
+  return ResultT{casted_socket_id};
 }
 
-auto engine::FileDescriptorLinux::ParseSessionIdToFd(
-    const SessionId session_id) noexcept -> Result<FileDescriptorLinux::Raw> {
+auto engine::FileDescriptorLinux::ParseSocketIdToFd(
+    const SocketId socket_id) noexcept -> Result<FileDescriptorLinux::Raw> {
   using ResultT = Result<FileDescriptorLinux::Raw>;
 
-  const auto casted_fd = static_cast<Raw>(session_id);
-  const auto restored_session_id = static_cast<SessionId>(casted_fd);
-  if (session_id != restored_session_id) {
-    return ResultT{Error{Symbol::kFileDescriptorLinuxParseSessionIdToFdFailed,
+  const auto casted_fd = static_cast<Raw>(socket_id);
+  const auto restored_socket_id = static_cast<SocketId>(casted_fd);
+  if (socket_id != restored_socket_id) {
+    return ResultT{Error{Symbol::kFileDescriptorLinuxParseSocketIdToFdFailed,
                          core::TinyJson{}
-                             .Set("session_id", session_id)
+                             .Set("socket_id", socket_id)
                              .Set("casted_fd", casted_fd)
-                             .Set("restored_session_id", restored_session_id)
+                             .Set("restored_socket_id", restored_socket_id)
                              .ToString()}};
   }
 
   return ResultT{casted_fd};
 }
 
-auto engine::FileDescriptorLinux::FromSessionId(
-    const SessionId session_id) noexcept -> Result<FileDescriptorLinux> {
+auto engine::FileDescriptorLinux::FromSocketId(
+    const SocketId socket_id) noexcept -> Result<FileDescriptorLinux> {
   using ResultT = Result<FileDescriptorLinux>;
 
-  auto res = ParseSessionIdToFd(session_id);
+  auto res = ParseSocketIdToFd(socket_id);
   if (res.IsErr()) {
     return ResultT{std::move(res.Err())};
   }

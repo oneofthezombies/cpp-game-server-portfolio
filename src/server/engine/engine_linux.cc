@@ -136,7 +136,7 @@ auto engine::EngineLinux::EventLoopThreadMain(
   if (auto res = event_loop->Run(); res.IsErr()) {
     core::TinyJson{}
         .Set("reason", "event loop thread run failed")
-        .Set("name", event_loop->Name())
+        .Set("name", event_loop->GetName())
         .Set("error", res.Err())
         .LogLn();
   }

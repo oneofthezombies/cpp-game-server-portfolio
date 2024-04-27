@@ -19,8 +19,8 @@ engine::MainEventLoopHandlerLinux::MainEventLoopHandlerLinux(
     : EventLoopHandler{},
       primary_event_loop_name_{std::move(primary_event_loop_name)} {}
 
-auto engine::MainEventLoopHandlerLinux::OnInit(
-    const Config &config, const EventLoop &event_loop) noexcept
+auto engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
+                                               const Config &config) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -67,7 +67,7 @@ auto engine::MainEventLoopHandlerLinux::OnInit(
   return ResultT{Void{}};
 }
 
-auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoopContext &context,
+auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoop &event_loop,
                                                Mail &&mail) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
@@ -77,35 +77,23 @@ auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoopContext &context,
   return ResultT{Void{}};
 }
 
-auto engine::MainEventLoopHandlerLinux::OnSessionEvent(
-    const EventLoopContext &context, const SessionId session_id,
-    const uint32_t events) noexcept -> Result<Void> {
+auto engine::MainEventLoopHandlerLinux::OnSocketIn(
+    const EventLoop &event_loop, const SocketId socket_id) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
 
-  const bool is_epoll_in = events & EPOLLIN;
-  if (!is_epoll_in) {
-    return ResultT{
-        Error{Symbol::kMainEventLoopHandlerLinuxUnexpectedSessionEvent,
-              core::TinyJson{}
-                  .Set("session_id", session_id)
-                  .Set("events", events)
-                  .ToString()}};
-  }
-
-  auto fd_res = FileDescriptorLinux::ParseSessionIdToFd(session_id);
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
     return ResultT{std::move(fd_res.Err())};
   }
 
   const auto fd = fd_res.Ok();
   if (fd != server_fd_->AsRaw()) {
-    return ResultT{Error{Symbol::kMainEventLoopHandlerLinuxUnexpectedSessionId,
-                         core::TinyJson{}
-                             .Set("session_id", session_id)
-                             .Set("fd", fd)
-                             .ToString()}};
+    return ResultT{Error{
+        Symbol::kMainEventLoopHandlerLinuxUnexpectedSocketId,
+        core::TinyJson{}.Set("socket_id", socket_id).Set("fd", fd).ToString()}};
   }
 
   struct sockaddr_in client_addr {};
@@ -125,8 +113,54 @@ auto engine::MainEventLoopHandlerLinux::OnSessionEvent(
     return ResultT{std::move(res.Err())};
   }
 
-  context.mail_box.tx.Send(Mail{
-      std::string{context.name}, std::string{primary_event_loop_name_},
-      std::move(core::TinyJson{}.Set("client_fd", std::to_string(client_fd)))});
+  event_loop.GetMailBox().tx.Send(Mail{
+      std::string{event_loop.GetName()}, std::string{primary_event_loop_name_},
+      std::move(core::TinyJson{}.Set("socket_id", std::to_string(socket_id)))});
+  return ResultT{Void{}};
+}
+
+auto engine::MainEventLoopHandlerLinux::OnSocketHangUp(
+    const EventLoop &event_loop, const SocketId socket_id) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  assert(server_fd_ != nullptr && "server_fd must not be nullptr");
+
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
+  if (fd_res.IsErr()) {
+    return ResultT{std::move(fd_res.Err())};
+  }
+
+  const auto fd = fd_res.Ok();
+  core::TinyJson{}
+      .Set("reason", "socket hang up")
+      .Set("name", event_loop.GetName())
+      .Set("socket_id", socket_id)
+      .Set("fd", fd)
+      .LogLn();
+  return ResultT{Void{}};
+}
+
+auto engine::MainEventLoopHandlerLinux::OnSocketError(
+    const EventLoop &event_loop, const SocketId socket_id, const int code,
+    const std::string_view description) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  assert(server_fd_ != nullptr && "server_fd must not be nullptr");
+
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
+  if (fd_res.IsErr()) {
+    return ResultT{std::move(fd_res.Err())};
+  }
+
+  const auto fd = fd_res.Ok();
+  core::TinyJson{}
+      .Set("reason", "socket error")
+      .Set("name", event_loop.GetName())
+      .Set("socket_id", socket_id)
+      .Set("fd", fd)
+      .Set("code", code)
+      .Set("description", description)
+      .LogLn();
   return ResultT{Void{}};
 }

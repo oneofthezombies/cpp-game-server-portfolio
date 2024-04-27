@@ -1,17 +1,19 @@
-#ifndef SERVER_ENGINE_MAIN_EVENT_LOOP_HANDLER_LINUX_H
-#define SERVER_ENGINE_MAIN_EVENT_LOOP_HANDLER_LINUX_H
+#ifndef SERVER_ENGINE_SOCKET_EVENT_LOOP_HANDLER_H
+#define SERVER_ENGINE_SOCKET_EVENT_LOOP_HANDLER_H
+
+#include <unordered_set>
+
+#include "core/core.h"
 
 #include "event_loop.h"
-#include "file_descriptor_linux.h"
 
 namespace engine {
 
-class MainEventLoopHandlerLinux final : public EventLoopHandler {
-public:
-  explicit MainEventLoopHandlerLinux(
-      std::string &&primary_event_loop_name) noexcept;
-  virtual ~MainEventLoopHandlerLinux() noexcept override = default;
-  CLASS_KIND_MOVABLE(MainEventLoopHandlerLinux);
+class SocketEventLoopHandler : public EventLoopHandler {
+protected:
+  explicit SocketEventLoopHandler() noexcept = default;
+  virtual ~SocketEventLoopHandler() noexcept = default;
+  CLASS_KIND_MOVABLE(SocketEventLoopHandler);
 
   [[nodiscard]] virtual auto OnInit(const EventLoop &event_loop,
                                     const Config &config) noexcept
@@ -35,10 +37,9 @@ public:
       -> Result<Void> override;
 
 private:
-  std::unique_ptr<FileDescriptorLinux> server_fd_;
-  std::string primary_event_loop_name_;
+  std::unordered_set<SocketId> sessions_;
 };
 
 } // namespace engine
 
-#endif // SERVER_ENGINE_MAIN_EVENT_LOOP_HANDLER_LINUX_H
+#endif // SERVER_ENGINE_SOCKET_EVENT_LOOP_HANDLER_H

@@ -29,9 +29,8 @@ public:
   [[nodiscard]] virtual auto Init(const Config &config) noexcept
       -> Result<Void> override;
   [[nodiscard]] virtual auto Run() noexcept -> Result<Void> override;
-  [[nodiscard]] virtual auto Name() const noexcept -> std::string_view override;
 
-  [[nodiscard]] virtual auto Add(const SessionId session_id,
+  [[nodiscard]] virtual auto Add(const SocketId socket_id,
                                  const uint32_t events) const noexcept
       -> Result<Void> override;
 
@@ -47,7 +46,7 @@ private:
   static constexpr size_t kMaxEvents = 1024;
 
 private:
-  explicit EventLoopLinux(EventLoopContext &&context,
+  explicit EventLoopLinux(MailBox &&mail_box, std::string &&name,
                           EventLoopHandlerPtr &&handler,
                           FileDescriptorLinux &&epoll_fd) noexcept;
 };

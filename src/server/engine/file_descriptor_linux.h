@@ -2,7 +2,7 @@
 #define SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H
 
 #include "common.h"
-#include "session.h"
+#include "socket.h"
 
 namespace engine {
 
@@ -25,14 +25,13 @@ public:
   [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
       -> Result<Void>;
 
-  [[nodiscard]] static auto ParseFdToSessionId(const Raw fd) noexcept
-      -> Result<SessionId>;
+  [[nodiscard]] static auto ParseFdToSocketId(const Raw fd) noexcept
+      -> Result<SocketId>;
 
-  [[nodiscard]] static auto
-  ParseSessionIdToFd(const SessionId session_id) noexcept
+  [[nodiscard]] static auto ParseSocketIdToFd(const SocketId socket_id) noexcept
       -> Result<FileDescriptorLinux::Raw>;
 
-  [[nodiscard]] static auto FromSessionId(const SessionId session_id) noexcept
+  [[nodiscard]] static auto FromSocketId(const SocketId socket_id) noexcept
       -> Result<FileDescriptorLinux>;
 
 private:

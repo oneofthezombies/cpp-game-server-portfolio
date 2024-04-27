@@ -8,10 +8,10 @@ namespace core {
 
 struct LinuxError final {
   // `errno`
-  int errno_value;
+  int code;
 
   // `strerror(errno)`
-  std::string_view errno_description;
+  std::string_view description;
 
   ~LinuxError() noexcept = default;
   CLASS_KIND_MOVABLE(LinuxError);
@@ -19,11 +19,11 @@ struct LinuxError final {
   [[nodiscard]] static auto FromErrno() noexcept -> LinuxError;
 
 private:
-  LinuxError(const int code, const std::string_view message) noexcept;
+  LinuxError(const int code, const std::string_view description) noexcept;
 };
 
-auto operator<<(std::ostream &os,
-                const LinuxError &error) noexcept -> std::ostream &;
+auto operator<<(std::ostream &os, const LinuxError &error) noexcept
+    -> std::ostream &;
 
 } // namespace core
 

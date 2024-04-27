@@ -2,10 +2,15 @@
 
 using namespace engine;
 
-engine::EventLoopContext::EventLoopContext(MailBox &&mail_box,
-                                           std::string &&name) noexcept
-    : mail_box(std::move(mail_box)), name(std::move(name)) {}
-
-engine::EventLoop::EventLoop(EventLoopContext &&context,
+engine::EventLoop::EventLoop(MailBox &&mail_box, std::string &&name,
                              EventLoopHandlerPtr &&handler) noexcept
-    : context_(std::move(context)), handler_(std::move(handler)) {}
+    : mail_box_{std::move(mail_box)}, name_{std::move(name)},
+      handler_{std::move(handler)} {}
+
+auto engine::EventLoop::GetMailBox() const noexcept -> const MailBox & {
+  return mail_box_;
+}
+
+auto engine::EventLoop::GetName() const noexcept -> std::string_view {
+  return name_;
+}

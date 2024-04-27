@@ -5,21 +5,12 @@
 
 #include "common.h"
 #include "mail_center.h"
-#include "session.h"
+#include "socket.h"
 
 namespace engine {
 
 struct Config;
 class EventLoop;
-
-struct EventLoopContext {
-  MailBox mail_box;
-  std::string name;
-
-  explicit EventLoopContext(MailBox &&mail_box, std::string &&name) noexcept;
-  ~EventLoopContext() noexcept = default;
-  CLASS_KIND_MOVABLE(EventLoopContext);
-};
 
 class EventLoopHandler {
 public:
@@ -27,16 +18,24 @@ public:
   virtual ~EventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoopHandler);
 
-  [[nodiscard]] virtual auto OnInit(const Config &config,
-                                    const EventLoop &event_loop) noexcept
+  [[nodiscard]] virtual auto OnInit(const EventLoop &event_loop,
+                                    const Config &config) noexcept
       -> Result<Void> = 0;
 
-  [[nodiscard]] virtual auto OnMail(const EventLoopContext &context,
+  [[nodiscard]] virtual auto OnMail(const EventLoop &event_loop,
                                     Mail &&mail) noexcept -> Result<Void> = 0;
 
-  [[nodiscard]] virtual auto OnSessionEvent(const EventLoopContext &context,
-                                            const SessionId session_id,
-                                            const uint32_t events) noexcept
+  [[nodiscard]] virtual auto OnSocketIn(const EventLoop &event_loop,
+                                        const SocketId socket_id) noexcept
+      -> Result<Void> = 0;
+
+  [[nodiscard]] virtual auto OnSocketHangUp(const EventLoop &event_loop,
+                                            const SocketId socket_id) noexcept
+      -> Result<Void> = 0;
+
+  [[nodiscard]] virtual auto
+  OnSocketError(const EventLoop &event_loop, const SocketId socket_id,
+                const int code, const std::string_view description) noexcept
       -> Result<Void> = 0;
 };
 
@@ -44,22 +43,24 @@ using EventLoopHandlerPtr = std::unique_ptr<EventLoopHandler>;
 
 class EventLoop {
 public:
-  explicit EventLoop(EventLoopContext &&context,
+  explicit EventLoop(MailBox &&mail_box, std::string &&name,
                      EventLoopHandlerPtr &&handler) noexcept;
   virtual ~EventLoop() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoop);
 
+  [[nodiscard]] virtual auto GetMailBox() const noexcept -> const MailBox &;
+  [[nodiscard]] virtual auto GetName() const noexcept -> std::string_view;
+
   [[nodiscard]] virtual auto Init(const Config &config) noexcept
       -> Result<Void> = 0;
   [[nodiscard]] virtual auto Run() noexcept -> Result<Void> = 0;
-  [[nodiscard]] virtual auto Name() const noexcept -> std::string_view = 0;
-
-  [[nodiscard]] virtual auto Add(const SessionId session_id,
+  [[nodiscard]] virtual auto Add(const SocketId socket_id,
                                  const uint32_t events) const noexcept
       -> Result<Void> = 0;
 
 protected:
-  EventLoopContext context_;
+  MailBox mail_box_;
+  std::string name_;
   EventLoopHandlerPtr handler_;
 };
 

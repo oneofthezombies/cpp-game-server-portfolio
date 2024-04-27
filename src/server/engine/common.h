@@ -22,11 +22,12 @@ enum class Symbol : int32_t {
   kMainEventLoopHandlerLinuxServerSocketFailed,
   kMainEventLoopHandlerLinuxServerSocketBindFailed,
   kMainEventLoopHandlerLinuxServerSocketListenFailed,
-  kMainEventLoopHandlerLinuxUnexpectedSessionEvent,
-  kMainEventLoopHandlerLinuxUnexpectedSessionId,
+  kMainEventLoopHandlerLinuxUnexpectedSocketId,
   kMainEventLoopHandlerLinuxServerSocketAcceptFailed,
 
-  MainEventLoopHandlerBuilderPrimaryEventLoopNameEmpty,
+  kSocketEventLoopHandlerParseSocketIdFailed,
+  kSocketEventLoopHandlerSocketIdAlreadyExists,
+  kSocketEventLoopHandlerSocketIdNotFound,
 
   kMailBoxAlreadyExists,
   kMailBoxNotFound,
@@ -40,12 +41,14 @@ enum class Symbol : int32_t {
   kEventLoopLinuxEpollWaitFailed,
   kEventLoopLinuxWriteFailed,
   kEventLoopLinuxWriteClosed,
+  kEventLoopLinuxGetSocketOptionFailed,
+  kEventLoopLinuxSocketErrorZero,
 
   kFileDescriptorLinuxGetStatusFailed,
   kFileDescriptorLinuxSetStatusFailed,
   kFileDescriptorLinuxCloseFailed,
-  kFileDescriptorLinuxParseFdToSessionIdFailed,
-  kFileDescriptorLinuxParseSessionIdToFdFailed,
+  kFileDescriptorLinuxParseFdToSocketIdFailed,
+  kFileDescriptorLinuxParseSocketIdToFdFailed,
 
   kLinuxSignalSetFailed,
   kLinuxSignalResetFailed,
