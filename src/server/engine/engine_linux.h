@@ -25,7 +25,6 @@ public:
   ~EngineLinux() noexcept = default;
   CLASS_KIND_MOVABLE(EngineLinux);
 
-  [[nodiscard]] auto Init() noexcept -> Result<Void>;
   [[nodiscard]] auto Run() noexcept -> Result<Void>;
 
   [[nodiscard]] auto AddEventLoop(std::string &&name,

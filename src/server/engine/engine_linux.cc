@@ -56,18 +56,6 @@ engine::EngineLinux::EngineLinux(Config &&config,
     : config_{std::move(config)}, main_event_loop_{std::move(main_event_loop)} {
 }
 
-auto engine::EngineLinux::Init() noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
-
-  assert(main_event_loop_ != nullptr && "main_event_loop must not be nullptr");
-
-  if (auto res = main_event_loop_->Init(config_); res.IsErr()) {
-    return res;
-  }
-
-  return ResultT{Void{}};
-}
-
 auto engine::EngineLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -90,6 +78,10 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
                 core::TinyJson{}
                     .Set("linux_error", core::LinuxError::FromErrno())
                     .ToString()}};
+    }
+
+    if (auto res = main_event_loop_->Init(config_); res.IsErr()) {
+      return res;
     }
 
     if (auto res = main_event_loop_->Run(); res.IsErr()) {
