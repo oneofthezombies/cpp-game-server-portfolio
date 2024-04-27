@@ -14,7 +14,7 @@
 #include "tiny_json.h"
 #include "utils.h"
 
-enum class Symbol : int32_t {
+enum Symbol : int32_t {
   kHelpRequested = 0,
   kIpArgNotFound,
   kIpValueNotFound,
@@ -29,13 +29,13 @@ auto operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
   return os;
 }
 
-struct ClientOptions final {
+struct Config final {
   std::string ip;
   uint16_t port{kUndefinedPort};
 
-  explicit ClientOptions() noexcept = default;
-  ~ClientOptions() noexcept = default;
-  CLASS_KIND_MOVABLE(ClientOptions);
+  explicit Config() noexcept = default;
+  ~Config() noexcept = default;
+  CLASS_KIND_MOVABLE(Config);
 
   static constexpr uint16_t kUndefinedPort{0};
 };
@@ -44,10 +44,10 @@ using Error = core::Error<Symbol>;
 
 template <typename T> using Result = core::Result<T, Error>;
 
-auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
-  using ResultT = Result<ClientOptions>;
+auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
+  using ResultT = Result<Config>;
 
-  ClientOptions options;
+  Config options;
   core::Tokenizer tokenizer{std::move(args)};
 
   // Skip the first argument which is the program name
@@ -96,7 +96,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<ClientOptions> {
     return ResultT{Error{Symbol::kIpArgNotFound}};
   }
 
-  if (options.port == ClientOptions::kUndefinedPort) {
+  if (options.port == Config::kUndefinedPort) {
     return ResultT{Error{Symbol::kPortArgNotFound}};
   }
 

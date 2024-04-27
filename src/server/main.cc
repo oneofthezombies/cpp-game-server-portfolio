@@ -3,7 +3,7 @@
 #include "engine/config.h"
 #include "engine/engine.h"
 
-enum class Symbol : int32_t {
+enum Symbol : int32_t {
   kHelpRequested = 0,
   kPortArgNotFound,
   kPortValueNotFound,
