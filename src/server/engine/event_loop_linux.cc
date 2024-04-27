@@ -6,7 +6,6 @@
 
 #include "event_loop_handler.h"
 #include "mail_center.h"
-#include "utils.h"
 #include "utils_linux.h"
 
 using namespace engine;
@@ -29,15 +28,18 @@ auto engine::EventLoopLinux::Builder::Build(
     return ResultT{std::move(mail_box_res.Err())};
   }
 
-  return ResultT{EventLoopLinux{std::move(mail_box_res.Ok()), std::move(name),
-                                std::move(epoll_fd), std::move(handler)}};
+  return ResultT{EventLoopLinux{EventLoopContext{
+                                    std::move(mail_box_res.Ok()),
+                                    std::move(name),
+                                },
+                                std::move(handler), std::move(epoll_fd)}};
 }
 
-engine::EventLoopLinux::EventLoopLinux(MailBox &&mail_box, std::string &&name,
-                                       FileDescriptorLinux &&epoll_fd,
-                                       EventLoopHandlerPtr &&handler) noexcept
-    : mail_box_{std::move(mail_box)}, name_{std::move(name)},
-      epoll_fd_{std::move(epoll_fd)}, handler_{std::move(handler)} {}
+engine::EventLoopLinux::EventLoopLinux(EventLoopContext &&context,
+                                       EventLoopHandlerPtr &&handler,
+                                       FileDescriptorLinux &&epoll_fd) noexcept
+    : context_{std::move(context)}, handler_{std::move(handler)},
+      epoll_fd_{std::move(epoll_fd)} {}
 
 auto engine::EventLoopLinux::Add(const SessionId session_id,
                                  const uint32_t events) const noexcept
@@ -116,7 +118,7 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   struct epoll_event events[kMaxEvents]{};
   std::atomic<bool> shutdown{false};
   while (!shutdown) {
-    auto mail = mail_box_.rx.TryReceive();
+    auto mail = context_.mail_box.rx.TryReceive();
     if (mail) {
       if (auto value = mail->body.Get("shutdown"); value) {
         shutdown = true;
@@ -152,7 +154,7 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 }
 
 auto engine::EventLoopLinux::Name() const noexcept -> std::string_view {
-  return name_;
+  return context_.name;
 }
 
 auto engine::EventLoopLinux::OnMailReceived(const Mail &mail) noexcept
@@ -167,22 +169,4 @@ auto engine::EventLoopLinux::OnEpollEventReceived(
   using ResultT = Result<Void>;
 
   return ResultT{Void{}};
-}
-
-auto engine::EventLoopLinux::ParseSessionIdToFd(const SessionId session_id)
-    const noexcept -> Result<FileDescriptorLinux::Raw> {
-  using ResultT = Result<FileDescriptorLinux::Raw>;
-
-  const auto casted = static_cast<FileDescriptorLinux::Raw>(session_id);
-  const auto restored = static_cast<SessionId>(casted);
-  if (session_id != restored) {
-    return ResultT{Error{Symbol::kEventLoopLinuxParseSessionIdToFdFailed,
-                         core::TinyJson{}
-                             .Set("session_id", session_id)
-                             .Set("casted", casted)
-                             .Set("restored", restored)
-                             .ToString()}};
-  }
-
-  return ResultT{casted};
 }

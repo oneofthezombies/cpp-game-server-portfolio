@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "event_loop_handler.h"
-#include "server/engine/session_service.h"
+#include "mail_center.h"
 
 namespace engine {
 
@@ -21,6 +21,15 @@ public:
 };
 
 using EventLoopImplPtr = std::unique_ptr<void, EventLoopImplRawDeleter>;
+
+struct EventLoopContext {
+  MailBox mail_box;
+  std::string name;
+
+  explicit EventLoopContext(MailBox &&mail_box, std::string &&name) noexcept;
+  ~EventLoopContext() noexcept = default;
+  CLASS_KIND_MOVABLE(EventLoopContext);
+};
 
 class EventLoop final {
 public:

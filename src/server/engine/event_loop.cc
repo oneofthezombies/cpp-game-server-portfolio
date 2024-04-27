@@ -34,14 +34,14 @@ auto EventLoop::Builder::Build(std::string &&name,
     -> Result<EventLoop> {
   using ResultT = Result<EventLoop>;
 
-  auto result =
+  auto res =
       EventLoopImpl::Builder{}.Build(std::move(name), std::move(handler));
-  if (result.IsErr()) {
-    return ResultT{std::move(result.Err())};
+  if (res.IsErr()) {
+    return ResultT{std::move(res.Err())};
   }
 
   return ResultT{
-      EventLoop{EventLoopImplPtr{new EventLoopImpl{std::move(result.Ok())}}}};
+      EventLoop{EventLoopImplPtr{new EventLoopImpl{std::move(res.Ok())}}}};
 }
 
 engine::EventLoop::EventLoop(EventLoopImplPtr &&impl) noexcept

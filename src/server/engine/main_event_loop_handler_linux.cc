@@ -14,6 +14,11 @@
 
 using namespace engine;
 
+engine::MainEventLoopHandlerLinux::MainEventLoopHandlerLinux(
+    std::string &&primary_event_loop_name) noexcept
+    : EventLoopHandler{},
+      primary_event_loop_name_{std::move(primary_event_loop_name)} {}
+
 auto engine::MainEventLoopHandlerLinux::OnInit(
     const Config &config, const EventLoop &event_loop) noexcept
     -> Result<Void> {
@@ -63,8 +68,8 @@ auto engine::MainEventLoopHandlerLinux::OnInit(
 }
 
 auto engine::MainEventLoopHandlerLinux::OnSessionEvent(
-    const SessionId session_id, const uint32_t events) noexcept
-    -> Result<Void> {
+    const EventLoopContext &context, const SessionId session_id,
+    const uint32_t events) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
@@ -110,9 +115,8 @@ auto engine::MainEventLoopHandlerLinux::OnSessionEvent(
     return ResultT{std::move(res.Err())};
   }
 
-  // TODO: send client_fd to primary event loop
-  context_->mail_box.tx.Send(
-      Mail{"main", "lobby", {{"client_fd", std::to_string(client_fd_raw)}}});
-
+  context.mail_box.tx.Send(Mail{
+      std::string{context.name}, std::string{primary_event_loop_name_},
+      std::move(core::TinyJson{}.Set("client_fd", std::to_string(client_fd)))});
   return ResultT{Void{}};
 }

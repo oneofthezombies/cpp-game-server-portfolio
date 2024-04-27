@@ -11,8 +11,6 @@
 
 namespace engine {
 
-using SessionId = uint64_t;
-
 class SessionService {
 public:
   [[nodiscard]] auto Name() const noexcept -> std::string_view;

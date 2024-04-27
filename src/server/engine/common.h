@@ -26,6 +26,8 @@ enum class Symbol : int32_t {
   kMainEventLoopHandlerLinuxUnexpectedSessionId,
   kMainEventLoopHandlerLinuxServerSocketAcceptFailed,
 
+  MainEventLoopHandlerBuilderPrimaryEventLoopNameEmpty,
+
   kHelpRequested,
   kPortArgNotFound,
   kPortValueNotFound,

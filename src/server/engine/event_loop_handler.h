@@ -12,10 +12,11 @@ namespace engine {
 
 struct Config;
 class EventLoop;
+struct EventLoopContext;
 
 class EventLoopHandler {
 public:
-  explicit EventLoopHandler() noexcept = default;
+  explicit EventLoopHandler() noexcept;
   virtual ~EventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoopHandler);
 
@@ -23,7 +24,8 @@ public:
                                     const EventLoop &event_loop) noexcept
       -> Result<Void> = 0;
 
-  [[nodiscard]] virtual auto OnSessionEvent(const SessionId session_id,
+  [[nodiscard]] virtual auto OnSessionEvent(const EventLoopContext &context,
+                                            const SessionId session_id,
                                             const uint32_t events) noexcept
       -> Result<Void> = 0;
 };

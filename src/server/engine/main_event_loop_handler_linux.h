@@ -6,9 +6,12 @@
 
 namespace engine {
 
+struct EventLoopContext;
+
 class MainEventLoopHandlerLinux final : public EventLoopHandler {
 public:
-  explicit MainEventLoopHandlerLinux() noexcept = default;
+  explicit MainEventLoopHandlerLinux(
+      std::string &&primary_event_loop_name) noexcept;
   virtual ~MainEventLoopHandlerLinux() noexcept override = default;
   CLASS_KIND_MOVABLE(MainEventLoopHandlerLinux);
 
@@ -16,12 +19,14 @@ public:
                                     const EventLoop &event_loop) noexcept
       -> Result<Void> override;
 
-  [[nodiscard]] virtual auto OnSessionEvent(const SessionId session_id,
+  [[nodiscard]] virtual auto OnSessionEvent(const EventLoopContext &context,
+                                            const SessionId session_id,
                                             const uint32_t events) noexcept
       -> Result<Void> override;
 
 private:
   std::unique_ptr<FileDescriptorLinux> server_fd_;
+  std::string primary_event_loop_name_;
 };
 
 } // namespace engine

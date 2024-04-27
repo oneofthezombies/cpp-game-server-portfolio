@@ -5,6 +5,7 @@
 
 #include "core/core.h"
 
+#include "event_loop.h"
 #include "event_loop_handler.h"
 #include "file_descriptor_linux.h"
 #include "mail_center.h"
@@ -46,17 +47,16 @@ public:
       -> Result<Void>;
 
 protected:
-  MailBox mail_box_;
-  std::string name_;
-  FileDescriptorLinux epoll_fd_;
+  EventLoopContext context_;
   EventLoopHandlerPtr handler_;
+  FileDescriptorLinux epoll_fd_;
 
   static constexpr size_t kMaxEvents = 1024;
 
 private:
-  explicit EventLoopLinux(MailBox &&mail_box, std::string &&name,
-                          FileDescriptorLinux &&epoll_fd,
-                          EventLoopHandlerPtr &&handler) noexcept;
+  explicit EventLoopLinux(EventLoopContext &&context,
+                          EventLoopHandlerPtr &&handler,
+                          FileDescriptorLinux &&epoll_fd) noexcept;
 
   [[nodiscard]] auto
   ParseSessionIdToFd(const SessionId session_id) const noexcept
