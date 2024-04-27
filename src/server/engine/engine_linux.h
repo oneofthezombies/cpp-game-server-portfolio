@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "config.h"
-#include "event_loop_handler.h"
+#include "event_loop.h"
 #include "file_descriptor_linux.h"
 
 namespace engine {
@@ -25,14 +25,16 @@ public:
   ~EngineLinux() noexcept = default;
   CLASS_KIND_MOVABLE(EngineLinux);
 
+  [[nodiscard]] auto Init() noexcept -> Result<Void>;
+  [[nodiscard]] auto Run() noexcept -> Result<Void>;
+
   [[nodiscard]] auto AddEventLoop(std::string &&name,
                                   EventLoopHandlerPtr &&handler) noexcept
       -> Result<Void>;
 
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
-
 private:
-  explicit EngineLinux(Config &&config) noexcept;
+  explicit EngineLinux(Config &&config,
+                       EventLoopPtr &&main_event_loop) noexcept;
 
   [[nodiscard]] auto OnServerFdEvent() noexcept -> Result<Void>;
   [[nodiscard]] auto
@@ -42,9 +44,10 @@ private:
   auto DeleteConnectedSessionOrCloseFd(
       const FileDescriptorLinux::Raw client_fd) noexcept -> void;
 
-  static auto EventLoopThreadMain(EventLoop &event_loop) noexcept -> void;
+  static auto EventLoopThreadMain(EventLoopPtr &&event_loop) noexcept -> void;
 
   std::unordered_map<std::string, std::thread> event_loop_threads_;
+  EventLoopPtr main_event_loop_;
   Config config_;
 };
 

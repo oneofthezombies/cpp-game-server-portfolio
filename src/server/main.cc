@@ -25,9 +25,9 @@ template <typename T> using Result = core::Result<T, Error>;
 auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config>;
 
 auto main(int argc, char **argv) noexcept -> int {
-  auto args_res = ParseArgs(core::ParseArgcArgv(argc, argv));
-  if (args_res.IsErr()) {
-    const auto &error = args_res.Err();
+  auto config_res = ParseArgs(core::ParseArgcArgv(argc, argv));
+  if (config_res.IsErr()) {
+    const auto &error = config_res.Err();
     switch (error.code) {
     case Symbol::kHelpRequested:
       // noop
@@ -62,7 +62,17 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
-  auto engine_res = engine::Engine::Builder{}.Build(std::move(args_res.Ok()));
+  auto config = std::move(config_res.Ok());
+  config.primary_event_loop_name = "lobby";
+  if (auto res = config.Validate(); res.IsErr()) {
+    core::TinyJson{}
+        .Set("reason", "config validation failed")
+        .Set("error", res.Err())
+        .LogLn();
+    return 1;
+  }
+
+  auto engine_res = engine::Engine::Builder{}.Build(std::move(config));
   if (engine_res.IsErr()) {
     core::TinyJson{}
         .Set("reason", "engine build failed")
@@ -71,7 +81,7 @@ auto main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
-  auto &engine = engine_res.Ok();
+  auto engine = std::move(engine_res.Ok());
   if (auto res = engine.Run(); res.IsErr()) {
     std::cout << res.Err() << std::endl;
     return 1;

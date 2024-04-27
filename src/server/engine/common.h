@@ -15,7 +15,7 @@ enum class Symbol : int32_t {
   // Add symbols after kBegin
 
   kConfigPortUndefined,
-  kConfigPrimarySessionServiceNotFound,
+  kConfigPrimaryEventLoopNameEmpty,
 
   kEngineEventLoopAlreadyExists,
 

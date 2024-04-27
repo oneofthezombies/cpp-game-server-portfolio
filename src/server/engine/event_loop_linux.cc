@@ -4,7 +4,6 @@
 
 #include "core/tiny_json.h"
 
-#include "event_loop_handler.h"
 #include "mail_center.h"
 #include "utils_linux.h"
 
@@ -12,8 +11,8 @@ using namespace engine;
 
 auto engine::EventLoopLinux::Builder::Build(
     std::string &&name, EventLoopHandlerPtr &&handler) const noexcept
-    -> Result<EventLoopLinux> {
-  using ResultT = Result<EventLoopLinux>;
+    -> Result<EventLoopPtr> {
+  using ResultT = Result<EventLoopPtr>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
@@ -28,25 +27,37 @@ auto engine::EventLoopLinux::Builder::Build(
     return ResultT{std::move(mail_box_res.Err())};
   }
 
-  return ResultT{EventLoopLinux{EventLoopContext{
-                                    std::move(mail_box_res.Ok()),
-                                    std::move(name),
-                                },
-                                std::move(handler), std::move(epoll_fd)}};
+  return ResultT{EventLoopPtr{
+      new EventLoopLinux{EventLoopContext{
+                             std::move(mail_box_res.Ok()),
+                             std::move(name),
+                         },
+                         std::move(handler), std::move(epoll_fd)}}};
 }
 
 engine::EventLoopLinux::EventLoopLinux(EventLoopContext &&context,
                                        EventLoopHandlerPtr &&handler,
                                        FileDescriptorLinux &&epoll_fd) noexcept
-    : context_{std::move(context)}, handler_{std::move(handler)},
+    : EventLoop{std::move(context), std::move(handler)},
       epoll_fd_{std::move(epoll_fd)} {}
+
+auto engine::EventLoopLinux::Init(const Config &config) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  if (auto res = handler_->OnInit(config, *this); res.IsErr()) {
+    return res;
+  }
+
+  return ResultT{Void{}};
+}
 
 auto engine::EventLoopLinux::Add(const SessionId session_id,
                                  const uint32_t events) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
-  auto fd_res = ParseSessionIdToFd(session_id);
+  auto fd_res = FileDescriptorLinux::ParseSessionIdToFd(session_id);
   if (fd_res.IsErr()) {
     return ResultT{std::move(fd_res.Err())};
   }

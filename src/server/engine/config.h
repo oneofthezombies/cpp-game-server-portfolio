@@ -11,6 +11,7 @@ namespace engine {
 
 struct Config final {
   uint16_t port{kUndefinedPort};
+  std::string primary_event_loop_name;
 
   static constexpr uint16_t kUndefinedPort{0};
 

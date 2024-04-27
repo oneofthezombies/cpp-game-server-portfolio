@@ -1,26 +1,16 @@
 #ifndef SERVER_ENGINE_EVENT_LOOP_H
 #define SERVER_ENGINE_EVENT_LOOP_H
 
-#include <memory>
-
 #include "core/core.h"
 
 #include "common.h"
-#include "event_loop_handler.h"
 #include "mail_center.h"
+#include "session.h"
 
 namespace engine {
 
-class EventLoopImplRawDeleter final {
-public:
-  explicit EventLoopImplRawDeleter() noexcept = default;
-  ~EventLoopImplRawDeleter() noexcept = default;
-  CLASS_KIND_MOVABLE(EventLoopImplRawDeleter);
-
-  auto operator()(void *impl_raw) const noexcept -> void;
-};
-
-using EventLoopImplPtr = std::unique_ptr<void, EventLoopImplRawDeleter>;
+struct Config;
+class EventLoop;
 
 struct EventLoopContext {
   MailBox mail_box;
@@ -31,34 +21,46 @@ struct EventLoopContext {
   CLASS_KIND_MOVABLE(EventLoopContext);
 };
 
-class EventLoop final {
+class EventLoopHandler {
 public:
-  class Builder final {
-  public:
-    explicit Builder() noexcept = default;
-    ~Builder() noexcept = default;
-    CLASS_KIND_PINNABLE(Builder);
+  explicit EventLoopHandler() noexcept = default;
+  virtual ~EventLoopHandler() noexcept = default;
+  CLASS_KIND_MOVABLE(EventLoopHandler);
 
-    [[nodiscard]] auto Build(std::string &&name,
-                             EventLoopHandlerPtr &&handler) const noexcept
-        -> Result<EventLoop>;
-  };
+  [[nodiscard]] virtual auto OnInit(const Config &config,
+                                    const EventLoop &event_loop) noexcept
+      -> Result<Void> = 0;
 
-  ~EventLoop() noexcept = default;
+  [[nodiscard]] virtual auto OnSessionEvent(const EventLoopContext &context,
+                                            const SessionId session_id,
+                                            const uint32_t events) noexcept
+      -> Result<Void> = 0;
+};
+
+using EventLoopHandlerPtr = std::unique_ptr<EventLoopHandler>;
+
+class EventLoop {
+public:
+  explicit EventLoop(EventLoopContext &&context,
+                     EventLoopHandlerPtr &&handler) noexcept;
+  virtual ~EventLoop() noexcept = default;
   CLASS_KIND_MOVABLE(EventLoop);
 
-  [[nodiscard]] auto Init(const Config &config) noexcept -> Result<Void>;
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
-  [[nodiscard]] auto Name() const noexcept -> std::string_view;
+  [[nodiscard]] virtual auto Init(const Config &config) noexcept
+      -> Result<Void> = 0;
+  [[nodiscard]] virtual auto Run() noexcept -> Result<Void> = 0;
+  [[nodiscard]] virtual auto Name() const noexcept -> std::string_view = 0;
 
-  [[nodiscard]] auto Add(const SessionId session_id,
-                         const uint32_t events) const noexcept -> Result<Void>;
+  [[nodiscard]] virtual auto Add(const SessionId session_id,
+                                 const uint32_t events) const noexcept
+      -> Result<Void> = 0;
 
-private:
-  explicit EventLoop(EventLoopImplPtr &&impl) noexcept;
-
-  EventLoopImplPtr impl_;
+protected:
+  EventLoopContext context_;
+  EventLoopHandlerPtr handler_;
 };
+
+using EventLoopPtr = std::unique_ptr<EventLoop>;
 
 } // namespace engine
 

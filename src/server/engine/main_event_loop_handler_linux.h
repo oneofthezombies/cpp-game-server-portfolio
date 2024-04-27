@@ -1,12 +1,10 @@
 #ifndef SERVER_ENGINE_MAIN_EVENT_LOOP_HANDLER_LINUX_H
 #define SERVER_ENGINE_MAIN_EVENT_LOOP_HANDLER_LINUX_H
 
-#include "event_loop_handler.h"
+#include "event_loop.h"
 #include "file_descriptor_linux.h"
 
 namespace engine {
-
-struct EventLoopContext;
 
 class MainEventLoopHandlerLinux final : public EventLoopHandler {
 public:

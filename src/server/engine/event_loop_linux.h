@@ -6,13 +6,12 @@
 #include "core/core.h"
 
 #include "event_loop.h"
-#include "event_loop_handler.h"
 #include "file_descriptor_linux.h"
 #include "mail_center.h"
 
 namespace engine {
 
-class EventLoopLinux final {
+class EventLoopLinux final : public EventLoop {
 public:
   class Builder {
   public:
@@ -22,18 +21,20 @@ public:
 
     [[nodiscard]] auto Build(std::string &&name,
                              EventLoopHandlerPtr &&handler) const noexcept
-        -> Result<EventLoopLinux>;
+        -> Result<EventLoopPtr>;
   };
 
-  ~EventLoopLinux() noexcept = default;
+  virtual ~EventLoopLinux() noexcept override = default;
   CLASS_KIND_MOVABLE(EventLoopLinux);
 
-  [[nodiscard]] auto Init(const Config &config) noexcept -> Result<Void>;
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
-  [[nodiscard]] auto Name() const noexcept -> std::string_view;
+  [[nodiscard]] virtual auto Init(const Config &config) noexcept
+      -> Result<Void> override;
+  [[nodiscard]] virtual auto Run() noexcept -> Result<Void> override;
+  [[nodiscard]] virtual auto Name() const noexcept -> std::string_view override;
 
-  [[nodiscard]] auto Add(const SessionId session_id,
-                         const uint32_t events) const noexcept -> Result<Void>;
+  [[nodiscard]] virtual auto Add(const SessionId session_id,
+                                 const uint32_t events) const noexcept
+      -> Result<Void> override;
 
   [[nodiscard]] auto Delete(const FileDescriptorLinux::Raw fd) noexcept
       -> Result<Void>;
@@ -46,9 +47,7 @@ public:
   OnEpollEventReceived(const struct epoll_event &event) noexcept
       -> Result<Void>;
 
-protected:
-  EventLoopContext context_;
-  EventLoopHandlerPtr handler_;
+private:
   FileDescriptorLinux epoll_fd_;
 
   static constexpr size_t kMaxEvents = 1024;
@@ -57,10 +56,6 @@ private:
   explicit EventLoopLinux(EventLoopContext &&context,
                           EventLoopHandlerPtr &&handler,
                           FileDescriptorLinux &&epoll_fd) noexcept;
-
-  [[nodiscard]] auto
-  ParseSessionIdToFd(const SessionId session_id) const noexcept
-      -> Result<FileDescriptorLinux::Raw>;
 };
 
 } // namespace engine
