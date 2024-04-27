@@ -109,5 +109,7 @@ auto contents::Battle::OnStart(const engine::EventLoop &event_loop,
     battle_states_.emplace(second_socket_id, std::move(battle_state));
   }
 
+  event_loop.Write();
+
   return ResultT{Void{}};
 }
