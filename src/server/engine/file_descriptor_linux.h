@@ -2,6 +2,7 @@
 #define SERVER_ENGINE_FILE_DESCRIPTOR_LINUX_H
 
 #include "common.h"
+#include "session.h"
 
 namespace engine {
 
@@ -23,6 +24,13 @@ public:
   [[nodiscard]] static auto IsValid(const Raw fd) noexcept -> bool;
   [[nodiscard]] static auto UpdateNonBlocking(const Raw fd) noexcept
       -> Result<Void>;
+
+  [[nodiscard]] static auto
+  ParseSessionIdToFd(const SessionId session_id) noexcept
+      -> Result<FileDescriptorLinux::Raw>;
+
+  [[nodiscard]] static auto FromSessionId(const SessionId session_id) noexcept
+      -> Result<FileDescriptorLinux>;
 
 private:
   Raw fd_{kInvalidFd};

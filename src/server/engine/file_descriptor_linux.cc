@@ -84,6 +84,36 @@ auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
   return ResultT{Void{}};
 }
 
+auto engine::FileDescriptorLinux::ParseSessionIdToFd(
+    const SessionId session_id) noexcept -> Result<FileDescriptorLinux::Raw> {
+  using ResultT = Result<FileDescriptorLinux::Raw>;
+
+  const auto casted_fd = static_cast<Raw>(session_id);
+  const auto restored_session_id = static_cast<SessionId>(casted_fd);
+  if (session_id != restored_session_id) {
+    return ResultT{Error{Symbol::kFileDescriptorLinuxParseSessionIdToFdFailed,
+                         core::TinyJson{}
+                             .Set("session_id", session_id)
+                             .Set("casted_fd", casted_fd)
+                             .Set("restored_session_id", restored_session_id)
+                             .ToString()}};
+  }
+
+  return ResultT{casted_fd};
+}
+
+auto engine::FileDescriptorLinux::FromSessionId(
+    const SessionId session_id) noexcept -> Result<FileDescriptorLinux> {
+  using ResultT = Result<FileDescriptorLinux>;
+
+  const auto res = ParseSessionIdToFd(session_id);
+  if (res.IsErr()) {
+    return ResultT{std::move(res.Err())};
+  }
+
+  return ResultT{FileDescriptorLinux{res.Ok()}};
+}
+
 auto engine::operator<<(std::ostream &os, const FileDescriptorLinux &fd)
     -> std::ostream & {
   os << "FileDescriptorLinux{";
