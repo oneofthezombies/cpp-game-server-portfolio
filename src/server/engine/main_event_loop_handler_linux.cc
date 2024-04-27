@@ -72,6 +72,8 @@ auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoopContext &context,
     -> Result<Void> {
   using ResultT = Result<Void>;
 
+  // noop
+
   return ResultT{Void{}};
 }
 
