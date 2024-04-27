@@ -7,7 +7,9 @@
 
 #include "core/tiny_json.h"
 
+#include "file_descriptor_linux.h"
 #include "mail_center.h"
+#include "utils.h"
 #include "utils_linux.h"
 
 using namespace engine;
@@ -205,6 +207,16 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
       }
 
       if (event.events & EPOLLHUP) {
+        const auto fd = event.data.fd;
+        core::Defer defer{[fd] {
+          if (auto res = FileDescriptorLinux::Close(fd); res.IsErr()) {
+            core::TinyJson{}
+                .Set("reason", "file descriptor close failed")
+                .Set("error", res.Err())
+                .LogLn();
+          }
+        }};
+
         if (auto res = handler_->OnSocketHangUp(*this, socket_id);
             res.IsErr()) {
           return res;

@@ -18,16 +18,12 @@ engine::FileDescriptorLinux::FileDescriptorLinux(
 }
 
 engine::FileDescriptorLinux::~FileDescriptorLinux() noexcept {
-  if (fd_ == kInvalidFd) {
-    return;
-  }
-
-  if (close(fd_) == -1) {
+  if (auto res = Close(fd_); res.IsErr()) {
     core::TinyJson{}
-        .Set("symbol", Symbol::kFileDescriptorLinuxCloseFailed)
-        .Set("linux_error", core::LinuxError::FromErrno())
-        .Set("fd", fd_)
+        .Set("reason", "file descriptor close failed")
+        .Set("error", res.Err())
         .LogLn();
+    return;
   }
 
   fd_ = kInvalidFd;
@@ -120,16 +116,22 @@ auto engine::FileDescriptorLinux::ParseSocketIdToFd(
   return ResultT{casted_fd};
 }
 
-auto engine::FileDescriptorLinux::FromSocketId(
-    const SocketId socket_id) noexcept -> Result<FileDescriptorLinux> {
-  using ResultT = Result<FileDescriptorLinux>;
+auto engine::FileDescriptorLinux::Close(const Raw fd) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
 
-  auto res = ParseSocketIdToFd(socket_id);
-  if (res.IsErr()) {
-    return ResultT{std::move(res.Err())};
+  if (fd == kInvalidFd) {
+    return ResultT{Void{}};
   }
 
-  return ResultT{FileDescriptorLinux{res.Ok()}};
+  if (close(fd) == -1) {
+    return ResultT{Error{Symbol::kFileDescriptorLinuxCloseFailed,
+                         core::TinyJson{}
+                             .Set("linux_error", core::LinuxError::FromErrno())
+                             .Set("fd", fd)
+                             .ToString()}};
+  }
+
+  return ResultT{Void{}};
 }
 
 auto engine::operator<<(std::ostream &os, const FileDescriptorLinux &fd)

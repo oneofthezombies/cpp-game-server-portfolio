@@ -30,17 +30,21 @@ auto core::TinyJson::ToString() const noexcept -> std::string {
   return oss.str();
 }
 
-auto core::TinyJson::Log(std::ostream &os) const noexcept -> void {
+auto core::TinyJson::Log(std::ostream &os,
+                         std::source_location location) const noexcept -> void {
   os << '{';
   for (const auto &[key, value] : raw_) {
-    os << '"' << key << '"' << ':' << '"' << value << '"' << ',';
+    os << '"' << key << "\":\"" << value << "\",";
   }
-  os.seekp(-1, std::ios_base::end);
+  os << "\"source_location\":\"" << location.file_name() << ':'
+     << location.line() << ':' << location.column() << '"';
   os << '}';
 }
 
-auto core::TinyJson::LogLn(std::ostream &os) const noexcept -> void {
-  Log(os);
+auto core::TinyJson::LogLn(std::ostream &os,
+                           std::source_location location) const noexcept
+    -> void {
+  Log(os, location);
   os << '\n';
 }
 
@@ -50,8 +54,8 @@ auto core::TinyJson::Parse(const std::string_view tiny_json) noexcept
   return parser.Parse();
 }
 
-auto core::operator<<(std::ostream &os,
-                      const TinyJson &tiny_json) noexcept -> std::ostream & {
+auto core::operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
+    -> std::ostream & {
   os << "TinyJson{";
   auto it = tiny_json.AsRaw().begin();
   while (it != tiny_json.AsRaw().end()) {
@@ -274,8 +278,9 @@ auto core::TinyJsonParser::Current(
   return tiny_json_str_[cursor_];
 }
 
-auto core::TinyJsonParser::Consume(
-    const char c, const std::source_location location) noexcept -> bool {
+auto core::TinyJsonParser::Consume(const char c,
+                                   const std::source_location location) noexcept
+    -> bool {
   if (cursor_ >= tiny_json_str_.size()) {
     Log("Unexpected end of input", location);
     return false;

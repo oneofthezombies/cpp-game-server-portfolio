@@ -51,9 +51,13 @@ public:
 
   [[nodiscard]] auto ToString() const noexcept -> std::string;
 
-  auto Log(std::ostream &os = std::cout) const noexcept -> void;
+  auto Log(std::ostream &os = std::cout,
+           std::source_location location =
+               std::source_location::current()) const noexcept -> void;
 
-  auto LogLn(std::ostream &os = std::cout) const noexcept -> void;
+  auto LogLn(std::ostream &os = std::cout,
+             std::source_location location =
+                 std::source_location::current()) const noexcept -> void;
 
   [[nodiscard]] static auto Parse(const std::string_view tiny_json_str) noexcept
       -> std::optional<TinyJson>;
@@ -64,8 +68,8 @@ private:
   friend class TinyJsonParser;
 };
 
-auto operator<<(std::ostream &os,
-                const TinyJson &tiny_json) noexcept -> std::ostream &;
+auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
+    -> std::ostream &;
 
 struct TinyJsonParserOptions {
   bool allow_trailing_comma{false};
@@ -92,15 +96,16 @@ private:
   [[nodiscard]] auto ParseValue() noexcept -> std::optional<std::string>;
   [[nodiscard]] auto ParseString() noexcept -> std::optional<std::string>;
 
-  [[nodiscard]] auto
-  Current(const std::source_location location = std::source_location::current())
-      const noexcept -> std::optional<char>;
-  [[nodiscard]] auto
-  Consume(const char c, const std::source_location location =
-                            std::source_location::current()) noexcept -> bool;
-  [[nodiscard]] auto
-  Advance(const std::source_location location =
-              std::source_location::current()) noexcept -> bool;
+  [[nodiscard]] auto Current(const std::source_location location =
+                                 std::source_location::current()) const noexcept
+      -> std::optional<char>;
+  [[nodiscard]] auto Consume(const char c,
+                             const std::source_location location =
+                                 std::source_location::current()) noexcept
+      -> bool;
+  [[nodiscard]] auto Advance(const std::source_location location =
+                                 std::source_location::current()) noexcept
+      -> bool;
   auto Trim() noexcept -> void;
 
   auto Log(const std::string_view message,

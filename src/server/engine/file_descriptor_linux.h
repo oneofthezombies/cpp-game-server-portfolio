@@ -31,8 +31,7 @@ public:
   [[nodiscard]] static auto ParseSocketIdToFd(const SocketId socket_id) noexcept
       -> Result<FileDescriptorLinux::Raw>;
 
-  [[nodiscard]] static auto FromSocketId(const SocketId socket_id) noexcept
-      -> Result<FileDescriptorLinux>;
+  [[nodiscard]] static auto Close(const Raw fd) noexcept -> Result<Void>;
 
 private:
   Raw fd_{kInvalidFd};
