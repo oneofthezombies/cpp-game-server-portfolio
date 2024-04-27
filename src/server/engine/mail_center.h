@@ -27,6 +27,8 @@ struct Mail final {
   auto Clone() const noexcept -> Mail;
 };
 
+auto operator<<(std::ostream &os, const Mail &mail) noexcept -> std::ostream &;
+
 struct MailBox final {
   core::Tx<Mail> tx;
   core::Rx<Mail> rx;

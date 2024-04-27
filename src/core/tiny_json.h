@@ -15,10 +15,10 @@ namespace core {
 
 class TinyJson final {
 public:
-  using Raw = std::unordered_map<std::string, std::string>;
+  using Map = std::unordered_map<std::string, std::string>;
 
   explicit TinyJson() noexcept = default;
-  explicit TinyJson(Raw &&raw) noexcept;
+  explicit TinyJson(Map &&raw) noexcept;
   ~TinyJson() noexcept = default;
   CLASS_KIND_MOVABLE(TinyJson);
 
@@ -33,19 +33,24 @@ public:
     std::ostringstream oss;
     oss << value;
     auto key_str = std::string(key);
-    auto found = raw_.find(key_str);
-    if (found != raw_.end()) {
+    auto found = map_.find(key_str);
+    if (found != map_.end()) {
       std::cout << "TinyJson duplicated key: " << key_str << ", "
                 << "Old value: " << found->second << ", "
                 << "New value: " << oss.str() << "\n";
       found->second = oss.str();
     } else {
-      raw_.emplace(std::move(key_str), oss.str());
+      map_.emplace(std::move(key_str), oss.str());
     }
     return *this;
   }
 
-  auto AsRaw() const noexcept -> const Raw &;
+  auto AsMap() const noexcept -> const Map &;
+
+  /**
+   * This method will move the ownership of the raw data to the caller.
+   */
+  [[nodiscard]] auto IntoMap() noexcept -> Map;
 
   [[nodiscard]] auto Clone() const noexcept -> TinyJson;
 
@@ -63,13 +68,13 @@ public:
       -> std::optional<TinyJson>;
 
 private:
-  Raw raw_;
+  Map map_;
 
   friend class TinyJsonParser;
 };
 
-auto operator<<(std::ostream &os, const TinyJson &tiny_json) noexcept
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const TinyJson &tiny_json) noexcept -> std::ostream &;
 
 struct TinyJsonParserOptions {
   bool allow_trailing_comma{false};
@@ -96,16 +101,15 @@ private:
   [[nodiscard]] auto ParseValue() noexcept -> std::optional<std::string>;
   [[nodiscard]] auto ParseString() noexcept -> std::optional<std::string>;
 
-  [[nodiscard]] auto Current(const std::source_location location =
-                                 std::source_location::current()) const noexcept
-      -> std::optional<char>;
-  [[nodiscard]] auto Consume(const char c,
-                             const std::source_location location =
-                                 std::source_location::current()) noexcept
-      -> bool;
-  [[nodiscard]] auto Advance(const std::source_location location =
-                                 std::source_location::current()) noexcept
-      -> bool;
+  [[nodiscard]] auto
+  Current(const std::source_location location = std::source_location::current())
+      const noexcept -> std::optional<char>;
+  [[nodiscard]] auto
+  Consume(const char c, const std::source_location location =
+                            std::source_location::current()) noexcept -> bool;
+  [[nodiscard]] auto
+  Advance(const std::source_location location =
+              std::source_location::current()) noexcept -> bool;
   auto Trim() noexcept -> void;
 
   auto Log(const std::string_view message,
@@ -113,7 +117,7 @@ private:
 
   std::string_view tiny_json_str_;
   size_t cursor_{};
-  TinyJson::Raw raw_;
+  TinyJson::Map map_;
   TinyJsonParserOptions options_;
 };
 

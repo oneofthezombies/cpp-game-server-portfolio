@@ -35,25 +35,25 @@ auto main(int argc, char **argv) noexcept -> int {
       break;
     case Symbol::kPortArgNotFound:
       core::TinyJson{}
-          .Set("reason", "port argument not found")
+          .Set("message", "port argument not found")
           .Set("error", error)
           .LogLn();
       break;
     case Symbol::kPortValueNotFound:
       core::TinyJson{}
-          .Set("reason", "port value not found")
+          .Set("message", "port value not found")
           .Set("error", error)
           .LogLn();
       break;
     case Symbol::kPortParsingFailed:
       core::TinyJson{}
-          .Set("reason", "port parsing failed")
+          .Set("message", "port parsing failed")
           .Set("error", error)
           .LogLn();
       break;
     case Symbol::kUnknownArgument:
       core::TinyJson{}
-          .Set("reason", "unknown argument")
+          .Set("message", "unknown argument")
           .Set("error", error)
           .LogLn();
       break;
@@ -67,7 +67,7 @@ auto main(int argc, char **argv) noexcept -> int {
   config.primary_event_loop_name = "lobby";
   if (auto res = config.Validate(); res.IsErr()) {
     core::TinyJson{}
-        .Set("reason", "config validation failed")
+        .Set("message", "config validation failed")
         .Set("error", res.Err())
         .LogLn();
     return 1;
@@ -76,7 +76,7 @@ auto main(int argc, char **argv) noexcept -> int {
   auto engine_res = engine::Engine::Builder{}.Build(std::move(config));
   if (engine_res.IsErr()) {
     core::TinyJson{}
-        .Set("reason", "engine build failed")
+        .Set("message", "engine build failed")
         .Set("error", engine_res.Err())
         .LogLn();
     return 1;
@@ -116,8 +116,9 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
 
       auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
-        return ResultT{Error{Symbol::kPortParsingFailed,
-                             std::make_error_code(result.Err()).message()}};
+        return ResultT{
+            Error{Symbol::kPortParsingFailed,
+                  core::TinyJson{}.Set("error", result.Err()).IntoMap()}};
       }
 
       config.port = result.Ok();
@@ -125,7 +126,8 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
       continue;
     }
 
-    return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
+    return ResultT{Error{Symbol::kUnknownArgument,
+                         core::TinyJson{}.Set("token", token).IntoMap()}};
   }
 
   if (config.port == engine::Config::kUndefinedPort) {

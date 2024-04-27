@@ -12,12 +12,18 @@ enum Symbol : int32_t {
   kServerContentsBegin = 2'000'000,
   // Add symbols after kBegin
 
+  kBattleMailKindNotFound,
+  kBattleMailUnexpectedKind,
+  kBattleMailBattleIdNotFound,
+  kBattleMailFirstSocketIdNotFound,
+  kBattleMailSecondSocketIdNotFound,
+
   // Add symbols before kEnd
   kServerContentsEnd
 };
 
-auto operator<<(std::ostream &os, const Symbol symbol) noexcept
-    -> std::ostream &;
+auto operator<<(std::ostream &os,
+                const Symbol symbol) noexcept -> std::ostream &;
 
 using Void = engine::Void;
 using Error = engine::Error;

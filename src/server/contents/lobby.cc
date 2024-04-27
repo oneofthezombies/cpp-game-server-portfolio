@@ -19,23 +19,25 @@ auto contents::Lobby::OnMail(const engine::EventLoop &event_loop,
     return res;
   }
 
-  if (HasTwoSocket()) {
-    const auto first = *sockets_.begin();
-    const auto second = *std::next(sockets_.begin());
-    if (auto res = UnregisterSocket(event_loop, first); res.IsErr()) {
+  if (IsMatchable()) {
+    const auto first_socket_id = *sockets_.begin();
+    const auto second_socket_id = *std::next(sockets_.begin());
+    if (auto res = UnregisterSocket(event_loop, first_socket_id); res.IsErr()) {
       return res;
     }
 
-    if (auto res = UnregisterSocket(event_loop, second); res.IsErr()) {
+    if (auto res = UnregisterSocket(event_loop, second_socket_id);
+        res.IsErr()) {
       return res;
     }
 
     const auto battle_id = NextBattleId();
-    event_loop.SendMail("battle_start",
-                        std::move(core::TinyJson{}
-                                      .Set("battle_id", battle_id)
-                                      .Set("first", first)
-                                      .Set("second", second)));
+    event_loop.SendMail(
+        "battle", std::move(core::TinyJson{}
+                                .Set("kind", "start")
+                                .Set("battle_id", battle_id)
+                                .Set("first_socket_id", first_socket_id)
+                                .Set("second_socket_id", second_socket_id)));
   }
 
   return ResultT{Void{}};
@@ -49,7 +51,7 @@ auto contents::Lobby::OnSocketIn(const engine::EventLoop &event_loop,
   return ResultT{Void{}};
 }
 
-auto contents::Lobby::HasTwoSocket() const noexcept -> bool {
+auto contents::Lobby::IsMatchable() const noexcept -> bool {
   return sockets_.size() >= 2;
 }
 

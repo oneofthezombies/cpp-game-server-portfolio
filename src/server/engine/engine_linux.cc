@@ -31,7 +31,7 @@ auto OnSignal(int signal) -> void {
   }
 
   core::TinyJson{}
-      .Set("reason", "signal_received")
+      .Set("message", "signal_received")
       .Set("signal", signal)
       .LogLn();
 }
@@ -77,7 +77,7 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
           Error{Symbol::kLinuxSignalSetFailed,
                 core::TinyJson{}
                     .Set("linux_error", core::LinuxError::FromErrno())
-                    .ToString()}};
+                    .IntoMap()}};
     }
 
     if (auto res = main_event_loop_->Init(config_); res.IsErr()) {
@@ -93,7 +93,7 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
           Error{Symbol::kLinuxSignalResetFailed,
                 core::TinyJson{}
                     .Set("linux_error", core::LinuxError::FromErrno())
-                    .ToString()}};
+                    .IntoMap()}};
     }
   }
 
@@ -109,7 +109,7 @@ auto engine::EngineLinux::AddEventLoop(std::string &&name,
   if (auto it = event_loop_threads_.find(name);
       it != event_loop_threads_.end()) {
     return ResultT{Error{Symbol::kEngineEventLoopAlreadyExists,
-                         core::TinyJson{}.Set("name", name).ToString()}};
+                         core::TinyJson{}.Set("name", name).IntoMap()}};
   }
 
   auto event_loop_res =
@@ -135,7 +135,7 @@ auto engine::EngineLinux::EventLoopThreadMain(
 
   if (auto res = event_loop->Run(); res.IsErr()) {
     core::TinyJson{}
-        .Set("reason", "event loop thread run failed")
+        .Set("message", "event loop thread run failed")
         .Set("name", event_loop->GetName())
         .Set("error", res.Err())
         .LogLn();

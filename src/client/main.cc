@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "core/core.h"
+#include "core/tiny_json.h"
 #include "core/utils.h"
 
 enum Symbol : int32_t {
@@ -45,7 +46,7 @@ template <typename T> using Result = core::Result<T, Error>;
 auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
   using ResultT = Result<Config>;
 
-  Config options;
+  Config config;
   core::Tokenizer tokenizer{std::move(args)};
 
   // Skip the first argument which is the program name
@@ -65,7 +66,7 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
         return ResultT{Error{Symbol::kIpValueNotFound}};
       }
 
-      options.ip = *next;
+      config.ip = *next;
       tokenizer.Eat();
       continue;
     }
@@ -78,27 +79,29 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
 
       auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
-        return ResultT{Error{Symbol::kPortParsingFailed,
-                             std::make_error_code(result.Err()).message()}};
+        return ResultT{
+            Error{Symbol::kPortParsingFailed,
+                  core::TinyJson{}.Set("error", result.Err()).IntoMap()}};
       }
 
-      options.port = result.Ok();
+      config.port = result.Ok();
       tokenizer.Eat();
       continue;
     }
 
-    return ResultT{Error{Symbol::kUnknownArgument, std::string{token}}};
+    return ResultT{Error{Symbol::kUnknownArgument,
+                         core::TinyJson{}.Set("token", token).IntoMap()}};
   }
 
-  if (options.ip.empty()) {
+  if (config.ip.empty()) {
     return ResultT{Error{Symbol::kIpArgNotFound}};
   }
 
-  if (options.port == Config::kUndefinedPort) {
+  if (config.port == Config::kUndefinedPort) {
     return ResultT{Error{Symbol::kPortArgNotFound}};
   }
 
-  return ResultT{std::move(options)};
+  return ResultT{std::move(config)};
 }
 
 auto main(int argc, char **argv) noexcept -> int {
@@ -107,8 +110,8 @@ auto main(int argc, char **argv) noexcept -> int {
   if (options_res.IsErr()) {
     const auto &error = options_res.Err();
     if (error.code == Symbol::kHelpRequested) {
-      std::cout
-          << "Usage: client [--ip <ip>] [--port <port>] [--room-id <room_id>]";
+      std::cout << "Usage: client [--ip <ip>] [--port <port>] [--room-id "
+                   "<room_id>]";
     } else if (error.code == Symbol::kIpArgNotFound) {
       std::cout << "Error: --ip argument not found";
     } else if (error.code == Symbol::kIpValueNotFound) {
@@ -118,7 +121,7 @@ auto main(int argc, char **argv) noexcept -> int {
     } else if (error.code == Symbol::kPortValueNotFound) {
       std::cout << "Error: --port argument value not found";
     } else if (error.code == Symbol::kPortParsingFailed) {
-      std::cout << "Error: port parsing failed: " << error.message;
+      std::cout << "Error: port parsing failed: " << error;
     } else if (error.code == Symbol::kUnknownArgument) {
       std::cout << "Error: unknown argument";
     } else {

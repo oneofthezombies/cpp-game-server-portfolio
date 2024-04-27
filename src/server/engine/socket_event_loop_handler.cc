@@ -8,21 +8,17 @@
 
 using namespace engine;
 
-auto engine::SocketEventLoopHandler::OnMail(const EventLoop &event_loop,
-                                            const Mail &mail) noexcept
-    -> Result<Void> {
+auto engine::SocketEventLoopHandler::OnMail(
+    const EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (mail.from == "main") {
     if (auto socket_id_str = mail.body.Get("socket_id")) {
       auto socket_id_res = core::ParseNumberString<SocketId>(*socket_id_str);
       if (socket_id_res.IsErr()) {
-        return ResultT{
-            Error{Symbol::kSocketEventLoopHandlerParseSocketIdFailed,
-                  core::TinyJson{}
-                      .Set("errc",
-                           std::make_error_code(socket_id_res.Err()).message())
-                      .ToString()}};
+        return ResultT{Error{
+            Symbol::kSocketEventLoopHandlerParseSocketIdFailed,
+            core::TinyJson{}.Set("error", socket_id_res.Err()).IntoMap()}};
       }
 
       const auto socket_id = socket_id_res.Ok();
@@ -36,8 +32,8 @@ auto engine::SocketEventLoopHandler::OnMail(const EventLoop &event_loop,
 }
 
 auto engine::SocketEventLoopHandler::OnSocketHangUp(
-    const EventLoop &event_loop, const SocketId socket_id) noexcept
-    -> Result<Void> {
+    const EventLoop &event_loop,
+    const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto res = UnregisterSocket(event_loop, socket_id); res.IsErr()) {
@@ -53,7 +49,7 @@ auto engine::SocketEventLoopHandler::OnSocketError(
   using ResultT = Result<Void>;
 
   core::TinyJson{}
-      .Set("reason", "socket error")
+      .Set("message", "socket error")
       .Set("name", event_loop.GetName())
       .Set("socket_id", socket_id)
       .Set("code", code)
@@ -69,7 +65,7 @@ auto engine::SocketEventLoopHandler::AddSocketToSet(
   if (sockets_.find(socket_id) != sockets_.end()) {
     return ResultT{
         Error{Symbol::kSocketEventLoopHandlerSocketIdAlreadyExists,
-              core::TinyJson{}.Set("socket_id", socket_id).ToString()}};
+              core::TinyJson{}.Set("socket_id", socket_id).IntoMap()}};
   }
 
   sockets_.emplace(socket_id);
@@ -84,7 +80,7 @@ auto engine::SocketEventLoopHandler::RemoveSocketFromSet(
   if (found == sockets_.end()) {
     return ResultT{
         Error{Symbol::kSocketEventLoopHandlerSocketIdNotFound,
-              core::TinyJson{}.Set("socket_id", socket_id).ToString()}};
+              core::TinyJson{}.Set("socket_id", socket_id).IntoMap()}};
   }
 
   sockets_.erase(found);
@@ -92,8 +88,8 @@ auto engine::SocketEventLoopHandler::RemoveSocketFromSet(
 }
 
 auto engine::SocketEventLoopHandler::RegisterSocket(
-    const EventLoop &event_loop, const SocketId socket_id) noexcept
-    -> Result<Void> {
+    const EventLoop &event_loop,
+    const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto res = event_loop.Add(socket_id, EPOLLIN | EPOLLET); res.IsErr()) {
@@ -108,8 +104,8 @@ auto engine::SocketEventLoopHandler::RegisterSocket(
 }
 
 auto engine::SocketEventLoopHandler::UnregisterSocket(
-    const EventLoop &event_loop, const SocketId socket_id) noexcept
-    -> Result<Void> {
+    const EventLoop &event_loop,
+    const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto res = RemoveSocketFromSet(socket_id); res.IsErr()) {

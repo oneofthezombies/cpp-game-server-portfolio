@@ -24,7 +24,7 @@ auto engine::EventLoopLinux::Builder::Build(
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCreate1Failed,
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   auto mail_box_res = MailCenter::Global().Create(std::string{name});
@@ -72,7 +72,7 @@ auto engine::EventLoopLinux::Add(const SocketId socket_id,
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   return ResultT{Void{}};
@@ -92,7 +92,7 @@ auto engine::EventLoopLinux::Delete(const SocketId socket_id) const noexcept
     return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   return ResultT{Void{}};
@@ -123,13 +123,13 @@ auto engine::EventLoopLinux::Write(const SocketId socket_id,
                 core::TinyJson{}
                     .Set("linux_error", core::LinuxError::FromErrno())
                     .Set("fd", fd)
-                    .ToString()}};
+                    .IntoMap()}};
     } else {
       written += count;
 
       if (count == 0) {
         return ResultT{Error{Symbol::kEventLoopLinuxWriteClosed,
-                             core::TinyJson{}.Set("fd", fd).ToString()}};
+                             core::TinyJson{}.Set("fd", fd).IntoMap()}};
       }
     }
   }
@@ -164,7 +164,7 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
           Error{Symbol::kEventLoopLinuxEpollWaitFailed,
                 core::TinyJson{}
                     .Set("linux_error", core::LinuxError::FromErrno())
-                    .ToString()}};
+                    .IntoMap()}};
     }
 
     for (int i = 0; i < fd_count; ++i) {
@@ -187,7 +187,7 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .Set("fd", event.data.fd)
                         .Set("socket_id", socket_id)
-                        .ToString()}};
+                        .IntoMap()}};
         }
 
         if (code == 0) {
@@ -195,7 +195,7 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
                                core::TinyJson{}
                                    .Set("fd", event.data.fd)
                                    .Set("socket_id", socket_id)
-                                   .ToString()}};
+                                   .IntoMap()}};
         }
 
         const auto description = std::string_view{strerror(code)};
@@ -211,7 +211,7 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
         core::Defer defer{[fd] {
           if (auto res = FileDescriptorLinux::Close(fd); res.IsErr()) {
             core::TinyJson{}
-                .Set("reason", "file descriptor close failed")
+                .Set("message", "file descriptor close failed")
                 .Set("error", res.Err())
                 .LogLn();
           }

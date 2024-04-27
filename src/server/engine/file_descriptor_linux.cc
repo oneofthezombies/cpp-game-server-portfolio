@@ -20,7 +20,7 @@ engine::FileDescriptorLinux::FileDescriptorLinux(
 engine::FileDescriptorLinux::~FileDescriptorLinux() noexcept {
   if (auto res = Close(fd_); res.IsErr()) {
     core::TinyJson{}
-        .Set("reason", "file descriptor close failed")
+        .Set("message", "file descriptor close failed")
         .Set("error", res.Err())
         .LogLn();
     return;
@@ -66,7 +66,7 @@ auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
                              .Set("fd", fd)
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
@@ -74,7 +74,7 @@ auto engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
                              .Set("fd", fd)
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   return ResultT{Void{}};
@@ -92,7 +92,7 @@ auto engine::FileDescriptorLinux::ParseFdToSocketId(const Raw fd) noexcept
                              .Set("fd", fd)
                              .Set("casted_socket_id", casted_socket_id)
                              .Set("restored_fd", restored_fd)
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   return ResultT{casted_socket_id};
@@ -110,7 +110,7 @@ auto engine::FileDescriptorLinux::ParseSocketIdToFd(
                              .Set("socket_id", socket_id)
                              .Set("casted_fd", casted_fd)
                              .Set("restored_socket_id", restored_socket_id)
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   return ResultT{casted_fd};
@@ -128,14 +128,14 @@ auto engine::FileDescriptorLinux::Close(const Raw fd) noexcept -> Result<Void> {
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
                              .Set("fd", fd)
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   return ResultT{Void{}};
 }
 
-auto engine::operator<<(std::ostream &os, const FileDescriptorLinux &fd)
-    -> std::ostream & {
+auto engine::operator<<(std::ostream &os,
+                        const FileDescriptorLinux &fd) -> std::ostream & {
   os << "FileDescriptorLinux{";
   os << "fd=";
   if (fd.IsValid()) {

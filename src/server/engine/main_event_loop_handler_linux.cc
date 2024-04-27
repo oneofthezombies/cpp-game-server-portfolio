@@ -29,7 +29,7 @@ auto engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
     return ResultT{Error{Symbol::kMainEventLoopHandlerLinuxServerSocketFailed,
                          core::TinyJson{}
                              .Set("linux_error", core::LinuxError::FromErrno())
-                             .ToString()}};
+                             .IntoMap()}};
   }
 
   auto server_fd = FileDescriptorLinux{server_fd_raw};
@@ -48,7 +48,7 @@ auto engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
         Error{Symbol::kMainEventLoopHandlerLinuxServerSocketBindFailed,
               core::TinyJson{}
                   .Set("linux_error", core::LinuxError::FromErrno())
-                  .ToString()}};
+                  .IntoMap()}};
   }
 
   if (listen(server_fd.AsRaw(), SOMAXCONN) < 0) {
@@ -56,7 +56,7 @@ auto engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
         Error{Symbol::kMainEventLoopHandlerLinuxServerSocketListenFailed,
               core::TinyJson{}
                   .Set("linux_error", core::LinuxError::FromErrno())
-                  .ToString()}};
+                  .IntoMap()}};
   }
 
   if (auto res = event_loop.Add(server_fd.AsRaw(), EPOLLIN); res.IsErr()) {
@@ -67,9 +67,8 @@ auto engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
   return ResultT{Void{}};
 }
 
-auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoop &event_loop,
-                                               const Mail &mail) noexcept
-    -> Result<Void> {
+auto engine::MainEventLoopHandlerLinux::OnMail(
+    const EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   // noop
@@ -78,8 +77,8 @@ auto engine::MainEventLoopHandlerLinux::OnMail(const EventLoop &event_loop,
 }
 
 auto engine::MainEventLoopHandlerLinux::OnSocketIn(
-    const EventLoop &event_loop, const SocketId socket_id) noexcept
-    -> Result<Void> {
+    const EventLoop &event_loop,
+    const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
@@ -93,7 +92,7 @@ auto engine::MainEventLoopHandlerLinux::OnSocketIn(
   if (fd != server_fd_->AsRaw()) {
     return ResultT{Error{
         Symbol::kMainEventLoopHandlerLinuxUnexpectedSocketId,
-        core::TinyJson{}.Set("socket_id", socket_id).Set("fd", fd).ToString()}};
+        core::TinyJson{}.Set("socket_id", socket_id).Set("fd", fd).IntoMap()}};
   }
 
   struct sockaddr_in client_addr {};
@@ -105,7 +104,7 @@ auto engine::MainEventLoopHandlerLinux::OnSocketIn(
         Error{Symbol::kMainEventLoopHandlerLinuxServerSocketAcceptFailed,
               core::TinyJson{}
                   .Set("linux_error", core::LinuxError::FromErrno())
-                  .ToString()}};
+                  .IntoMap()}};
   }
 
   if (auto res = FileDescriptorLinux::UpdateNonBlocking(client_fd);
@@ -119,8 +118,8 @@ auto engine::MainEventLoopHandlerLinux::OnSocketIn(
 }
 
 auto engine::MainEventLoopHandlerLinux::OnSocketHangUp(
-    const EventLoop &event_loop, const SocketId socket_id) noexcept
-    -> Result<Void> {
+    const EventLoop &event_loop,
+    const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
@@ -132,7 +131,7 @@ auto engine::MainEventLoopHandlerLinux::OnSocketHangUp(
 
   const auto fd = fd_res.Ok();
   core::TinyJson{}
-      .Set("reason", "socket hang up")
+      .Set("message", "socket hang up")
       .Set("name", event_loop.GetName())
       .Set("socket_id", socket_id)
       .Set("fd", fd)
@@ -154,7 +153,7 @@ auto engine::MainEventLoopHandlerLinux::OnSocketError(
 
   const auto fd = fd_res.Ok();
   core::TinyJson{}
-      .Set("reason", "socket error")
+      .Set("message", "socket error")
       .Set("name", event_loop.GetName())
       .Set("socket_id", socket_id)
       .Set("fd", fd)

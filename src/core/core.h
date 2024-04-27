@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <variant>
 
 #define CLASS_KIND_COPYABLE(cls)                                               \
@@ -78,18 +79,23 @@ auto operator<<(std::ostream &os,
   return os;
 }
 
+using ErrorDetails = std::unordered_map<std::string, std::string>;
+
 template <typename T>
   requires std::is_integral_v<T> || std::is_enum_v<T>
 struct Error final {
   T code;
-  std::string message;
+  ErrorDetails details;
 
   explicit Error(const T code) noexcept : code(code) {}
-  explicit Error(const T code, std::string &&message) noexcept
-      : code(code), message(std::move(message)) {}
+  explicit Error(const T code, ErrorDetails &&details) noexcept
+      : code(code), details(std::move(details)) {}
   ~Error() noexcept = default;
   CLASS_KIND_MOVABLE(Error);
 };
+
+auto operator<<(std::ostream &os,
+                const ErrorDetails &details) -> std::ostream &;
 
 template <typename T>
 auto operator<<(std::ostream &os, const Error<T> &error) -> std::ostream & {
@@ -97,8 +103,8 @@ auto operator<<(std::ostream &os, const Error<T> &error) -> std::ostream & {
   os << "code=";
   os << error.code;
   os << ", ";
-  os << "message=";
-  os << error.message;
+  os << "details=";
+  os << error.details;
   os << "}";
   return os;
 }

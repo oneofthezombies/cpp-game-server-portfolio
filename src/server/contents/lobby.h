@@ -28,7 +28,7 @@ public:
       const engine::SocketId socket_id) noexcept -> Result<Void> override;
 
 private:
-  auto HasTwoSocket() const noexcept -> bool;
+  auto IsMatchable() const noexcept -> bool;
   auto NextBattleId() noexcept -> uint64_t;
 
   uint64_t next_battle_id_{};
