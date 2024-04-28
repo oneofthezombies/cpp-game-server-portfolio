@@ -21,6 +21,7 @@ enum Symbol : int32_t {
 };
 
 using SocketId = uint64_t;
+using BattleId = uint64_t;
 
 }  // namespace core
 

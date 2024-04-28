@@ -47,6 +47,7 @@ template <typename T>
 using Result = core::Result<T>;
 
 using SocketId = core::SocketId;
+using BattleId = core::BattleId;
 
 auto
 ParseArgs(core::Args &&args) noexcept -> Result<Config> {
@@ -198,6 +199,29 @@ main(int argc, char **argv) noexcept -> int {
       const auto socket_id = socket_id_res.Ok();
       std::cout << "Connected to the server with socket id: " << socket_id
                 << std::endl;
+    } else if (kind == "battle_start") {
+      const auto battle_id_res = message->GetAsNumber<BattleId>("battle_id");
+      if (battle_id_res.IsErr()) {
+        std::cout << "Failed to get the battle id." << std::endl;
+        return 1;
+      }
+
+      const auto battle_id = battle_id_res.Ok();
+
+      const auto opponent_socket_id_res =
+          message->GetAsNumber<SocketId>("opponent_socket_id");
+      if (opponent_socket_id_res.IsErr()) {
+        std::cout << "Failed to get the opponent socket id." << std::endl;
+        return 1;
+      }
+
+      const auto opponent_socket_id = opponent_socket_id_res.Ok();
+      std::cout << "Battle started with battle id: " << battle_id
+                << " and opponent socket id: " << opponent_socket_id
+                << std::endl;
+    } else {
+      std::cout << "Unknown message kind: " << kind << std::endl;
+      continue;
     }
   }
 

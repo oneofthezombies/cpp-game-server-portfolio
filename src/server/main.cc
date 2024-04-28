@@ -2,7 +2,9 @@
 #include "core/utils.h"
 #include "engine/config.h"
 #include "engine/engine.h"
+#include "server/contents/battle.h"
 #include "server/contents/lobby.h"
+#include "server/engine/event_loop.h"
 
 enum Symbol : int32_t {
   kHelpRequested = 0,
@@ -86,15 +88,20 @@ main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
+  std::vector<std::pair<std::string, engine::EventLoopHandlerPtr>> event_loops;
+  event_loops.emplace_back("lobby", std::make_unique<contents::Lobby>());
+  event_loops.emplace_back("battle", std::make_unique<contents::Battle>());
+
   auto engine = std::move(engine_res.Ok());
-  if (auto res =
-          engine.AddEventLoop("lobby", std::make_unique<contents::Lobby>());
-      res.IsErr()) {
-    core::TinyJson{}
-        .Set("message", "add event loop failed")
-        .Set("error", res.Err())
-        .LogLn();
-    return 1;
+  for (auto &[name, handler] : event_loops) {
+    if (auto res = engine.AddEventLoop(std::string{name}, std::move(handler));
+        res.IsErr()) {
+      core::TinyJson{}
+          .Set("message", "register event loop handler failed")
+          .Set("error", res.Err())
+          .LogLn();
+      return 1;
+    }
   }
 
   if (auto res = engine.Run(); res.IsErr()) {

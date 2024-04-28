@@ -9,6 +9,7 @@ namespace contents {
 class Lobby final : public engine::SocketEventLoopHandler<Lobby> {
  public:
   using Super = engine::SocketEventLoopHandler<Lobby>;
+  using Self = Lobby;
 
   explicit Lobby() noexcept = default;
   virtual ~Lobby() noexcept override = default;
@@ -28,13 +29,14 @@ class Lobby final : public engine::SocketEventLoopHandler<Lobby> {
       -> Result<Void> override;
 
  private:
-  auto
+  [[nodiscard]] auto
   IsMatchable() const noexcept -> bool;
-  auto
+
+  [[nodiscard]] auto
   NextBattleId() noexcept -> BattleId;
 
-  static auto
-  OnConnect(Lobby &self,
+  [[nodiscard]] static auto
+  OnConnect(Self &self,
             engine::EventLoop &event_loop,
             const engine::Mail &mail) noexcept -> Result<Void>;
 

@@ -54,7 +54,7 @@ contents::Lobby::NextBattleId() noexcept -> BattleId {
 }
 
 auto
-contents::Lobby::OnConnect(Lobby &self,
+contents::Lobby::OnConnect(Self &self,
                            engine::EventLoop &event_loop,
                            const engine::Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;

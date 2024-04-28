@@ -8,7 +8,11 @@
 namespace contents {
 
 struct BattleState {
-  uint64_t battle_id{};
+  SocketId first_socket_id;
+  std::string first_hand;
+
+  SocketId second_socket_id;
+  std::string second_hand;
 
   explicit BattleState() noexcept = default;
   ~BattleState() noexcept = default;
@@ -18,6 +22,7 @@ struct BattleState {
 class Battle final : public engine::SocketEventLoopHandler<Battle> {
  public:
   using Super = engine::SocketEventLoopHandler<Battle>;
+  using Self = Battle;
 
   explicit Battle() noexcept = default;
   virtual ~Battle() noexcept override = default;
@@ -37,11 +42,12 @@ class Battle final : public engine::SocketEventLoopHandler<Battle> {
       -> Result<Void> override;
 
  private:
-  [[nodiscard]] auto
-  OnStart(engine::EventLoop &event_loop,
+  [[nodiscard]] static auto
+  OnStart(Self &self,
+          engine::EventLoop &event_loop,
           const engine::Mail &mail) noexcept -> Result<Void>;
 
-  std::unordered_map<engine::SocketId, BattleState> battle_states_;
+  std::unordered_map<BattleId, BattleState> battle_states_;
 };
 
 }  // namespace contents

@@ -1,6 +1,7 @@
 #ifndef SERVER_CONTENTS_COMMON_H
 #define SERVER_CONTENTS_COMMON_H
 
+#include "core/common.h"
 #include "core/core.h"
 
 namespace contents {
@@ -27,7 +28,8 @@ using Error = core::Error;
 template <typename T>
 using Result = core::Result<T>;
 
-using BattleId = uint64_t;
+using BattleId = core::BattleId;
+using SocketId = core::SocketId;
 
 }  // namespace contents
 
