@@ -15,15 +15,15 @@ class Lobby final : public engine::SocketEventLoopHandler<Lobby> {
   CLASS_KIND_MOVABLE(Lobby);
 
   [[nodiscard]] virtual auto
-  OnInit(const engine::EventLoop &event_loop,
+  OnInit(engine::EventLoop &event_loop,
          const engine::Config &config) noexcept -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnMail(const engine::EventLoop &event_loop,
+  OnMail(engine::EventLoop &event_loop,
          const engine::Mail &mail) noexcept -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnSocketIn(const engine::EventLoop &event_loop,
+  OnSocketIn(engine::EventLoop &event_loop,
              const engine::SocketId socket_id) noexcept
       -> Result<Void> override;
 
@@ -35,10 +35,10 @@ class Lobby final : public engine::SocketEventLoopHandler<Lobby> {
 
   static auto
   OnConnect(Lobby &self,
-            const engine::EventLoop &event_loop,
+            engine::EventLoop &event_loop,
             const engine::Mail &mail) noexcept -> Result<Void>;
 
-  BattleId next_battle_id_{};
+  BattleId next_battle_id_{1};
 };
 
 }  // namespace contents

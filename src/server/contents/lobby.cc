@@ -1,11 +1,13 @@
 #include "lobby.h"
 
+#include "core/protocol.h"
+#include "core/tiny_json.h"
 #include "server/engine/socket.h"
 
 using namespace contents;
 
 auto
-contents::Lobby::OnInit(const engine::EventLoop &event_loop,
+contents::Lobby::OnInit(engine::EventLoop &event_loop,
                         const engine::Config &config) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -19,7 +21,7 @@ contents::Lobby::OnInit(const engine::EventLoop &event_loop,
 }
 
 auto
-contents::Lobby::OnMail(const engine::EventLoop &event_loop,
+contents::Lobby::OnMail(engine::EventLoop &event_loop,
                         const engine::Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -31,7 +33,7 @@ contents::Lobby::OnMail(const engine::EventLoop &event_loop,
 }
 
 auto
-contents::Lobby::OnSocketIn(const engine::EventLoop &event_loop,
+contents::Lobby::OnSocketIn(engine::EventLoop &event_loop,
                             const engine::SocketId socket_id) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
@@ -55,7 +57,7 @@ contents::Lobby::NextBattleId() noexcept -> BattleId {
 
 auto
 contents::Lobby::OnConnect(Lobby &self,
-                           const engine::EventLoop &event_loop,
+                           engine::EventLoop &event_loop,
                            const engine::Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -67,9 +69,14 @@ contents::Lobby::OnConnect(Lobby &self,
   }
 
   const auto socket_id = socket_id_res.Ok();
-
-  // TODO
-  // event_loop.Write(socket_id, "");
+  auto message = core::TinyJson{}
+                     .Set("kind", "connect")
+                     .Set("socket_id", socket_id)
+                     .Take();
+  if (auto res = event_loop.SendServerEvent(socket_id, std::move(message));
+      res.IsErr()) {
+    return ResultT{Error::From(res.TakeErr())};
+  }
 
   if (self.IsMatchable()) {
     const auto first_socket_id = *self.sockets_.begin();
@@ -85,13 +92,13 @@ contents::Lobby::OnConnect(Lobby &self,
     }
 
     const auto battle_id = self.NextBattleId();
-    event_loop.SendMail(
-        "battle",
-        std::move(core::TinyJson{}
-                      .Set("kind", "start")
-                      .Set("battle_id", battle_id)
-                      .Set("first_socket_id", first_socket_id)
-                      .Set("second_socket_id", second_socket_id)));
+    event_loop.SendMail("battle",
+                        core::TinyJson{}
+                            .Set("kind", "start")
+                            .Set("battle_id", battle_id)
+                            .Set("first_socket_id", first_socket_id)
+                            .Set("second_socket_id", second_socket_id)
+                            .Take());
   }
 
   return ResultT{Void{}};

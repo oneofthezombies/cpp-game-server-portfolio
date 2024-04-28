@@ -41,7 +41,7 @@ engine::MailCenter::MailCenter(core::Tx<MailBody> &&run_tx) noexcept
 
 auto
 engine::MailCenter::Shutdown() noexcept -> void {
-  run_tx_.Send(std::move(core::TinyJson{}.Set("shutdown", "")));
+  run_tx_.Send(core::TinyJson{}.Set("shutdown", "").Take());
   run_thread_.join();
 }
 

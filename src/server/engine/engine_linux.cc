@@ -27,7 +27,7 @@ OnSignal(int signal) -> void {
       (*signal_mail_box_ptr)
           .tx.Send(Mail{"signal",
                         "all",
-                        std::move(core::TinyJson{}.Set("__shutdown", ""))});
+                        core::TinyJson{}.Set("__shutdown", "").Take()});
     }
   }
 

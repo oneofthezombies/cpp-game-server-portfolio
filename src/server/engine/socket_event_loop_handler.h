@@ -14,14 +14,14 @@ class SocketEventLoopHandler : public EventLoopHandler {
   using Super = EventLoopHandler;
   using Derived = T;
   using MailHandler =
-      std::function<Result<Void>(Derived &, const EventLoop &, const Mail &)>;
+      std::function<Result<Void>(Derived &, EventLoop &, const Mail &)>;
 
   explicit SocketEventLoopHandler() noexcept;
   virtual ~SocketEventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(SocketEventLoopHandler);
 
   [[nodiscard]] virtual auto
-  OnMail(const EventLoop &event_loop,
+  OnMail(EventLoop &event_loop,
          const Mail &mail) noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
@@ -71,7 +71,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] virtual auto
-  OnSocketHangUp(const EventLoop &event_loop,
+  OnSocketHangUp(EventLoop &event_loop,
                  const SocketId socket_id) noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
@@ -83,7 +83,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] virtual auto
-  OnSocketError(const EventLoop &event_loop,
+  OnSocketError(EventLoop &event_loop,
                 const SocketId socket_id,
                 const int code,
                 const std::string_view description) noexcept
@@ -101,7 +101,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] auto
-  RegisterSocket(const EventLoop &event_loop,
+  RegisterSocket(EventLoop &event_loop,
                  const SocketId socket_id) noexcept -> Result<Void> {
     using ResultT = Result<Void>;
 
@@ -119,7 +119,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] auto
-  UnregisterSocket(const EventLoop &event_loop,
+  UnregisterSocket(EventLoop &event_loop,
                    const SocketId socket_id) noexcept -> Result<Void> {
     using ResultT = Result<Void>;
 

@@ -2,9 +2,8 @@
 #define CORE_PROTOCOL_H
 
 #include <cstdint>
-#include <optional>
+#include <ostream>
 
-#include "core.h"
 #include "tiny_json.h"
 
 namespace core {
@@ -41,32 +40,8 @@ enum class MessageKind : uint8_t {
 auto
 operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
 
-using MessageBody = TinyJson;
-
-struct Message final {
-  using Id = uint64_t;
-
-  MessageKind kind;
-  Id id;
-  MessageBody body;
-
-  explicit Message(const MessageKind kind,
-                   const Id id,
-                   MessageBody &&body) noexcept;
-  ~Message() noexcept = default;
-  CLASS_KIND_MOVABLE(Message);
-
-  [[nodiscard]] static auto
-  FromRaw(const std::string_view raw) -> std::optional<Message>;
-
-  [[nodiscard]] static auto
-  BuildRaw(const MessageKind kind,
-           const Id id,
-           std::string &&tiny_json_str) noexcept -> std::string;
-};
-
-auto
-operator<<(std::ostream &os, const Message &message) noexcept -> std::ostream &;
+using MessageId = uint64_t;
+using Message = TinyJson;
 
 }  // namespace core
 

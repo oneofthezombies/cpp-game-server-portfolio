@@ -25,6 +25,11 @@ core::TinyJson::Get(const std::string_view key) const noexcept
 }
 
 auto
+core::TinyJson::Take() noexcept -> TinyJson {
+  return TinyJson{std::move(map_)};
+}
+
+auto
 core::TinyJson::AsMap() const noexcept -> const Map & {
   return map_;
 }

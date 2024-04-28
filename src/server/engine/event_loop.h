@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "core/core.h"
+#include "core/protocol.h"
 #include "mail_center.h"
 #include "socket.h"
 
@@ -18,23 +19,22 @@ class EventLoopHandler {
   CLASS_KIND_MOVABLE(EventLoopHandler);
 
   [[nodiscard]] virtual auto
-  OnInit(const EventLoop &event_loop,
+  OnInit(EventLoop &event_loop,
          const Config &config) noexcept -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  OnMail(const EventLoop &event_loop,
-         const Mail &mail) noexcept -> Result<Void> = 0;
+  OnMail(EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  OnSocketIn(const EventLoop &event_loop,
+  OnSocketIn(EventLoop &event_loop,
              const SocketId socket_id) noexcept -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  OnSocketHangUp(const EventLoop &event_loop,
+  OnSocketHangUp(EventLoop &event_loop,
                  const SocketId socket_id) noexcept -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  OnSocketError(const EventLoop &event_loop,
+  OnSocketError(EventLoop &event_loop,
                 const SocketId socket_id,
                 const int code,
                 const std::string_view description) noexcept
@@ -66,6 +66,10 @@ class EventLoop {
   SendMail(const std::string_view to,
            MailBody &&mail_body) const noexcept -> void;
 
+  auto
+  SendServerEvent(const SocketId socket_id,
+                  core::Message &&message) noexcept -> Result<Void>;
+
   [[nodiscard]] virtual auto
   Init(const Config &config) noexcept -> Result<Void> = 0;
 
@@ -84,9 +88,13 @@ class EventLoop {
         const std::string_view data) const noexcept -> Result<Void> = 0;
 
  protected:
+  [[nodiscard]] auto
+  NextMessageId() noexcept -> core::MessageId;
+
   MailBox mail_box_;
   std::string name_;
   EventLoopHandlerPtr handler_;
+  core::MessageId next_message_id_{1};
 };
 
 using EventLoopPtr = std::unique_ptr<EventLoop>;

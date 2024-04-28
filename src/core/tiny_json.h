@@ -66,7 +66,10 @@ class TinyJson final {
     return *this;
   }
 
-  auto
+  [[nodiscard]] auto
+  Take() noexcept -> TinyJson;
+
+  [[nodiscard]] auto
   AsMap() const noexcept -> const Map &;
 
   /**

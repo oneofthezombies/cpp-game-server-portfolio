@@ -25,21 +25,21 @@ class Battle final : public engine::SocketEventLoopHandler<Battle> {
   CLASS_KIND_MOVABLE(Battle);
 
   [[nodiscard]] virtual auto
-  OnInit(const engine::EventLoop &event_loop,
+  OnInit(engine::EventLoop &event_loop,
          const engine::Config &config) noexcept -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnMail(const engine::EventLoop &event_loop,
+  OnMail(engine::EventLoop &event_loop,
          const engine::Mail &mail) noexcept -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnSocketIn(const engine::EventLoop &event_loop,
+  OnSocketIn(engine::EventLoop &event_loop,
              const engine::SocketId socket_id) noexcept
       -> Result<Void> override;
 
  private:
   [[nodiscard]] auto
-  OnStart(const engine::EventLoop &event_loop,
+  OnStart(engine::EventLoop &event_loop,
           const engine::Mail &mail) noexcept -> Result<Void>;
 
   std::unordered_map<engine::SocketId, BattleState> battle_states_;

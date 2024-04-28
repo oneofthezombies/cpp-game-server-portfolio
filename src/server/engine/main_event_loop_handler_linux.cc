@@ -19,9 +19,8 @@ engine::MainEventLoopHandlerLinux::MainEventLoopHandlerLinux(
       primary_event_loop_name_{std::move(primary_event_loop_name)} {}
 
 auto
-engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
-                                          const Config &config) noexcept
-    -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnInit(
+    EventLoop &event_loop, const Config &config) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto server_fd_raw = socket(AF_INET, SOCK_STREAM, 0);
@@ -71,7 +70,7 @@ engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
 
 auto
 engine::MainEventLoopHandlerLinux::OnMail(
-    const EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> {
+    EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   // noop
@@ -80,9 +79,8 @@ engine::MainEventLoopHandlerLinux::OnMail(
 }
 
 auto
-engine::MainEventLoopHandlerLinux::OnSocketIn(const EventLoop &event_loop,
-                                              const SocketId socket_id) noexcept
-    -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnSocketIn(
+    EventLoop &event_loop, const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
@@ -125,8 +123,7 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(const EventLoop &event_loop,
 
 auto
 engine::MainEventLoopHandlerLinux::OnSocketHangUp(
-    const EventLoop &event_loop,
-    const SocketId socket_id) noexcept -> Result<Void> {
+    EventLoop &event_loop, const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
@@ -148,7 +145,7 @@ engine::MainEventLoopHandlerLinux::OnSocketHangUp(
 
 auto
 engine::MainEventLoopHandlerLinux::OnSocketError(
-    const EventLoop &event_loop,
+    EventLoop &event_loop,
     const SocketId socket_id,
     const int code,
     const std::string_view description) noexcept -> Result<Void> {

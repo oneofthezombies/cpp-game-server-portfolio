@@ -39,6 +39,9 @@ enum Symbol : int32_t {
   kMailBoxNameTooLong,
   kMailBoxNameAllReserved,
 
+  kEventLoopMessageKindDuplicated,
+  kEventLoopMessageIdDuplicated,
+
   kEventLoopLinuxEpollCreate1Failed,
   kEventLoopLinuxEpollCtlAddFailed,
   kEventLoopLinuxEpollCtlDeleteFailed,
