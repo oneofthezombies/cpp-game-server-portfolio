@@ -34,7 +34,10 @@
 # Build files
 /build/
 /local/
-build.log
+/build.log
 
 # clangd
 /.cache
+
+# Test files
+/test.json

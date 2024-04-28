@@ -51,7 +51,9 @@ engine::EventLoop::SendServerEvent(const SocketId socket_id,
   }
 
   const auto data =
-      message.Set("__message_kind", core::MessageKind::kServerEvent)
+      message
+          .Set("__message_kind",
+               static_cast<int32_t>(core::MessageKind::kServerEvent))
           .Set("__message_id", NextMessageId())
           .ToString();
 
