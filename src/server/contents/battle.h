@@ -48,6 +48,7 @@ class Battle final : public engine::SocketEventLoopHandler<Battle> {
           const engine::Mail &mail) noexcept -> Result<Void>;
 
   std::unordered_map<BattleId, BattleState> battle_states_;
+  std::unordered_map<SocketId, BattleId> socket_id_to_battle_ids_;
 };
 
 }  // namespace contents

@@ -85,7 +85,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
              const SocketId socket_id) noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
-    // noop
+    // TODO
 
     return ResultT{Void{}};
   }

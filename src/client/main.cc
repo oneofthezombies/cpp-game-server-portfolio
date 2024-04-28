@@ -219,11 +219,35 @@ main(int argc, char **argv) noexcept -> int {
       std::cout << "Battle started with battle id: " << battle_id
                 << " and opponent socket id: " << opponent_socket_id
                 << std::endl;
-      std::cout << "Please enter your move: ";
-      std::cout << "Available moves: rock, paper, scissors, lizard, spock"
-                << std::endl;
+
       std::string move;
-      std::cin >> move;
+      bool valid_move = false;
+      while (!valid_move) {
+        std::cout << "Please enter your move: ";
+        std::cout << "Available moves: rock, paper, scissors, lizard, spock"
+                  << std::endl;
+        std::cin >> move;
+        if (move != "rock" && move != "paper" && move != "scissors" &&
+            move != "lizard" && move != "spock") {
+          std::cout << "Invalid move." << std::endl;
+          continue;
+        }
+
+        valid_move = true;
+      }
+
+      const auto data = core::TinyJson{}
+                            .Set("kind", "battle_move")
+                            .Set("move", move)
+                            .ToString();
+      auto count = write(sock, data.data(), data.size());
+      if (count == -1) {
+        std::cerr << "Failed to send the move to the server." << std::endl;
+        return 1;
+      }
+
+      std::cout << "Move sent to the server. Waiting for the opponent's move."
+                << std::endl;
     } else {
       std::cout << "Unknown message kind: " << kind << std::endl;
       continue;

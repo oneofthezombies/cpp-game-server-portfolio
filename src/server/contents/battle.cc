@@ -68,6 +68,8 @@ contents::Battle::OnStart(Self &self,
     return ResultT{Error::From(res.TakeErr())};
   }
 
+  self.socket_id_to_battle_ids_.emplace(first_socket_id, battle_id);
+
   auto second_socket_id_res =
       mail.body.GetAsNumber<SocketId>("second_socket_id");
   if (second_socket_id_res.IsErr()) {
@@ -79,6 +81,8 @@ contents::Battle::OnStart(Self &self,
       res.IsErr()) {
     return ResultT{Error::From(res.TakeErr())};
   }
+
+  self.socket_id_to_battle_ids_.emplace(second_socket_id, battle_id);
 
   BattleState battle_state;
   battle_state.first_socket_id = first_socket_id;
