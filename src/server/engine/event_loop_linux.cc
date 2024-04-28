@@ -156,9 +156,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
     auto mail = mail_box_.rx.TryReceive();
     if (mail) {
       if (auto shutdown_res = mail->body.Get("__shutdown");
-          shutdown_res.IsErr()) {
-        return ResultT{Error::From(shutdown_res.TakeErr())};
-      } else {
+          shutdown_res.IsOk()) {
         shutdown = true;
       }
 

@@ -19,6 +19,7 @@ RUN apt-get install -y llvm
 RUN apt-get install -y clang
 RUN apt-get install -y lld
 RUN apt-get install -y clangd
+RUN apt-get install -y net-tools
 RUN rm -rf /var/lib/apt/lists/*
 
 # python
@@ -49,3 +50,6 @@ RUN mkdir -p $HOME/app/ninja/bin
 RUN mv ninja $HOME/app/ninja/bin/ninja
 RUN rm ninja.zip
 RUN echo 'export PATH="$HOME/app/ninja/bin:$PATH"' >> ~/.bashrc
+
+# cmake-format
+RUN pip install cmake_format
