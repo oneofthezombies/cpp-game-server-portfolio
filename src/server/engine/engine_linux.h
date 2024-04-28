@@ -11,45 +11,49 @@
 namespace engine {
 
 class EngineLinux final {
-public:
+ public:
   class Builder final {
-  public:
+   public:
     explicit Builder() noexcept = default;
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build(Config &&config) const noexcept
-        -> Result<EngineLinux>;
+    [[nodiscard]] auto
+    Build(Config &&config) const noexcept -> Result<EngineLinux>;
   };
 
   ~EngineLinux() noexcept = default;
   CLASS_KIND_MOVABLE(EngineLinux);
 
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
+  [[nodiscard]] auto
+  Run() noexcept -> Result<Void>;
 
-  [[nodiscard]] auto AddEventLoop(std::string &&name,
-                                  EventLoopHandlerPtr &&handler) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  RegisterEventLoop(std::string &&name,
+                    EventLoopHandlerPtr &&handler) noexcept -> Result<Void>;
 
-private:
+ private:
   explicit EngineLinux(Config &&config,
                        EventLoopPtr &&main_event_loop) noexcept;
 
-  [[nodiscard]] auto OnServerFdEvent() noexcept -> Result<Void>;
+  [[nodiscard]] auto
+  OnServerFdEvent() noexcept -> Result<Void>;
   [[nodiscard]] auto
   OnClientFdEvent(const FileDescriptorLinux::Raw client_fd) noexcept
       -> Result<Void>;
 
-  auto DeleteConnectedSessionOrCloseFd(
+  auto
+  DeleteConnectedSessionOrCloseFd(
       const FileDescriptorLinux::Raw client_fd) noexcept -> void;
 
-  static auto EventLoopThreadMain(EventLoopPtr &&event_loop) noexcept -> void;
+  static auto
+  EventLoopThreadMain(EventLoopPtr &&event_loop) noexcept -> void;
 
   std::unordered_map<std::string, std::thread> event_loop_threads_;
   EventLoopPtr main_event_loop_;
   Config config_;
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // SERVER_ENGINE_ENGINE_LINUX_H
+#endif  // SERVER_ENGINE_ENGINE_LINUX_H

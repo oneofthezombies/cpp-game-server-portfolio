@@ -10,42 +10,45 @@
 namespace engine {
 
 class EngineImplRawDeleter final {
-public:
+ public:
   explicit EngineImplRawDeleter() noexcept = default;
   ~EngineImplRawDeleter() noexcept = default;
   CLASS_KIND_MOVABLE(EngineImplRawDeleter);
 
-  void operator()(void *impl_raw) const noexcept;
+  void
+  operator()(void *impl_raw) const noexcept;
 };
 
 using EngineImplPtr = std::unique_ptr<void, EngineImplRawDeleter>;
 
 class Engine final {
-public:
+ public:
   class Builder final {
-  public:
+   public:
     explicit Builder() noexcept = default;
     ~Builder() noexcept = default;
     CLASS_KIND_PINNABLE(Builder);
 
-    [[nodiscard]] auto Build(Config &&config) const noexcept -> Result<Engine>;
+    [[nodiscard]] auto
+    Build(Config &&config) const noexcept -> Result<Engine>;
   };
 
   ~Engine() noexcept = default;
   CLASS_KIND_MOVABLE(Engine);
 
-  [[nodiscard]] auto AddEventLoop(std::string &&name,
-                                  EventLoopHandlerPtr &&handler) noexcept
-      -> Result<Void>;
+  [[nodiscard]] auto
+  RegisterEventLoop(std::string &&name,
+                    EventLoopHandlerPtr &&handler) noexcept -> Result<Void>;
 
-  [[nodiscard]] auto Run() noexcept -> Result<Void>;
+  [[nodiscard]] auto
+  Run() noexcept -> Result<Void>;
 
-private:
+ private:
   explicit Engine(EngineImplPtr &&impl) noexcept;
 
   EngineImplPtr impl_;
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // SERVER_ENGINE_ENGINE_H
+#endif  // SERVER_ENGINE_ENGINE_H

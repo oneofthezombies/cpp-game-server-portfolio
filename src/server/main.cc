@@ -94,7 +94,8 @@ main(int argc, char **argv) noexcept -> int {
 
   auto engine = std::move(engine_res.Ok());
   for (auto &[name, handler] : event_loops) {
-    if (auto res = engine.AddEventLoop(std::string{name}, std::move(handler));
+    if (auto res =
+            engine.RegisterEventLoop(std::string{name}, std::move(handler));
         res.IsErr()) {
       core::TinyJson{}
           .Set("message", "register event loop handler failed")

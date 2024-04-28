@@ -9,10 +9,10 @@ namespace contents {
 
 struct BattleState {
   SocketId first_socket_id;
-  std::string first_hand;
+  std::string first_socket_move;
 
   SocketId second_socket_id;
-  std::string second_hand;
+  std::string second_socket_move;
 
   explicit BattleState() noexcept = default;
   ~BattleState() noexcept = default;

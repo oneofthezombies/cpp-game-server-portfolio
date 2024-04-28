@@ -40,11 +40,11 @@ engine::Engine::Engine(EngineImplPtr &&impl) noexcept : impl_{std::move(impl)} {
 }
 
 auto
-engine::Engine::AddEventLoop(std::string &&name,
-                             EventLoopHandlerPtr &&handler) noexcept
+engine::Engine::RegisterEventLoop(std::string &&name,
+                                  EventLoopHandlerPtr &&handler) noexcept
     -> Result<Void> {
   return CastEngineImpl(impl_.get())
-      ->AddEventLoop(std::move(name), std::move(handler));
+      ->RegisterEventLoop(std::move(name), std::move(handler));
 }
 
 auto

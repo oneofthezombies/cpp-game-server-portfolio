@@ -106,8 +106,8 @@ engine::EngineLinux::Run() noexcept -> Result<Void> {
 }
 
 auto
-engine::EngineLinux::AddEventLoop(std::string &&name,
-                                  EventLoopHandlerPtr &&handler) noexcept
+engine::EngineLinux::RegisterEventLoop(std::string &&name,
+                                       EventLoopHandlerPtr &&handler) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 

@@ -219,6 +219,11 @@ main(int argc, char **argv) noexcept -> int {
       std::cout << "Battle started with battle id: " << battle_id
                 << " and opponent socket id: " << opponent_socket_id
                 << std::endl;
+      std::cout << "Please enter your move: ";
+      std::cout << "Available moves: rock, paper, scissors, lizard, spock"
+                << std::endl;
+      std::string move;
+      std::cin >> move;
     } else {
       std::cout << "Unknown message kind: " << kind << std::endl;
       continue;
