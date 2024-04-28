@@ -248,6 +248,25 @@ main(int argc, char **argv) noexcept -> int {
 
       std::cout << "Move sent to the server. Waiting for the opponent's move."
                 << std::endl;
+    } else if ("battle_result") {
+      const auto result_res = message->Get("result");
+      if (result_res.IsErr()) {
+        std::cout << "Failed to get the result." << std::endl;
+        return 1;
+      }
+
+      const auto result = result_res.Ok();
+      std::cout << "Battle result: " << result << std::endl;
+
+      if (result == "win") {
+        std::cout << "You won the battle." << std::endl;
+      } else if (result == "lose") {
+        std::cout << "You lost the battle." << std::endl;
+      } else if (result == "draw") {
+        std::cout << "The battle is a draw." << std::endl;
+      } else {
+        std::cout << "Unknown battle result: " << result << std::endl;
+      }
     } else {
       std::cout << "Unknown message kind: " << kind << std::endl;
       continue;

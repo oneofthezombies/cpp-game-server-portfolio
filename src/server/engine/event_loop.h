@@ -86,6 +86,9 @@ class EventLoop {
   Write(const SocketId socket_id,
         const std::string_view data) const noexcept -> Result<Void> = 0;
 
+  [[nodiscard]] virtual auto
+  Read(const SocketId socket_id) const noexcept -> Result<std::string> = 0;
+
  protected:
   [[nodiscard]] auto
   NextMessageId() noexcept -> core::MessageId;

@@ -1,8 +1,23 @@
 #include "battle.h"
 
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+
 #include "core/tiny_json.h"
 
 using namespace contents;
+
+namespace {
+
+static const std::unordered_map<std::string_view, std::vector<std::string_view>>
+    kRules = {{"rock", {"scissors", "lizard"}},
+              {"paper", {"rock", "spock"}},
+              {"scissors", {"paper", "lizard"}},
+              {"lizard", {"spock", "paper"}},
+              {"spock", {"scissors", "rock"}}};
+
+}  // namespace
 
 auto
 contents::Battle::OnInit(engine::EventLoop &event_loop,
@@ -15,6 +30,7 @@ contents::Battle::OnInit(engine::EventLoop &event_loop,
   }
 
   mail_handlers_.emplace("start", OnStart);
+  message_handlers_.emplace("battle_move", OnBattleMove);
 
   return ResultT{Void{}};
 }
@@ -112,4 +128,133 @@ contents::Battle::OnStart(Self &self,
   }
 
   return ResultT{Void{}};
+}
+
+auto
+contents::Battle::OnBattleMove(Self &self,
+                               engine::EventLoop &event_loop,
+                               const engine::SocketId socket_id,
+                               core::Message &&message) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  // find state
+  auto battle_id_res = self.socket_id_to_battle_ids_.find(socket_id);
+  if (battle_id_res == self.socket_id_to_battle_ids_.end()) {
+    return ResultT{
+        Error::From(kBattleBattleIdNotFound,
+                    core::TinyJson{}.Set("socket_id", socket_id).IntoMap())};
+  }
+
+  const auto battle_id = battle_id_res->second;
+  auto battle_state_res = self.battle_states_.find(battle_id);
+  if (battle_state_res == self.battle_states_.end()) {
+    return ResultT{
+        Error::From(kBattleBattleStateNotFound,
+                    core::TinyJson{}.Set("battle_id", battle_id).IntoMap())};
+  }
+
+  auto move_res = message.Get("move");
+  if (move_res.IsErr()) {
+    return ResultT{Error::From(move_res.TakeErr())};
+  }
+
+  auto move = move_res.TakeOk();
+
+  // check move
+  if (kRules.find(move) == kRules.end()) {
+    return ResultT{Error::From(kBattleMoveNotFound,
+                               core::TinyJson{}.Set("move", move).IntoMap())};
+  }
+
+  auto &battle_state = battle_state_res->second;
+  if (battle_state.first_socket_id == socket_id) {
+    if (!battle_state.first_socket_move.empty()) {
+      return ResultT{Error::From(kBattleSocketMoveAlreadySet,
+                                 core::TinyJson{}
+                                     .Set("socket_id", socket_id)
+                                     .Set("battle_id", battle_id)
+                                     .IntoMap())};
+    }
+
+    battle_state.first_socket_move = move_res.TakeOk();
+  } else if (battle_state.second_socket_id == socket_id) {
+    if (!battle_state.second_socket_move.empty()) {
+      return ResultT{Error::From(kBattleSocketMoveAlreadySet,
+                                 core::TinyJson{}
+                                     .Set("socket_id", socket_id)
+                                     .Set("battle_id", battle_id)
+                                     .IntoMap())};
+    }
+
+    battle_state.second_socket_move = move_res.TakeOk();
+  } else {
+    return ResultT{
+        Error::From(kBattleSocketIdNotFound,
+                    core::TinyJson{}.Set("socket_id", socket_id).IntoMap())};
+  }
+
+  if (battle_state.first_socket_move.empty() ||
+      battle_state.second_socket_move.empty()) {
+    return ResultT{Void{}};
+  }
+
+  // battle logic
+  const auto &first_move = battle_state.first_socket_move;
+  const auto &second_move = battle_state.second_socket_move;
+  if (first_move == second_move) {
+    // send draw
+    event_loop.SendServerEvent(battle_state.first_socket_id,
+                               core::TinyJson{}
+                                   .Set("kind", "battle_result")
+                                   .Set("result", "draw")
+                                   .Take());
+    event_loop.SendServerEvent(battle_state.second_socket_id,
+                               core::TinyJson{}
+                                   .Set("kind", "battle_result")
+                                   .Set("result", "draw")
+                                   .Take());
+    return ResultT{Void{}};
+  }
+
+  const auto &first_win_moves = kRules.at(first_move);
+  if (first_win_moves.end() !=
+      std::find(first_win_moves.begin(), first_win_moves.end(), second_move)) {
+    // send first win
+    event_loop.SendServerEvent(battle_state.first_socket_id,
+                               core::TinyJson{}
+                                   .Set("kind", "battle_result")
+                                   .Set("result", "win")
+                                   .Take());
+    event_loop.SendServerEvent(battle_state.second_socket_id,
+                               core::TinyJson{}
+                                   .Set("kind", "battle_result")
+                                   .Set("result", "lose")
+                                   .Take());
+    return ResultT{Void{}};
+  }
+
+  const auto &second_win_moves = kRules.at(second_move);
+  if (second_win_moves.end() !=
+      std::find(second_win_moves.begin(), second_win_moves.end(), first_move)) {
+    // send second win
+    event_loop.SendServerEvent(battle_state.first_socket_id,
+                               core::TinyJson{}
+                                   .Set("kind", "battle_result")
+                                   .Set("result", "lose")
+                                   .Take());
+    event_loop.SendServerEvent(battle_state.second_socket_id,
+                               core::TinyJson{}
+                                   .Set("kind", "battle_result")
+                                   .Set("result", "win")
+                                   .Take());
+    return ResultT{Void{}};
+  }
+
+  // return error
+  return ResultT{Error::From(kBattleMoveLogicError,
+                             core::TinyJson{}
+                                 .Set("first_move", first_move)
+                                 .Set("second_move", second_move)
+                                 .IntoMap())};
 }

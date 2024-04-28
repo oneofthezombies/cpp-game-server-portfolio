@@ -3,9 +3,8 @@
 
 #include <cstdint>
 
-#include "core/core.h"
-
 #include "common.h"
+#include "core/core.h"
 
 namespace engine {
 
@@ -19,9 +18,10 @@ struct Config final {
   ~Config() noexcept = default;
   CLASS_KIND_MOVABLE(Config);
 
-  [[nodiscard]] auto Validate() const noexcept -> Result<Void>;
+  [[nodiscard]] auto
+  Validate() const noexcept -> Result<Void>;
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // SERVER_ENGINE_CONFIG_H
+#endif  // SERVER_ENGINE_CONFIG_H

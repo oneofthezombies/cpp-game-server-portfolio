@@ -47,6 +47,12 @@ class Battle final : public engine::SocketEventLoopHandler<Battle> {
           engine::EventLoop &event_loop,
           const engine::Mail &mail) noexcept -> Result<Void>;
 
+  [[nodiscard]] static auto
+  OnBattleMove(Self &self,
+               engine::EventLoop &event_loop,
+               const engine::SocketId socket_id,
+               core::Message &&message) noexcept -> Result<Void>;
+
   std::unordered_map<BattleId, BattleState> battle_states_;
   std::unordered_map<SocketId, BattleId> socket_id_to_battle_ids_;
 };

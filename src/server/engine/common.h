@@ -34,6 +34,10 @@ enum Symbol : int32_t {
   kSocketEventLoopHandlerMailHandlerAlreadyExists,
   kSocketEventLoopHandlerMailHandlerNotFound,
   kSocketEventLoopHandlerMailHandlerFailed,
+  kSocketEventLoopHandlerMessageParseFailed,
+  kSocketEventLoopHandlerMessageKindNotFound,
+  kSocketEventLoopHandlerMessageHandlerNotFound,
+  kSocketEventLoopHandlerMessageHandlerFailed,
 
   kMailBoxAlreadyExists,
   kMailBoxNotFound,
@@ -50,6 +54,8 @@ enum Symbol : int32_t {
   kEventLoopLinuxEpollWaitFailed,
   kEventLoopLinuxWriteFailed,
   kEventLoopLinuxWriteClosed,
+  kEventLoopLinuxReadFailed,
+  kEventLoopLinuxReadClosed,
   kEventLoopLinuxGetSocketOptionFailed,
   kEventLoopLinuxSocketErrorZero,
 

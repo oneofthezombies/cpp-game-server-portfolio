@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "core/core.h"
+#include "core/protocol.h"
 #include "event_loop.h"
 
 namespace engine {
@@ -13,8 +14,11 @@ class SocketEventLoopHandler : public EventLoopHandler {
  public:
   using Super = EventLoopHandler;
   using Derived = T;
+  using Kind = std::string;
   using MailHandler =
       std::function<Result<Void>(Derived &, EventLoop &, const Mail &)>;
+  using MessageHandler = std::function<Result<Void>(
+      Derived &, EventLoop &, const SocketId, core::Message &&)>;
 
   explicit SocketEventLoopHandler() noexcept = default;
   virtual ~SocketEventLoopHandler() noexcept = default;
@@ -85,7 +89,53 @@ class SocketEventLoopHandler : public EventLoopHandler {
              const SocketId socket_id) noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
-    // TODO
+    auto message_res = event_loop.Read(socket_id);
+    if (message_res.IsErr()) {
+      return ResultT{Error::From(message_res.TakeErr())};
+    }
+
+    const auto message = message_res.TakeOk();
+    auto parse_res = core::Message::Parse(message);
+    if (!parse_res) {
+      return ResultT{Error::From(kSocketEventLoopHandlerMessageParseFailed,
+                                 core::TinyJson{}
+                                     .Set("message", message)
+                                     .Set("name", event_loop.GetName())
+                                     .IntoMap())};
+    }
+
+    auto kind_res = parse_res->Get("kind");
+    if (kind_res.IsErr()) {
+      return ResultT{Error::From(kSocketEventLoopHandlerMessageKindNotFound,
+                                 core::TinyJson{}
+                                     .Set("message", message)
+                                     .Set("name", event_loop.GetName())
+                                     .IntoMap(),
+                                 kind_res.TakeErr())};
+    }
+
+    const auto kind = kind_res.Ok();
+    const auto handler = message_handlers_.find(std::string{kind});
+    if (handler == message_handlers_.end()) {
+      return ResultT{Error::From(kSocketEventLoopHandlerMessageHandlerNotFound,
+                                 core::TinyJson{}
+                                     .Set("message", message)
+                                     .Set("name", event_loop.GetName())
+                                     .IntoMap())};
+    }
+
+    if (auto res = (handler->second)(static_cast<Derived &>(*this),
+                                     event_loop,
+                                     socket_id,
+                                     std::move(*parse_res));
+        res.IsErr()) {
+      return ResultT{Error::From(kSocketEventLoopHandlerMessageHandlerFailed,
+                                 core::TinyJson{}
+                                     .Set("message", message)
+                                     .Set("name", event_loop.GetName())
+                                     .IntoMap(),
+                                 res.TakeErr())};
+    }
 
     return ResultT{Void{}};
   }
@@ -201,7 +251,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
 
  protected:
   std::unordered_set<SocketId> sockets_;
-  std::unordered_map<std::string, MailHandler> mail_handlers_;
+  std::unordered_map<Kind, MailHandler> mail_handlers_;
+  std::unordered_map<Kind, MessageHandler> message_handlers_;
 };
 
 }  // namespace engine

@@ -15,6 +15,13 @@ enum Symbol : int32_t {
 
   kLobbyMailGetSocketIdFailed,
 
+  kBattleBattleIdNotFound,
+  kBattleBattleStateNotFound,
+  kBattleSocketIdNotFound,
+  kBattleMoveNotFound,
+  kBattleSocketMoveAlreadySet,
+  kBattleMoveLogicError,
+
   // Add symbols before kEnd
   kServerContentsEnd
 };

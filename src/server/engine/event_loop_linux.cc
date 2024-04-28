@@ -147,6 +147,51 @@ engine::EventLoopLinux::Write(const SocketId socket_id,
 }
 
 auto
+engine::EventLoopLinux::Read(const SocketId socket_id) const noexcept
+    -> Result<std::string> {
+  using ResultT = Result<std::string>;
+
+  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
+  if (fd_res.IsErr()) {
+    return ResultT{Error::From(fd_res.TakeErr())};
+  }
+
+  const auto fd = fd_res.Ok();
+  std::string buffer(4096, '\0');
+  while (true) {
+    const auto count = read(fd, buffer.data(), buffer.size());
+    if (count == -1) {
+      const auto errno_value = errno;
+      if (errno_value == EAGAIN || errno_value == EWOULDBLOCK) {
+        core::TinyJson{}
+            .Set("message", "read would block")
+            .Set("fd", fd)
+            .Set("socket_id", socket_id)
+            .Set("errno", errno_value)
+            .LogLn();
+        continue;
+      }
+
+      return ResultT{
+          Error::From(kEventLoopLinuxReadFailed,
+                      core::TinyJson{}
+                          .Set("linux_error", core::LinuxError::FromErrno())
+                          .Set("fd", fd)
+                          .Set("socket_id", socket_id)
+                          .Set("errno", errno_value)
+                          .IntoMap())};
+    }
+
+    if (count == 0) {
+      return ResultT{Error::From(kEventLoopLinuxReadClosed,
+                                 core::TinyJson{}.Set("fd", fd).IntoMap())};
+    }
+
+    return ResultT{buffer.substr(0, count)};
+  }
+}
+
+auto
 engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 

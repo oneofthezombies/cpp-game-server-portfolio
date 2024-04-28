@@ -35,12 +35,15 @@ class EventLoopLinux final : public EventLoop {
   Add(const SocketId socket_id, const EventLoopAddOptions &options)
       const noexcept -> Result<Void> override;
 
-  [[nodiscard]] auto
+  [[nodiscard]] virtual auto
   Remove(const SocketId socket_id) const noexcept -> Result<Void> override;
 
-  [[nodiscard]] auto
+  [[nodiscard]] virtual auto
   Write(const SocketId socket_id,
         const std::string_view data) const noexcept -> Result<Void> override;
+
+  [[nodiscard]] virtual auto
+  Read(const SocketId socket_id) const noexcept -> Result<std::string> override;
 
  private:
   FileDescriptorLinux epoll_fd_;
