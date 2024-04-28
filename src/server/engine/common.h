@@ -20,6 +20,7 @@ enum Symbol : int32_t {
   kEngineEventLoopAlreadyExists,
 
   kMainEventLoopHandlerLinuxServerSocketFailed,
+  kMainEventLoopHandlerLinuxServerSocketSetOptFailed,
   kMainEventLoopHandlerLinuxServerSocketBindFailed,
   kMainEventLoopHandlerLinuxServerSocketListenFailed,
   kMainEventLoopHandlerLinuxUnexpectedSocketId,

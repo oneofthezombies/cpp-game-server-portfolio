@@ -32,6 +32,19 @@ engine::MainEventLoopHandlerLinux::OnInit(
                         .IntoMap())};
   }
 
+  int reuse{1};
+  if (setsockopt(server_fd_raw,
+                 SOL_SOCKET,
+                 SO_REUSEADDR,
+                 &reuse,
+                 sizeof(reuse)) < 0) {
+    return ResultT{
+        Error::From(kMainEventLoopHandlerLinuxServerSocketSetOptFailed,
+                    core::TinyJson{}
+                        .Set("linux_error", core::LinuxError::FromErrno())
+                        .IntoMap())};
+  }
+
   auto server_fd = FileDescriptorLinux{server_fd_raw};
   if (auto result = server_fd.UpdateNonBlocking(); result.IsErr()) {
     return ResultT{Error{std::move(result.Err())}};
@@ -85,16 +98,18 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
 
-  auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
-  if (fd_res.IsErr()) {
-    return ResultT{Error::From(fd_res.TakeErr())};
+  auto server_fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
+  if (server_fd_res.IsErr()) {
+    return ResultT{Error::From(server_fd_res.TakeErr())};
   }
 
-  const auto fd = fd_res.Ok();
-  if (fd != server_fd_->AsRaw()) {
-    return ResultT{Error::From(
-        kMainEventLoopHandlerLinuxUnexpectedSocketId,
-        core::TinyJson{}.Set("socket_id", socket_id).Set("fd", fd).IntoMap())};
+  const auto server_fd = server_fd_res.Ok();
+  if (server_fd != server_fd_->AsRaw()) {
+    return ResultT{Error::From(kMainEventLoopHandlerLinuxUnexpectedSocketId,
+                               core::TinyJson{}
+                                   .Set("socket_id", socket_id)
+                                   .Set("server_fd", server_fd)
+                                   .IntoMap())};
   }
 
   struct sockaddr_in client_addr {};
@@ -114,10 +129,16 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(
     return ResultT{Error::From(res.TakeErr())};
   }
 
-  event_loop.SendMail(
-      std::string{primary_event_loop_name_},
-      std::move(
-          core::TinyJson{}.Set("kind", "connect").Set("socket_id", socket_id)));
+  auto client_socket_id_res = FileDescriptorLinux::ParseFdToSocketId(client_fd);
+  if (client_socket_id_res.IsErr()) {
+    return ResultT{Error::From(client_socket_id_res.TakeErr())};
+  }
+
+  const auto client_socket_id = client_socket_id_res.Ok();
+  event_loop.SendMail(std::string{primary_event_loop_name_},
+                      std::move(core::TinyJson{}
+                                    .Set("kind", "connect")
+                                    .Set("socket_id", client_socket_id)));
   return ResultT{Void{}};
 }
 

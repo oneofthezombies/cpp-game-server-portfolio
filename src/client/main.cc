@@ -157,6 +157,8 @@ main(int argc, char **argv) noexcept -> int {
   }
 
   while (true) {
+    std::cout << "Read message..." << std::endl;
+
     char buffer[4096]{};
     auto read_size = read(sock, buffer, sizeof(buffer));
     if (read_size == -1) {
