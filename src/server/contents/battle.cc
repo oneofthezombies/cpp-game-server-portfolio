@@ -21,7 +21,7 @@ contents::Battle::OnMail(const engine::EventLoop &event_loop,
   using ResultT = Result<Void>;
 
   if (auto res = Super::OnMail(event_loop, mail); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   return ResultT{Void{}};

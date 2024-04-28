@@ -37,12 +37,12 @@ class TinyJson final {
 
     auto get_res = Get(key);
     if (get_res.IsErr()) {
-      return ResultT{Error::From(std::move(get_res.Err()))};
+      return ResultT{Error::From(get_res.TakeErr())};
     }
 
     auto parse_res = core::ParseNumberString<T>(get_res.Ok());
     if (parse_res.IsErr()) {
-      return ResultT{Error::From(std::move(parse_res.Err()))};
+      return ResultT{Error::From(parse_res.TakeErr())};
     }
 
     return ResultT{parse_res.Ok()};

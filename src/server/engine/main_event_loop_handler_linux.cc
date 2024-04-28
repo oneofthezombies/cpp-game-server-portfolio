@@ -62,7 +62,7 @@ engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
   }
 
   if (auto res = event_loop.Add(server_fd.AsRaw(), {.in = true}); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   server_fd_.reset(new FileDescriptorLinux{std::move(server_fd)});
@@ -89,7 +89,7 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(const EventLoop &event_loop,
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{Error::From(std::move(fd_res.Err()))};
+    return ResultT{Error::From(fd_res.TakeErr())};
   }
 
   const auto fd = fd_res.Ok();
@@ -113,7 +113,7 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(const EventLoop &event_loop,
 
   if (auto res = FileDescriptorLinux::UpdateNonBlocking(client_fd);
       res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   event_loop.SendMail(
@@ -133,7 +133,7 @@ engine::MainEventLoopHandlerLinux::OnSocketHangUp(
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{Error::From(std::move(fd_res.Err()))};
+    return ResultT{Error::From(fd_res.TakeErr())};
   }
 
   const auto fd = fd_res.Ok();
@@ -158,7 +158,7 @@ engine::MainEventLoopHandlerLinux::OnSocketError(
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{Error::From(std::move(fd_res.Err()))};
+    return ResultT{Error::From(fd_res.TakeErr())};
   }
 
   const auto fd = fd_res.Ok();

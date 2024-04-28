@@ -47,7 +47,7 @@ engine::EngineLinux::Builder::Build(Config &&config) const noexcept
       EventLoopHandlerPtr{new MainEventLoopHandlerLinux{
           std::string{config.primary_event_loop_name}}});
   if (main_event_loop_res.IsErr()) {
-    return ResultT{Error::From(std::move(main_event_loop_res.Err()))};
+    return ResultT{Error::From(main_event_loop_res.TakeErr())};
   }
 
   return ResultT{
@@ -67,7 +67,7 @@ engine::EngineLinux::Run() noexcept -> Result<Void> {
 
   auto signal_mail_box_res = MailCenter::Global().Create("signal");
   if (signal_mail_box_res.IsErr()) {
-    return ResultT{Error::From(std::move(signal_mail_box_res.Err()))};
+    return ResultT{Error::From(signal_mail_box_res.TakeErr())};
   }
 
   const auto &signal_mail_box = signal_mail_box_res.Ok();
@@ -85,11 +85,11 @@ engine::EngineLinux::Run() noexcept -> Result<Void> {
     }
 
     if (auto res = main_event_loop_->Init(config_); res.IsErr()) {
-      return ResultT{Error::From(std::move(res.Err()))};
+      return ResultT{Error::From(res.TakeErr())};
     }
 
     if (auto res = main_event_loop_->Run(); res.IsErr()) {
-      return ResultT{Error::From(std::move(res.Err()))};
+      return ResultT{Error::From(res.TakeErr())};
     }
 
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
@@ -120,12 +120,12 @@ engine::EngineLinux::AddEventLoop(std::string &&name,
   auto event_loop_res =
       EventLoopLinux::Builder{}.Build(std::string{name}, std::move(handler));
   if (event_loop_res.IsErr()) {
-    return ResultT{Error::From(std::move(event_loop_res.Err()))};
+    return ResultT{Error::From(event_loop_res.TakeErr())};
   }
 
   auto event_loop = std::move(event_loop_res.Ok());
   if (auto res = event_loop->Init(config_); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   auto event_loop_thread =

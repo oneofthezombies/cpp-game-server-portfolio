@@ -107,6 +107,11 @@ class ResultBase final {
   }
 
   [[nodiscard]] auto
+  TakeOk() noexcept -> T {
+    return std::move(std::get<T>(data_));
+  }
+
+  [[nodiscard]] auto
   Err() const noexcept -> const E & {
     return std::get<E>(data_);
   }
@@ -114,6 +119,11 @@ class ResultBase final {
   [[nodiscard]] auto
   Err() noexcept -> E & {
     return std::get<E>(data_);
+  }
+
+  [[nodiscard]] auto
+  TakeErr() noexcept -> E {
+    return std::move(std::get<E>(data_));
   }
 
  private:

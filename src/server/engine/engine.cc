@@ -59,7 +59,7 @@ engine::Engine::Builder::Build(Config &&config) const noexcept
 
   auto result = EngineImpl::Builder{}.Build(std::move(config));
   if (result.IsErr()) {
-    return ResultT{Error::From(std::move(result.Err()))};
+    return ResultT{Error::From(result.TakeErr())};
   }
 
   return ResultT{Engine{EngineImplPtr{new EngineImpl{std::move(result.Ok())}}}};

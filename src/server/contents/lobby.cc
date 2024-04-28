@@ -10,7 +10,7 @@ contents::Lobby::OnInit(const engine::EventLoop &event_loop,
   using ResultT = Result<Void>;
 
   if (auto res = Super::OnInit(event_loop, config); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   mail_handlers_.emplace("connect", OnConnect);
@@ -24,7 +24,7 @@ contents::Lobby::OnMail(const engine::EventLoop &event_loop,
   using ResultT = Result<Void>;
 
   if (auto res = Super::OnMail(event_loop, mail); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   return ResultT{Void{}};
@@ -37,7 +37,7 @@ contents::Lobby::OnSocketIn(const engine::EventLoop &event_loop,
   using ResultT = Result<Void>;
 
   if (auto res = Super::OnSocketIn(event_loop, socket_id); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   return ResultT{Void{}};
@@ -79,12 +79,12 @@ contents::Lobby::OnConnect(Lobby &self,
     const auto second_socket_id = *std::next(self.sockets_.begin());
     if (auto res = self.UnregisterSocket(event_loop, first_socket_id);
         res.IsErr()) {
-      return ResultT{Error::From(std::move(res.Err()))};
+      return ResultT{Error::From(res.TakeErr())};
     }
 
     if (auto res = self.UnregisterSocket(event_loop, second_socket_id);
         res.IsErr()) {
-      return ResultT{Error::From(std::move(res.Err()))};
+      return ResultT{Error::From(res.TakeErr())};
     }
 
     const auto battle_id = self.NextBattleId();

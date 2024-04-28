@@ -31,7 +31,7 @@ engine::EventLoopLinux::Builder::Build(
 
   auto mail_box_res = MailCenter::Global().Create(std::string{name});
   if (mail_box_res.IsErr()) {
-    return ResultT{Error::From(std::move(mail_box_res.Err()))};
+    return ResultT{Error::From(mail_box_res.TakeErr())};
   }
 
   return ResultT{EventLoopPtr{new EventLoopLinux{std::move(mail_box_res.Ok()),
@@ -52,7 +52,7 @@ engine::EventLoopLinux::Init(const Config &config) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto res = handler_->OnInit(*this, config); res.IsErr()) {
-    return ResultT{Error::From(std::move(res.Err()))};
+    return ResultT{Error::From(res.TakeErr())};
   }
 
   return ResultT{Void{}};
@@ -66,7 +66,7 @@ engine::EventLoopLinux::Add(const SocketId socket_id,
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{Error::From(std::move(fd_res.Err()))};
+    return ResultT{Error::From(fd_res.TakeErr())};
   }
 
   const auto fd = fd_res.Ok();
@@ -91,7 +91,7 @@ engine::EventLoopLinux::Remove(const SocketId socket_id) const noexcept
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{Error::From(std::move(fd_res.Err()))};
+    return ResultT{Error::From(fd_res.TakeErr())};
   }
 
   const auto fd = fd_res.Ok();
@@ -114,7 +114,7 @@ engine::EventLoopLinux::Write(const SocketId socket_id,
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{Error::From(std::move(fd_res.Err()))};
+    return ResultT{Error::From(fd_res.TakeErr())};
   }
 
   const auto fd = fd_res.Ok();
@@ -157,13 +157,13 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
     if (mail) {
       if (auto shutdown_res = mail->body.Get("__shutdown");
           shutdown_res.IsErr()) {
-        return ResultT{Error::From(std::move(shutdown_res.Err()))};
+        return ResultT{Error::From(shutdown_res.TakeErr())};
       } else {
         shutdown = true;
       }
 
       if (auto res = handler_->OnMail(*this, std::move(*mail)); res.IsErr()) {
-        return ResultT{Error::From(std::move(res.Err()))};
+        return ResultT{Error::From(res.TakeErr())};
       }
     }
 
@@ -185,7 +185,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
       auto socket_id_res =
           FileDescriptorLinux::ParseFdToSocketId(event.data.fd);
       if (socket_id_res.IsErr()) {
-        return ResultT{Error::From(std::move(socket_id_res.Err()))};
+        return ResultT{Error::From(socket_id_res.TakeErr())};
       }
 
       const auto socket_id = socket_id_res.Ok();
@@ -215,7 +215,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
         if (auto res =
                 handler_->OnSocketError(*this, socket_id, code, description);
             res.IsErr()) {
-          return ResultT{Error::From(std::move(res.Err()))};
+          return ResultT{Error::From(res.TakeErr())};
         }
       }
 
@@ -232,13 +232,13 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
         if (auto res = handler_->OnSocketHangUp(*this, socket_id);
             res.IsErr()) {
-          return ResultT{Error::From(std::move(res.Err()))};
+          return ResultT{Error::From(res.TakeErr())};
         }
       }
 
       if (event.events & EPOLLIN) {
         if (auto res = handler_->OnSocketIn(*this, socket_id); res.IsErr()) {
-          return ResultT{Error::From(std::move(res.Err()))};
+          return ResultT{Error::From(res.TakeErr())};
         }
       }
     }
