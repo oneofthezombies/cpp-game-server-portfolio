@@ -1,6 +1,5 @@
 #include "lobby.h"
 
-#include "core/protocol.h"
 #include "core/tiny_json.h"
 #include "server/engine/socket.h"
 

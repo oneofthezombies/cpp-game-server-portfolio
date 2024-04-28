@@ -16,9 +16,19 @@ class SocketEventLoopHandler : public EventLoopHandler {
   using MailHandler =
       std::function<Result<Void>(Derived &, EventLoop &, const Mail &)>;
 
-  explicit SocketEventLoopHandler() noexcept;
+  explicit SocketEventLoopHandler() noexcept = default;
   virtual ~SocketEventLoopHandler() noexcept = default;
   CLASS_KIND_MOVABLE(SocketEventLoopHandler);
+
+  [[nodiscard]] virtual auto
+  OnInit(EventLoop &event_loop,
+         const Config &config) noexcept -> Result<Void> override {
+    using ResultT = Result<Void>;
+
+    // noop
+
+    return ResultT{Void{}};
+  }
 
   [[nodiscard]] virtual auto
   OnMail(EventLoop &event_loop,
@@ -66,6 +76,16 @@ class SocketEventLoopHandler : public EventLoopHandler {
                                      .IntoMap(),
                                  res.TakeErr())};
     }
+
+    return ResultT{Void{}};
+  }
+
+  [[nodiscard]] virtual auto
+  OnSocketIn(EventLoop &event_loop,
+             const SocketId socket_id) noexcept -> Result<Void> override {
+    using ResultT = Result<Void>;
+
+    // noop
 
     return ResultT{Void{}};
   }

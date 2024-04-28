@@ -2,6 +2,7 @@
 #include "core/utils.h"
 #include "engine/config.h"
 #include "engine/engine.h"
+#include "server/contents/lobby.h"
 
 enum Symbol : int32_t {
   kHelpRequested = 0,
@@ -86,6 +87,16 @@ main(int argc, char **argv) noexcept -> int {
   }
 
   auto engine = std::move(engine_res.Ok());
+  if (auto res =
+          engine.AddEventLoop("lobby", std::make_unique<contents::Lobby>());
+      res.IsErr()) {
+    core::TinyJson{}
+        .Set("message", "add event loop failed")
+        .Set("error", res.Err())
+        .LogLn();
+    return 1;
+  }
+
   if (auto res = engine.Run(); res.IsErr()) {
     std::cout << res.Err() << std::endl;
     return 1;
