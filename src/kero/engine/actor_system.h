@@ -99,7 +99,7 @@ class ActorSystem final {
   ValidateName(const std::string &name) const noexcept -> Result<Void>;
 
   static auto
-  ThreadMain(ActorSystem &self, Rx<Dict> &&run_rx) -> void;
+  ThreadMain(ActorSystem &self, std::unique_ptr<Rx<Dict>> &&run_rx) -> void;
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;

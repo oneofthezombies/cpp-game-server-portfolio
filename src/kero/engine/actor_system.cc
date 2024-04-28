@@ -123,9 +123,10 @@ kero::ActorSystem::ValidateName(const std::string &name) const noexcept
 }
 
 auto
-kero::ActorSystem::ThreadMain(ActorSystem &self, Rx<Dict> &&run_rx) -> void {
+kero::ActorSystem::ThreadMain(ActorSystem &self,
+                              std::unique_ptr<Rx<Dict>> &&run_rx) -> void {
   while (true) {
-    if (auto message = run_rx.TryReceive(); message.IsSome()) {
+    if (auto message = run_rx->TryReceive(); message.IsSome()) {
       if (message.TakeUnwrap().Has("shutdown")) {
         break;
       }
