@@ -21,28 +21,8 @@ contents::Battle::OnMail(const engine::EventLoop &event_loop,
   using ResultT = Result<Void>;
 
   if (auto res = Super::OnMail(event_loop, mail); res.IsErr()) {
-    return std::move(res);
+    return ResultT{Error::From(std::move(res.Err()))};
   }
-
-  // TODO
-  // auto kind_res = mail.body.Get("kind");
-  // if (kind_res.IsErr()) {
-  //   return ResultT{Error::From(kBattleMailKindNotFound,
-  //                              core::TinyJson{}
-  //                                  .Set("mail", mail)
-  //                                  .Set("error", kind_res.Err())
-  //                                  .IntoMap())};
-  // }
-
-  // const auto kind = kind_res.Ok();
-  // if (kind == "start") {
-  //   if (auto res = OnStart(event_loop, mail); res.IsErr()) {
-  //     return res;
-  //   }
-  // } else {
-  //   return ResultT{Error{kBattleMailUnexpectedKind,
-  //                        core::TinyJson{}.Set("mail", mail).IntoMap()}};
-  // }
 
   return ResultT{Void{}};
 }

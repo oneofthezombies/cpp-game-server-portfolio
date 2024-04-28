@@ -37,7 +37,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
 
       const auto socket_id = socket_id_res.Ok();
       if (auto res = RegisterSocket(event_loop, socket_id); res.IsErr()) {
-        return res;
+        return ResultT{Error::From(std::move(res.Err()))};
       }
     }
 
@@ -80,7 +80,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     using ResultT = Result<Void>;
 
     if (auto res = UnregisterSocket(event_loop, socket_id); res.IsErr()) {
-      return res;
+      return ResultT{Error::From(std::move(res.Err()))};
     }
 
     return ResultT{Void{}};
@@ -116,7 +116,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     }
 
     if (auto res = AddSocketToSet(socket_id); res.IsErr()) {
-      return res;
+      return ResultT{Error::From(std::move(res.Err()))};
     }
 
     return ResultT{Void{}};
@@ -128,11 +128,11 @@ class SocketEventLoopHandler : public EventLoopHandler {
     using ResultT = Result<Void>;
 
     if (auto res = RemoveSocketFromSet(socket_id); res.IsErr()) {
-      return res;
+      return ResultT{Error::From(std::move(res.Err()))};
     }
 
     if (auto res = event_loop.Remove(socket_id); res.IsErr()) {
-      return res;
+      return ResultT{Error::From(std::move(res.Err()))};
     }
 
     return ResultT{Void{}};

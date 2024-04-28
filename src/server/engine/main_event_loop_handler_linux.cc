@@ -62,7 +62,7 @@ engine::MainEventLoopHandlerLinux::OnInit(const EventLoop &event_loop,
   }
 
   if (auto res = event_loop.Add(server_fd.AsRaw(), {.in = true}); res.IsErr()) {
-    return res;
+    return ResultT{Error::From(std::move(res.Err()))};
   }
 
   server_fd_.reset(new FileDescriptorLinux{std::move(server_fd)});

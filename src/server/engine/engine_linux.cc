@@ -85,11 +85,11 @@ engine::EngineLinux::Run() noexcept -> Result<Void> {
     }
 
     if (auto res = main_event_loop_->Init(config_); res.IsErr()) {
-      return res;
+      return ResultT{Error::From(std::move(res.Err()))};
     }
 
     if (auto res = main_event_loop_->Run(); res.IsErr()) {
-      return res;
+      return ResultT{Error::From(std::move(res.Err()))};
     }
 
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {

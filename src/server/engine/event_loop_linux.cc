@@ -52,7 +52,7 @@ engine::EventLoopLinux::Init(const Config &config) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto res = handler_->OnInit(*this, config); res.IsErr()) {
-    return res;
+    return ResultT{Error::From(std::move(res.Err()))};
   }
 
   return ResultT{Void{}};
@@ -163,7 +163,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
       }
 
       if (auto res = handler_->OnMail(*this, std::move(*mail)); res.IsErr()) {
-        return res;
+        return ResultT{Error::From(std::move(res.Err()))};
       }
     }
 
@@ -215,7 +215,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
         if (auto res =
                 handler_->OnSocketError(*this, socket_id, code, description);
             res.IsErr()) {
-          return res;
+          return ResultT{Error::From(std::move(res.Err()))};
         }
       }
 
@@ -232,13 +232,13 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
         if (auto res = handler_->OnSocketHangUp(*this, socket_id);
             res.IsErr()) {
-          return res;
+          return ResultT{Error::From(std::move(res.Err()))};
         }
       }
 
       if (event.events & EPOLLIN) {
         if (auto res = handler_->OnSocketIn(*this, socket_id); res.IsErr()) {
-          return res;
+          return ResultT{Error::From(std::move(res.Err()))};
         }
       }
     }
