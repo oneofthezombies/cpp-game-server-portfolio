@@ -6,6 +6,7 @@
 #include "core/core.h"
 #include "core/protocol.h"
 #include "event_loop.h"
+#include "server/engine/common.h"
 
 namespace engine {
 
@@ -91,6 +92,15 @@ class SocketEventLoopHandler : public EventLoopHandler {
 
     auto message_res = event_loop.Read(socket_id);
     if (message_res.IsErr()) {
+      if (message_res.Err().code == kEventLoopLinuxReadClosed) {
+        if (auto res = OnSocketClose(event_loop, socket_id, "socket closed");
+            res.IsErr()) {
+          return ResultT{Error::From(res.TakeErr())};
+        }
+
+        return ResultT{Void{}};
+      }
+
       return ResultT{Error::From(message_res.TakeErr())};
     }
 
@@ -145,7 +155,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
                  const SocketId socket_id) noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
-    if (auto res = UnregisterSocket(event_loop, socket_id); res.IsErr()) {
+    if (auto res = OnSocketClose(event_loop, socket_id, "socket hang up");
+        res.IsErr()) {
       return ResultT{Error::From(res.TakeErr())};
     }
 
@@ -246,6 +257,26 @@ class SocketEventLoopHandler : public EventLoopHandler {
     }
 
     mail_handlers_.emplace(kind, handler);
+    return ResultT{Void{}};
+  }
+
+  [[nodiscard]] auto
+  OnSocketClose(EventLoop &event_loop,
+                const SocketId socket_id,
+                const std::string_view message) noexcept -> Result<Void> {
+    using ResultT = Result<Void>;
+
+    if (auto res = UnregisterSocket(event_loop, socket_id); res.IsErr()) {
+      core::TinyJson{}
+          .Set("message", message)
+          .Set("name", event_loop.GetName())
+          .Set("socket_id", socket_id)
+          .Set("error", res.TakeErr())
+          .LogLn();
+    }
+
+    // call callback
+
     return ResultT{Void{}};
   }
 
