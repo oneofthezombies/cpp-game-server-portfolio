@@ -8,10 +8,9 @@
 #include <unordered_set>
 
 #include "kero/core/dict.h"
+#include "kero/engine/component.h"
 
 namespace kero {
-
-class Component;
 
 class Engine final {
  public:
@@ -37,12 +36,12 @@ class Engine final {
   }
 
   [[nodiscard]] auto
-  AddEvent(const std::string& event, const std::string& component_name) noexcept
-      -> bool;
+  SubscribeEvent(const std::string& event,
+                 const std::string& component_name) noexcept -> bool;
 
   [[nodiscard]] auto
-  RemoveEvent(const std::string& event,
-              const std::string& component_name) noexcept -> bool;
+  UnsubscribeEvent(const std::string& event,
+                   const std::string& component_name) noexcept -> bool;
 
   [[nodiscard]] auto
   GetComponent(const std::string& name) noexcept -> OptionRef<Component&>;

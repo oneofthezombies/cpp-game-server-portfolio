@@ -17,7 +17,7 @@ class Component {
   CLASS_KIND_MOVABLE(Component);
 
   [[nodiscard]] auto
-  GetName() const noexcept -> std::string_view;
+  GetName() const noexcept -> const std::string&;
 
   template <typename T>
     requires std::is_base_of_v<Component, T>
@@ -31,20 +31,17 @@ class Component {
   }
 
   virtual auto
-  OnCreate(Engine& engine) noexcept -> void {
-    /* noop */
-  }
+  OnCreate(Engine& engine) noexcept -> void;
 
   virtual auto
-  OnUpdate(Engine& engine) noexcept -> void {
-    /* noop */
-  }
+  OnDestroy(Engine& engine) noexcept -> void;
+
+  virtual auto
+  OnUpdate(Engine& engine) noexcept -> void;
 
   virtual auto
   OnEvent(Engine& engine, const std::string& event, const Dict& data) noexcept
-      -> void {
-    /* noop */
-  }
+      -> void;
 
  private:
   std::string name_;

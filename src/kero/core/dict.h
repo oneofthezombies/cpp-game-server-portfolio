@@ -142,6 +142,12 @@ class Dict final {
   }
 
   [[nodiscard]] auto
+  Remove(const std::string& key) noexcept -> Self& {
+    data_.erase(key);
+    return *this;
+  }
+
+  [[nodiscard]] auto
   Has(const std::string& key) const noexcept -> bool;
 
   [[nodiscard]] auto

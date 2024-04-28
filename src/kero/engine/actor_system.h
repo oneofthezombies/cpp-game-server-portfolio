@@ -46,7 +46,14 @@ class Actor final : public Component {
   CLASS_KIND_MOVABLE(Actor);
 
   virtual auto
+  OnCreate(Engine &engine) noexcept -> void override;
+
+  virtual auto
   OnUpdate(Engine &engine) noexcept -> void override;
+
+  virtual auto
+  OnEvent(Engine &engine, const std::string &event, const Dict &data) noexcept
+      -> void override;
 
  private:
   MailBox mail_box_;

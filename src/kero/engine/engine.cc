@@ -30,8 +30,9 @@ kero::Engine::Dispatch(const std::string& event, const Dict& data) noexcept
 }
 
 auto
-kero::Engine::AddEvent(const std::string& event,
-                       const std::string& component_name) noexcept -> bool {
+kero::Engine::SubscribeEvent(const std::string& event,
+                             const std::string& component_name) noexcept
+    -> bool {
   auto it = events_.find(event);
   if (it == events_.end()) {
     it = events_.try_emplace(event).first;
@@ -47,8 +48,9 @@ kero::Engine::AddEvent(const std::string& event,
 }
 
 auto
-kero::Engine::RemoveEvent(const std::string& event,
-                          const std::string& component_name) noexcept -> bool {
+kero::Engine::UnsubscribeEvent(const std::string& event,
+                               const std::string& component_name) noexcept
+    -> bool {
   auto it = events_.find(event);
   if (it == events_.end()) {
     return false;

@@ -1,5 +1,8 @@
 #include "actor_system.h"
 
+#include "kero/engine/engine.h"
+#include "kero/engine/events.h"
+
 using namespace kero;
 
 kero::Mail::Mail(std::string &&from, std::string &&to, Dict &&body) noexcept
@@ -17,6 +20,13 @@ kero::Actor::Actor(std::string &&name, MailBox &&mail_box) noexcept
     : Component{std::move(name)}, mail_box_{std::move(mail_box)} {}
 
 auto
+kero::Actor::OnCreate(Engine &engine) noexcept -> void {
+  if (!engine.SubscribeEvent(kEventMailToSend, GetName())) {
+    // TODO: log error
+  }
+}
+
+auto
 kero::Actor::OnUpdate(Engine &engine) noexcept -> void {
   auto mail = mail_box_.rx.TryReceive();
   if (mail.IsNone()) {
@@ -24,7 +34,29 @@ kero::Actor::OnUpdate(Engine &engine) noexcept -> void {
   }
 
   auto [from, to, body] = mail.TakeUnwrap();
-  // TODO
+  engine.Dispatch(kEventMailReceived,
+                  body.Set("__from", std::string{from})
+                      .Set("__to", std::string{to})
+                      .Take());
+}
+
+auto
+kero::Actor::OnEvent(Engine &engine,
+                     const std::string &event,
+                     const Dict &data) noexcept -> void {
+  if (event != kEventMailToSend) {
+    return;
+  }
+
+  auto clone = data.Clone();
+  auto to = clone.TakeOrDefault("__to", std::string{});
+  if (to.empty()) {
+    // TODO: log error
+    return;
+  }
+
+  mail_box_.tx.Send(
+      Mail{std::string{GetName()}, std::string{to}, clone.Take()});
 }
 
 kero::ActorSystem::ActorSystem(Tx<Dict> &&run_tx,
@@ -65,7 +97,7 @@ kero::ActorSystem::Stop() noexcept -> bool {
     return false;
   }
 
-  run_tx_.Send(Dict{}.Set("shutdown", true).Take());
+  run_tx_.Send(Dict{}.Set(kMessageShutdown, true).Take());
   run_thread_.join();
   return true;
 }
@@ -138,7 +170,7 @@ kero::ActorSystem::ThreadMain(ActorSystem &self,
                               std::unique_ptr<Rx<Dict>> &&run_rx) -> void {
   while (true) {
     if (auto message = run_rx->TryReceive(); message.IsSome()) {
-      if (message.TakeUnwrap().Has("shutdown")) {
+      if (message.TakeUnwrap().Has(kMessageShutdown)) {
         break;
       }
     }
