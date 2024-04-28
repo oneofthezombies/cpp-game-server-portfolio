@@ -16,6 +16,17 @@ kero::MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
 kero::Actor::Actor(std::string &&name, MailBox &&mail_box) noexcept
     : Component{std::move(name)}, mail_box_{std::move(mail_box)} {}
 
+auto
+kero::Actor::OnUpdate(Engine &engine) noexcept -> void {
+  auto mail = mail_box_.rx.TryReceive();
+  if (mail.IsNone()) {
+    return;
+  }
+
+  auto [from, to, body] = mail.TakeUnwrap();
+  // TODO
+}
+
 kero::ActorSystem::ActorSystem(Tx<Dict> &&run_tx,
                                std::unique_ptr<Rx<Dict>> &&run_rx) noexcept
     : run_tx_{std::move(run_tx)}, run_rx_{std::move(run_rx)} {}

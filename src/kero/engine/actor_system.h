@@ -45,6 +45,9 @@ class Actor final : public Component {
   virtual ~Actor() noexcept override = default;
   CLASS_KIND_MOVABLE(Actor);
 
+  virtual auto
+  OnUpdate(Engine &engine) noexcept -> void override;
+
  private:
   MailBox mail_box_;
 };

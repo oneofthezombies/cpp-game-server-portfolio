@@ -31,17 +31,17 @@ class Component {
   }
 
   virtual auto
-  OnCreate(Engine& runner) noexcept -> void {
+  OnCreate(Engine& engine) noexcept -> void {
     /* noop */
   }
 
   virtual auto
-  OnUpdate(Engine& runner) noexcept -> void {
+  OnUpdate(Engine& engine) noexcept -> void {
     /* noop */
   }
 
   virtual auto
-  OnEvent(Engine& runner, const std::string& event, const Dict& data) noexcept
+  OnEvent(Engine& engine, const std::string& event, const Dict& data) noexcept
       -> void {
     /* noop */
   }
