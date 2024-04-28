@@ -1,8 +1,9 @@
 #ifndef CORE_UTILS_LINUX_H
 #define CORE_UTILS_LINUX_H
 
-#include "core.h"
 #include <string_view>
+
+#include "core.h"
 
 namespace core {
 
@@ -16,15 +17,17 @@ struct LinuxError final {
   ~LinuxError() noexcept = default;
   CLASS_KIND_MOVABLE(LinuxError);
 
-  [[nodiscard]] static auto FromErrno() noexcept -> LinuxError;
+  [[nodiscard]] static auto
+  FromErrno() noexcept -> LinuxError;
 
-private:
+ private:
   LinuxError(const int code, const std::string_view description) noexcept;
 };
 
-auto operator<<(std::ostream &os, const LinuxError &error) noexcept
-    -> std::ostream &;
+auto
+operator<<(std::ostream &os,
+           const LinuxError &error) noexcept -> std::ostream &;
 
-} // namespace core
+}  // namespace core
 
-#endif // CORE_UTILS_LINUX_H
+#endif  // CORE_UTILS_LINUX_H

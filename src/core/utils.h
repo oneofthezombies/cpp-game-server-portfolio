@@ -24,8 +24,10 @@ class Tokenizer final {
 
   auto
   Current() const noexcept -> std::optional<std::string_view>;
+
   auto
   Next() const noexcept -> std::optional<std::string_view>;
+
   auto
   Eat() noexcept -> void;
 

@@ -10,7 +10,7 @@ enum Symbol : int32_t {
   kCommonBegin = 1'000'000,
   // Add symbols after kBegin
 
-  kPropagated,
+  kErrorPropagated,
 
   kTinyJsonKeyNotFound,
 

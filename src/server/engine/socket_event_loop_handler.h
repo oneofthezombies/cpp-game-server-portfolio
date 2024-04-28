@@ -174,8 +174,9 @@ class SocketEventLoopHandler : public EventLoopHandler {
     using ResultT = Result<Void>;
 
     if (mail_handlers_.find(kind) != mail_handlers_.end()) {
-      return ResultT{Error{kSocketEventLoopHandlerMailHandlerAlreadyExists,
-                           core::TinyJson{}.Set("kind", kind).IntoMap()}};
+      return ResultT{
+          Error::From(kSocketEventLoopHandlerMailHandlerAlreadyExists,
+                      core::TinyJson{}.Set("kind", kind).IntoMap())};
     }
 
     mail_handlers_.emplace(kind, handler);

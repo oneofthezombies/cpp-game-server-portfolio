@@ -38,7 +38,8 @@ enum class MessageKind : uint8_t {
   kServerEvent = 8,
 };
 
-auto operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
+auto
+operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
 
 using MessageBody = TinyJson;
 
@@ -49,7 +50,8 @@ struct Message final {
   Id id;
   MessageBody body;
 
-  explicit Message(const MessageKind kind, const Id id,
+  explicit Message(const MessageKind kind,
+                   const Id id,
                    MessageBody &&body) noexcept;
   ~Message() noexcept = default;
   CLASS_KIND_MOVABLE(Message);
@@ -58,13 +60,14 @@ struct Message final {
   FromRaw(const std::string_view raw) -> std::optional<Message>;
 
   [[nodiscard]] static auto
-  BuildRaw(const MessageKind kind, const Id id,
+  BuildRaw(const MessageKind kind,
+           const Id id,
            std::string &&tiny_json_str) noexcept -> std::string;
 };
 
-auto operator<<(std::ostream &os,
-                const Message &message) noexcept -> std::ostream &;
+auto
+operator<<(std::ostream &os, const Message &message) noexcept -> std::ostream &;
 
-} // namespace core
+}  // namespace core
 
-#endif // CORE_PROTOCOL_H
+#endif  // CORE_PROTOCOL_H

@@ -49,13 +49,13 @@ using ErrorCause = std::unique_ptr<Error>;
 struct Error final {
   ErrorCode code;
   ErrorDetails details;
-  ErrorCause cause;
   std::source_location location;
+  ErrorCause cause;
 
   explicit Error(const ErrorCode code,
                  ErrorDetails &&details,
-                 ErrorCause &&cause,
-                 std::source_location &&location) noexcept;
+                 std::source_location &&location,
+                 ErrorCause &&cause) noexcept;
 
   ~Error() noexcept = default;
   CLASS_KIND_MOVABLE(Error);

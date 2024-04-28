@@ -34,14 +34,28 @@ core::operator<<(std::ostream &os, const Error &error) -> std::ostream & {
   os << ", ";
   os << "details=";
   DebugErrorDetails(os, error.details);
+  os << ", ";
+  os << "location=";
+  os << error.location.file_name();
+  os << ":";
+  os << error.location.line();
+  os << ":";
+  os << error.location.column();
+  os << ":";
+  os << error.location.function_name();
+  if (error.cause) {
+    os << ", ";
+    os << "cause=";
+    os << *error.cause;
+  }
   os << "}";
   return os;
 }
 
 core::Error::Error(const ErrorCode code,
                    ErrorDetails &&details,
-                   ErrorCause &&cause,
-                   std::source_location &&location) noexcept
+                   std::source_location &&location,
+                   ErrorCause &&cause) noexcept
     : code{code},
       details{std::move(details)},
       cause{std::move(cause)},
@@ -51,14 +65,21 @@ auto
 core::Error::From(const ErrorCode code,
                   ErrorDetails &&details,
                   std::source_location &&location) noexcept -> Error {
-  return Error{code, std::move(details), nullptr, std::move(location)};
+  return Error{
+      code,
+      std::move(details),
+      std::move(location),
+      nullptr,
+  };
 }
 
 auto
 core::Error::From(Error &&cause,
                   std::source_location &&location) noexcept -> Error {
-  return Error{kPropagated,
-               {},
-               std::make_unique<Error>(std::move(cause)),
-               std::move(location)};
+  return Error{
+      kErrorPropagated,
+      {},
+      std::move(location),
+      std::make_unique<Error>(std::move(cause)),
+  };
 }

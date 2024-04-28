@@ -1,48 +1,50 @@
 #include "protocol.h"
+
 #include "tiny_json.h"
 
 using namespace core;
 
-auto core::operator<<(std::ostream &os,
-                      const MessageKind kind) -> std::ostream & {
+auto
+core::operator<<(std::ostream &os, const MessageKind kind) -> std::ostream & {
   switch (kind) {
-  case MessageKind::kUndefined:
-    os << "Undefined";
-    break;
-  case MessageKind::kClientRequest:
-    os << "ClientRequest";
-    break;
-  case MessageKind::kClientRequestSuccess:
-    os << "ClientRequestSuccess";
-    break;
-  case MessageKind::kClientRequestFailure:
-    os << "ClientRequestFailure";
-    break;
-  case MessageKind::kClientEvent:
-    os << "ClientEvent";
-    break;
-  case MessageKind::kServerRequest:
-    os << "ServerRequest";
-    break;
-  case MessageKind::kServerRequestSuccess:
-    os << "ServerRequestSuccess";
-    break;
-  case MessageKind::kServerRequestFailure:
-    os << "ServerRequestFailure";
-    break;
-  case MessageKind::kServerEvent:
-    os << "ServerEvent";
-    break;
+    case MessageKind::kUndefined:
+      os << "Undefined";
+      break;
+    case MessageKind::kClientRequest:
+      os << "ClientRequest";
+      break;
+    case MessageKind::kClientRequestSuccess:
+      os << "ClientRequestSuccess";
+      break;
+    case MessageKind::kClientRequestFailure:
+      os << "ClientRequestFailure";
+      break;
+    case MessageKind::kClientEvent:
+      os << "ClientEvent";
+      break;
+    case MessageKind::kServerRequest:
+      os << "ServerRequest";
+      break;
+    case MessageKind::kServerRequestSuccess:
+      os << "ServerRequestSuccess";
+      break;
+    case MessageKind::kServerRequestFailure:
+      os << "ServerRequestFailure";
+      break;
+    case MessageKind::kServerEvent:
+      os << "ServerEvent";
+      break;
   }
   return os;
 }
 
-core::Message::Message(const MessageKind kind, const Id id,
+core::Message::Message(const MessageKind kind,
+                       const Id id,
                        MessageBody &&body) noexcept
     : kind{kind}, id{id}, body{std::move(body)} {}
 
-auto core::Message::FromRaw(const std::string_view raw)
-    -> std::optional<Message> {
+auto
+core::Message::FromRaw(const std::string_view raw) -> std::optional<Message> {
   if (raw.size() < sizeof(MessageKind)) {
     return std::nullopt;
   }
@@ -63,9 +65,10 @@ auto core::Message::FromRaw(const std::string_view raw)
   return Message{kind, id, std::move(*json)};
 }
 
-auto core::Message::BuildRaw(const MessageKind kind, const Id id,
-                             std::string &&tiny_json_str) noexcept
-    -> std::string {
+auto
+core::Message::BuildRaw(const MessageKind kind,
+                        const Id id,
+                        std::string &&tiny_json_str) noexcept -> std::string {
   std::string raw;
   raw.reserve(sizeof(MessageKind) + sizeof(Id) + tiny_json_str.size());
 
@@ -76,8 +79,9 @@ auto core::Message::BuildRaw(const MessageKind kind, const Id id,
   return raw;
 }
 
-auto core::operator<<(std::ostream &os,
-                      const Message &message) noexcept -> std::ostream & {
+auto
+core::operator<<(std::ostream &os,
+                 const Message &message) noexcept -> std::ostream & {
   os << "Message{";
   os << "kind=";
   os << message.kind;
