@@ -48,7 +48,14 @@ core::TinyJson::Clone() const noexcept -> TinyJson {
 auto
 core::TinyJson::ToString() const noexcept -> std::string {
   std::ostringstream oss;
-  Log(oss);
+  oss << '{';
+  for (const auto &[key, value] : map_) {
+    oss << '"' << key << "\":\"" << value << "\",";
+  }
+  if (!map_.empty()) {
+    oss.seekp(-1, std::ios_base::end);
+  }
+  oss << '}';
   return oss.str();
 }
 
