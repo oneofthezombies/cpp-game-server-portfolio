@@ -12,9 +12,20 @@ kero::Engine::Run() noexcept -> void {
 }
 
 auto
-kero::Engine::Update() noexcept -> void {
-  for (auto& [_, component] : components_) {
-    component->OnUpdate(*this);
+kero::Engine::Dispatch(const std::string& event, const Dict& data) noexcept
+    -> void {
+  auto it = events_.find(event);
+  if (it == events_.end()) {
+    return;
+  }
+
+  for (const auto& component_name : it->second) {
+    auto component = GetComponent(component_name);
+    if (component.IsNone()) {
+      continue;
+    }
+
+    component.Unwrap().OnEvent(*this, event, data);
   }
 }
 
@@ -64,18 +75,31 @@ kero::Engine::GetComponent(const std::string& name) noexcept
 }
 
 auto
-kero::ThreadEngine::Start(Engine&& runner) -> bool {
-  if (thread_.joinable()) {
+kero::Engine::Update() noexcept -> void {
+  for (auto& [_, component] : components_) {
+    component->OnUpdate(*this);
+  }
+}
+
+kero::ThreadEngine::~ThreadEngine() noexcept {
+  if (IsRunning()) {
+    [[maybe_unused]] auto stopped = Stop();
+  }
+}
+
+auto
+kero::ThreadEngine::Start(Engine&& engine) noexcept -> bool {
+  if (IsRunning()) {
     return false;
   }
 
-  thread_ = std::thread{&ThreadMain, std::move(runner)};
+  thread_ = std::thread{&ThreadMain, std::move(engine)};
   return true;
 }
 
 auto
-kero::ThreadEngine::Stop() -> bool {
-  if (!thread_.joinable()) {
+kero::ThreadEngine::Stop() noexcept -> bool {
+  if (!IsRunning()) {
     return false;
   }
 
@@ -84,6 +108,11 @@ kero::ThreadEngine::Stop() -> bool {
 }
 
 auto
-kero::ThreadEngine::ThreadMain(Engine&& runner) -> void {
-  runner.Run();
+kero::ThreadEngine::IsRunning() const noexcept -> bool {
+  return thread_.joinable();
+}
+
+auto
+kero::ThreadEngine::ThreadMain(Engine&& engine) -> void {
+  engine.Run();
 }

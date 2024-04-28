@@ -142,14 +142,13 @@ class Dict final {
   }
 
   [[nodiscard]] auto
-  Has(const std::string& key) const noexcept -> bool {
-    return data_.find(key) != data_.end();
-  }
+  Has(const std::string& key) const noexcept -> bool;
 
   [[nodiscard]] auto
-  Take() noexcept -> Self {
-    return std::move(*this);
-  }
+  Take() noexcept -> Self;
+
+  [[nodiscard]] auto
+  Clone() const noexcept -> Self;
 
  private:
   std::unordered_map<std::string, DictValue> data_;

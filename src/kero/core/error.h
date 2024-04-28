@@ -13,7 +13,7 @@ struct Error final {
   using Code = int32_t;
   using Cause = std::unique_ptr<Error>;
 
-  enum {
+  enum : int32_t {
     kFailed = 1,
     kPropagated = 2,
   };
