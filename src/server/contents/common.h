@@ -12,6 +12,8 @@ enum Symbol : int32_t {
   kServerContentsBegin = 3'000'000,
   // Add symbols after kBegin
 
+  kLobbyMailGetSocketIdFailed,
+
   // Add symbols before kEnd
   kServerContentsEnd
 };

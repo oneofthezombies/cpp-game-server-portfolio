@@ -29,10 +29,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
       auto socket_id_res = mail.body.GetAsNumber<SocketId>("socket_id");
       if (socket_id_res.IsErr()) {
         return ResultT{Error::From(kSocketEventLoopHandlerMailSocketIdNotFound,
-                                   core::TinyJson{}
-                                       .Set("mail", mail)
-                                       .Set("error", socket_id_res.Err())
-                                       .IntoMap())};
+                                   core::TinyJson{}.Set("mail", mail).IntoMap(),
+                                   socket_id_res.TakeErr())};
       }
 
       const auto socket_id = socket_id_res.Ok();
@@ -41,13 +39,11 @@ class SocketEventLoopHandler : public EventLoopHandler {
       }
     }
 
-    const auto kind_res = mail.body.Get("kind");
+    auto kind_res = mail.body.Get("kind");
     if (kind_res.IsErr()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMailKindNotFound,
-                                 core::TinyJson{}
-                                     .Set("mail", mail)
-                                     .Set("error", kind_res.Err())
-                                     .IntoMap())};
+                                 core::TinyJson{}.Set("mail", mail).IntoMap(),
+                                 kind_res.TakeErr())};
     }
 
     const auto kind = kind_res.Ok();
@@ -67,8 +63,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
                                  core::TinyJson{}
                                      .Set("mail", mail)
                                      .Set("name", event_loop.GetName())
-                                     .Set("error", res.Err())
-                                     .IntoMap())};
+                                     .IntoMap(),
+                                 res.TakeErr())};
     }
 
     return ResultT{Void{}};

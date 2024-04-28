@@ -59,17 +59,14 @@ contents::Lobby::OnConnect(Lobby &self,
                            const engine::Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  // TODO
-  // auto socket_id_res = mail.body.GetAsNumber<engine::SocketId>("socket_id");
-  // if (socket_id_res.IsErr()) {
-  //   return ResultT{Error::From(kLobbyMailSocketIdParsingFailed,
-  //                              core::TinyJson{}
-  //                                  .Set("mail", mail)
-  //                                  .Set("error", socket_id_res.Err())
-  //                                  .IntoMap())};
-  // }
+  auto socket_id_res = mail.body.GetAsNumber<engine::SocketId>("socket_id");
+  if (socket_id_res.IsErr()) {
+    return ResultT{Error::From(kLobbyMailGetSocketIdFailed,
+                               core::TinyJson{}.Set("mail", mail).IntoMap(),
+                               socket_id_res.TakeErr())};
+  }
 
-  // const auto socket_id = socket_id_res.Ok();
+  const auto socket_id = socket_id_res.Ok();
 
   // TODO
   // event_loop.Write(socket_id, "");

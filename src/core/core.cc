@@ -74,6 +74,31 @@ core::Error::From(const ErrorCode code,
 }
 
 auto
+core::Error::From(const ErrorCode code,
+                  Error &&cause,
+                  std::source_location &&location) noexcept -> Error {
+  return Error{
+      code,
+      {},
+      std::move(location),
+      std::make_unique<Error>(std::move(cause)),
+  };
+}
+
+auto
+core::Error::From(const ErrorCode code,
+                  ErrorDetails &&details,
+                  Error &&cause,
+                  std::source_location &&location) noexcept -> Error {
+  return Error{
+      code,
+      std::move(details),
+      std::move(location),
+      std::make_unique<Error>(std::move(cause)),
+  };
+}
+
+auto
 core::Error::From(Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{

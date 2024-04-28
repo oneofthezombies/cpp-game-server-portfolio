@@ -67,6 +67,18 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   static auto
+  From(const ErrorCode code,
+       Error &&cause,
+       std::source_location &&location) noexcept -> Error;
+
+  static auto
+  From(const ErrorCode code,
+       ErrorDetails &&details,
+       Error &&cause,
+       std::source_location &&location =
+           std::source_location::current()) noexcept -> Error;
+
+  static auto
   From(Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;

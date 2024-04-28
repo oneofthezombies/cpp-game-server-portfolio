@@ -80,11 +80,13 @@ ParseArgs(core::Args &&args) noexcept -> Result<Config> {
         return ResultT{Error::From(kPortValueNotFound)};
       }
 
-      auto result = core::ParseNumberString<uint16_t>(*next);
+      const auto next_token = *next;
+      auto result = core::ParseNumberString<uint16_t>(next_token);
       if (result.IsErr()) {
         return ResultT{
             Error::From(kPortParsingFailed,
-                        core::TinyJson{}.Set("error", result.Err()).IntoMap())};
+                        core::TinyJson{}.Set("token", next_token).IntoMap(),
+                        result.TakeErr())};
       }
 
       config.port = result.Ok();
