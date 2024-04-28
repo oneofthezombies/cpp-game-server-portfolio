@@ -52,4 +52,4 @@ RUN rm ninja.zip
 RUN echo 'export PATH="$HOME/app/ninja/bin:$PATH"' >> ~/.bashrc
 
 # cmake-format
-RUN pip install cmake_format
+RUN $HOME/.pyenv/shims/pip install cmake_format
