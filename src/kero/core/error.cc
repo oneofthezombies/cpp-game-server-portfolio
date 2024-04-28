@@ -35,7 +35,10 @@ kero::Error::From(Dict &&details,
 }
 
 auto
-kero::Error::From(Cause &&cause, std::source_location &&location) noexcept
+kero::Error::From(Error &&cause, std::source_location &&location) noexcept
     -> Error {
-  return Error{kPropagated, Dict{}, std::move(location), std::move(cause)};
+  return Error{kPropagated,
+               Dict{},
+               std::move(location),
+               std::make_unique<Error>(std::move(cause))};
 }

@@ -93,7 +93,7 @@ kero::ThreadEngine::Start(Engine&& engine) noexcept -> bool {
     return false;
   }
 
-  thread_ = std::thread{&ThreadMain, std::move(engine)};
+  thread_ = std::thread{ThreadMain, std::move(engine)};
   return true;
 }
 

@@ -36,7 +36,7 @@ struct Error final {
 
   [[nodiscard]] static auto
   From(const Code code,
-       Dict &&details,
+       Dict &&details = Dict{},
        Cause &&cause = nullptr,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
@@ -48,7 +48,7 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(Cause &&cause = nullptr,
+  From(Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 };

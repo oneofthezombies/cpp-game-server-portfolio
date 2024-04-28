@@ -41,8 +41,12 @@ struct MailBox final {
 
 class Actor final : public Component {
  public:
-  explicit Actor(std::string &&name) noexcept;
+  explicit Actor(std::string &&name, MailBox &&mail_box) noexcept;
   virtual ~Actor() noexcept override = default;
+  CLASS_KIND_MOVABLE(Actor);
+
+ private:
+  MailBox mail_box_;
 };
 
 using ActorPtr = std::unique_ptr<Actor>;
@@ -52,16 +56,28 @@ class ActorSystem final {
   enum : int32_t {
     kEmptyNameNotAllowed = 1,
     kNameTooLong = 2,
+    kMailBoxNameAlreadyExists = 3,
+    kMailBoxNameNotFound = 4,
+    kReservedNameNotAllowed = 5,
+    kAlreadyRunning = 6,
+    kMultipleStartNotAllowed,
   };
 
-  static constexpr auto kMaxNameLength = 64;
+  class Builder final {
+   public:
+    explicit Builder() noexcept = default;
+    ~Builder() noexcept = default;
+    CLASS_KIND_PINNABLE(Builder);
 
-  explicit ActorSystem() noexcept = default;
+    [[nodiscard]] auto
+    Build() noexcept -> ActorSystem;
+  };
+
   ~ActorSystem() noexcept;
   CLASS_KIND_PINNABLE(ActorSystem);
 
   [[nodiscard]] auto
-  Start() noexcept -> bool;
+  Start() noexcept -> Result<Void>;
 
   [[nodiscard]] auto
   Stop() noexcept -> bool;
@@ -73,18 +89,25 @@ class ActorSystem final {
   CreateActor(std::string &&name) noexcept -> Result<ActorPtr>;
 
   [[nodiscard]] auto
-  DeleteActor(const std::string &name) noexcept -> Result<Void>;
+  DeleteMailBox(const std::string &name) noexcept -> bool;
 
  private:
+  explicit ActorSystem(Tx<Dict> &&run_tx,
+                       std::unique_ptr<Rx<Dict>> &&run_rx) noexcept;
+
   auto
   ValidateName(const std::string &name) const noexcept -> Result<Void>;
 
   static auto
-  ThreadMain() -> void;
+  ThreadMain(ActorSystem &self, Rx<Dict> &&run_rx) -> void;
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;
-  std::thread thread_;
+  Tx<Dict> run_tx_;
+  std::unique_ptr<Rx<Dict>> run_rx_;
+  std::thread run_thread_;
+
+  static constexpr auto kMaxNameLength = 64;
 };
 
 }  // namespace kero
