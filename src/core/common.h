@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace core {
+
 /**
  * Common symbols start from 1,000,000
  */
@@ -17,5 +19,9 @@ enum Symbol : int32_t {
   // Add symbols before kEnd
   kCommonEnd
 };
+
+using SocketId = uint64_t;
+
+}  // namespace core
 
 #endif  // CORE_COMMON_H

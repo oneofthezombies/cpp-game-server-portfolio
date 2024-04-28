@@ -9,6 +9,7 @@
 #include <ostream>
 #include <string>
 
+#include "core/common.h"
 #include "core/core.h"
 #include "core/tiny_json.h"
 #include "core/utils.h"
@@ -44,6 +45,8 @@ using Error = core::Error;
 
 template <typename T>
 using Result = core::Result<T>;
+
+using SocketId = core::SocketId;
 
 auto
 ParseArgs(core::Args &&args) noexcept -> Result<Config> {
@@ -156,11 +159,9 @@ main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
+  std::string buffer(4096, '\0');
   while (true) {
-    std::cout << "Read message..." << std::endl;
-
-    char buffer[4096]{};
-    auto read_size = read(sock, buffer, sizeof(buffer));
+    auto read_size = read(sock, buffer.data(), buffer.size());
     if (read_size == -1) {
       std::cerr << "Failed to read from the server." << std::endl;
       return 1;
@@ -171,8 +172,33 @@ main(int argc, char **argv) noexcept -> int {
       break;
     }
 
-    std::cout << "Server: " << buffer << " (" << read_size << " bytes)"
+    std::cout << "[DEBUG] Server: " << buffer << " (" << read_size << " bytes)"
               << std::endl;
+
+    const auto message = core::TinyJson::Parse(buffer.substr(0, read_size));
+    if (!message) {
+      std::cout << "Failed to parse the message." << std::endl;
+      continue;
+    }
+
+    auto kind_res = message->Get("kind");
+    if (kind_res.IsErr()) {
+      std::cout << "Failed to get the kind of the message." << std::endl;
+      continue;
+    }
+
+    const auto kind = kind_res.Ok();
+    if (kind == "connect") {
+      const auto socket_id_res = message->GetAsNumber<SocketId>("socket_id");
+      if (socket_id_res.IsErr()) {
+        std::cout << "Failed to get the socket id." << std::endl;
+        return 1;
+      }
+
+      const auto socket_id = socket_id_res.Ok();
+      std::cout << "Connected to the server with socket id: " << socket_id
+                << std::endl;
+    }
   }
 
   return 0;

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+#include "core/common.h"
 #include "core/core.h"
 
 namespace engine {
@@ -73,6 +74,8 @@ using Error = core::Error;
 
 template <typename T>
 using Result = core::Result<T>;
+
+using SocketId = core::SocketId;
 
 }  // namespace engine
 
