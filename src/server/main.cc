@@ -1,6 +1,5 @@
 #include "core/tiny_json.h"
 #include "core/utils.h"
-
 #include "engine/config.h"
 #include "engine/engine.h"
 
@@ -12,51 +11,55 @@ enum Symbol : int32_t {
   kUnknownArgument,
 };
 
-auto operator<<(std::ostream &os, const Symbol &symbol) -> std::ostream & {
+auto
+operator<<(std::ostream &os, const Symbol &symbol) -> std::ostream & {
   os << "Symbol{";
   os << static_cast<int32_t>(symbol);
   os << "}";
   return os;
 }
 
-using Error = core::Error<Symbol>;
+using Error = core::Error;
 
-template <typename T> using Result = core::Result<T, Error>;
+template <typename T>
+using Result = core::Result<T>;
 
-auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config>;
+auto
+ParseArgs(core::Args &&args) noexcept -> Result<engine::Config>;
 
-auto main(int argc, char **argv) noexcept -> int {
+auto
+main(int argc, char **argv) noexcept -> int {
   auto config_res = ParseArgs(core::ParseArgcArgv(argc, argv));
   if (config_res.IsErr()) {
     const auto &error = config_res.Err();
     switch (error.code) {
-    case Symbol::kHelpRequested:
-      // noop
-      break;
-    case Symbol::kPortArgNotFound:
-      core::TinyJson{}
-          .Set("message", "port argument not found")
-          .Set("error", error)
-          .LogLn();
-      break;
-    case Symbol::kPortValueNotFound:
-      core::TinyJson{}
-          .Set("message", "port value not found")
-          .Set("error", error)
-          .LogLn();
-      break;
-    case Symbol::kPortParsingFailed:
-      core::TinyJson{}
-          .Set("message", "port parsing failed")
-          .Set("error", error)
-          .LogLn();
-      break;
-    case Symbol::kUnknownArgument:
-      core::TinyJson{}
-          .Set("message", "unknown argument")
-          .Set("error", error)
-          .LogLn();
-      break;
+      case kHelpRequested:
+        // noop
+        break;
+      case kPortArgNotFound:
+        core::TinyJson{}
+            .Set("message", "port argument not found")
+            .Set("error", error)
+            .LogLn();
+        break;
+      case kPortValueNotFound:
+        core::TinyJson{}
+            .Set("message", "port value not found")
+            .Set("error", error)
+            .LogLn();
+        break;
+      case kPortParsingFailed:
+        core::TinyJson{}
+            .Set("message", "port parsing failed")
+            .Set("error", error)
+            .LogLn();
+        break;
+      case kUnknownArgument:
+        core::TinyJson{}
+            .Set("message", "unknown argument")
+            .Set("error", error)
+            .LogLn();
+        break;
     }
 
     core::TinyJson{}.Set("usage", "server [--port <port>]").LogLn();
@@ -91,7 +94,8 @@ auto main(int argc, char **argv) noexcept -> int {
   return 0;
 }
 
-auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
+auto
+ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
   using ResultT = Result<engine::Config>;
 
   engine::Config config{};
@@ -105,20 +109,20 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
     const auto token = *current;
 
     if (token == "--help") {
-      return ResultT{Error{Symbol::kHelpRequested}};
+      return ResultT{Error::From(kHelpRequested)};
     }
 
     if (token == "--port") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return ResultT{Error{Symbol::kPortValueNotFound}};
+        return ResultT{Error::From(kPortValueNotFound)};
       }
 
       auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
         return ResultT{
-            Error{Symbol::kPortParsingFailed,
-                  core::TinyJson{}.Set("error", result.Err()).IntoMap()}};
+            Error::From(kPortParsingFailed,
+                        core::TinyJson{}.Set("error", result.Err()).IntoMap())};
       }
 
       config.port = result.Ok();
@@ -126,12 +130,12 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
       continue;
     }
 
-    return ResultT{Error{Symbol::kUnknownArgument,
-                         core::TinyJson{}.Set("token", token).IntoMap()}};
+    return ResultT{Error::From(kUnknownArgument,
+                               core::TinyJson{}.Set("token", token).IntoMap())};
   }
 
   if (config.port == engine::Config::kUndefinedPort) {
-    return ResultT{Error{Symbol::kPortArgNotFound}};
+    return ResultT{Error::From(kPortArgNotFound)};
   }
 
   return ResultT{std::move(config)};

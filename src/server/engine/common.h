@@ -8,10 +8,10 @@
 namespace engine {
 
 /**
- * Server engine symbols start from 1,000,000
+ * Server engine symbols start from 2,000,000
  */
 enum Symbol : int32_t {
-  kServerEngineBegin = 1'000'000,
+  kServerEngineBegin = 2'000'000,
   // Add symbols after kBegin
 
   kConfigPortUndefined,
@@ -25,9 +25,13 @@ enum Symbol : int32_t {
   kMainEventLoopHandlerLinuxUnexpectedSocketId,
   kMainEventLoopHandlerLinuxServerSocketAcceptFailed,
 
-  kSocketEventLoopHandlerParseSocketIdFailed,
   kSocketEventLoopHandlerSocketIdAlreadyExists,
   kSocketEventLoopHandlerSocketIdNotFound,
+  kSocketEventLoopHandlerMailSocketIdNotFound,
+  kSocketEventLoopHandlerMailKindNotFound,
+  kSocketEventLoopHandlerMailHandlerAlreadyExists,
+  kSocketEventLoopHandlerMailHandlerNotFound,
+  kSocketEventLoopHandlerMailHandlerFailed,
 
   kMailBoxAlreadyExists,
   kMailBoxNotFound,
@@ -57,14 +61,15 @@ enum Symbol : int32_t {
   kServerEngineEnd
 };
 
-auto operator<<(std::ostream &os, const Symbol symbol) noexcept
-    -> std::ostream &;
+auto
+operator<<(std::ostream &os, const Symbol symbol) noexcept -> std::ostream &;
 
 using Void = core::Void;
-using Error = core::Error<int32_t>;
+using Error = core::Error;
 
-template <typename T> using Result = core::Result<T, Error>;
+template <typename T>
+using Result = core::Result<T>;
 
-} // namespace engine
+}  // namespace engine
 
-#endif // SERVER_ENGINE_COMMON_H
+#endif  // SERVER_ENGINE_COMMON_H

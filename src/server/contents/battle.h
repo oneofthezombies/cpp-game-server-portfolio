@@ -1,12 +1,10 @@
 #ifndef SERVER_CONTENTS_BATTLE_H
 #define SERVER_CONTENTS_BATTLE_H
 
+#include "common.h"
 #include "core/core.h"
-
 #include "server/engine/socket.h"
 #include "server/engine/socket_event_loop_handler.h"
-
-#include "common.h"
 
 namespace contents {
 
@@ -18,9 +16,9 @@ struct BattleState {
   CLASS_KIND_MOVABLE(BattleState);
 };
 
-class Battle final : public engine::SocketEventLoopHandler {
-public:
-  using Super = engine::SocketEventLoopHandler;
+class Battle final : public engine::SocketEventLoopHandler<Battle> {
+ public:
+  using Super = engine::SocketEventLoopHandler<Battle>;
 
   explicit Battle() noexcept = default;
   virtual ~Battle() noexcept override = default;
@@ -34,17 +32,19 @@ public:
   OnMail(const engine::EventLoop &event_loop,
          const engine::Mail &mail) noexcept -> Result<Void> override;
 
-  [[nodiscard]] virtual auto OnSocketIn(
-      const engine::EventLoop &event_loop,
-      const engine::SocketId socket_id) noexcept -> Result<Void> override;
+  [[nodiscard]] virtual auto
+  OnSocketIn(const engine::EventLoop &event_loop,
+             const engine::SocketId socket_id) noexcept
+      -> Result<Void> override;
 
-private:
-  [[nodiscard]] auto OnStart(const engine::EventLoop &event_loop,
-                             const engine::Mail &mail) noexcept -> Result<Void>;
+ private:
+  [[nodiscard]] auto
+  OnStart(const engine::EventLoop &event_loop,
+          const engine::Mail &mail) noexcept -> Result<Void>;
 
   std::unordered_map<engine::SocketId, BattleState> battle_states_;
 };
 
-} // namespace contents
+}  // namespace contents
 
-#endif // SERVER_CONTENTS_BATTLE_H
+#endif  // SERVER_CONTENTS_BATTLE_H

@@ -10,11 +10,12 @@
 #include <unordered_map>
 
 #include "core.h"
+#include "core/utils.h"
 
 namespace core {
 
 class TinyJson final {
-public:
+ public:
   using Map = std::unordered_map<std::string, std::string>;
 
   explicit TinyJson() noexcept = default;
@@ -25,11 +26,31 @@ public:
   /**
    * Returning value is a reference to the value in the map.
    */
-  [[nodiscard]] auto Get(const std::string_view key) const noexcept
-      -> std::optional<std::string_view>;
+  [[nodiscard]] auto
+  Get(const std::string_view key) const noexcept -> Result<std::string_view>;
 
   template <typename T>
-  auto Set(const std::string_view key, const T &value) noexcept -> TinyJson & {
+    requires std::integral<T> || std::floating_point<T>
+  [[nodiscard]] auto
+  GetAsNumber(const std::string_view key) const noexcept -> Result<T> {
+    using ResultT = Result<T>;
+
+    auto get_res = Get(key);
+    if (get_res.IsErr()) {
+      return ResultT{Error::From(std::move(get_res.Err()))};
+    }
+
+    auto parse_res = core::ParseNumberString<T>(get_res.Ok());
+    if (parse_res.IsErr()) {
+      return ResultT{Error::From(std::move(parse_res.Err()))};
+    }
+
+    return ResultT{parse_res.Ok()};
+  }
+
+  template <typename T>
+  auto
+  Set(const std::string_view key, const T &value) noexcept -> TinyJson & {
     std::ostringstream oss;
     oss << value;
     auto key_str = std::string(key);
@@ -45,36 +66,44 @@ public:
     return *this;
   }
 
-  auto AsMap() const noexcept -> const Map &;
+  auto
+  AsMap() const noexcept -> const Map &;
 
   /**
    * This method will move the ownership of the raw data to the caller.
    */
-  [[nodiscard]] auto IntoMap() noexcept -> Map;
+  [[nodiscard]] auto
+  IntoMap() noexcept -> Map;
 
-  [[nodiscard]] auto Clone() const noexcept -> TinyJson;
+  [[nodiscard]] auto
+  Clone() const noexcept -> TinyJson;
 
-  [[nodiscard]] auto ToString() const noexcept -> std::string;
+  [[nodiscard]] auto
+  ToString() const noexcept -> std::string;
 
-  auto Log(std::ostream &os = std::cout,
-           std::source_location location =
-               std::source_location::current()) const noexcept -> void;
+  auto
+  Log(std::ostream &os = std::cout,
+      std::source_location location =
+          std::source_location::current()) const noexcept -> void;
 
-  auto LogLn(std::ostream &os = std::cout,
-             std::source_location location =
-                 std::source_location::current()) const noexcept -> void;
+  auto
+  LogLn(std::ostream &os = std::cout,
+        std::source_location location =
+            std::source_location::current()) const noexcept -> void;
 
-  [[nodiscard]] static auto Parse(const std::string_view tiny_json_str) noexcept
+  [[nodiscard]] static auto
+  Parse(const std::string_view tiny_json_str) noexcept
       -> std::optional<TinyJson>;
 
-private:
+ private:
   Map map_;
 
   friend class TinyJsonParser;
 };
 
-auto operator<<(std::ostream &os,
-                const TinyJson &tiny_json) noexcept -> std::ostream &;
+auto
+operator<<(std::ostream &os,
+           const TinyJson &tiny_json) noexcept -> std::ostream &;
 
 struct TinyJsonParserOptions {
   bool allow_trailing_comma{false};
@@ -85,35 +114,43 @@ struct TinyJsonParserOptions {
 };
 
 class TinyJsonParser final {
-public:
+ public:
   explicit TinyJsonParser(
       const std::string_view tiny_json_str,
       TinyJsonParserOptions &&options = TinyJsonParserOptions{}) noexcept;
   ~TinyJsonParser() noexcept = default;
   CLASS_KIND_MOVABLE(TinyJsonParser);
 
-  [[nodiscard]] auto Parse() noexcept -> std::optional<TinyJson>;
+  [[nodiscard]] auto
+  Parse() noexcept -> std::optional<TinyJson>;
 
-private:
-  [[nodiscard]] auto ParseKeyValue() noexcept
+ private:
+  [[nodiscard]] auto
+  ParseKeyValue() noexcept
       -> std::optional<std::pair<std::string, std::string>>;
-  [[nodiscard]] auto ParseKey() noexcept -> std::optional<std::string>;
-  [[nodiscard]] auto ParseValue() noexcept -> std::optional<std::string>;
-  [[nodiscard]] auto ParseString() noexcept -> std::optional<std::string>;
+  [[nodiscard]] auto
+  ParseKey() noexcept -> std::optional<std::string>;
+  [[nodiscard]] auto
+  ParseValue() noexcept -> std::optional<std::string>;
+  [[nodiscard]] auto
+  ParseString() noexcept -> std::optional<std::string>;
 
   [[nodiscard]] auto
   Current(const std::source_location location = std::source_location::current())
       const noexcept -> std::optional<char>;
   [[nodiscard]] auto
-  Consume(const char c, const std::source_location location =
-                            std::source_location::current()) noexcept -> bool;
+  Consume(const char c,
+          const std::source_location location =
+              std::source_location::current()) noexcept -> bool;
   [[nodiscard]] auto
   Advance(const std::source_location location =
               std::source_location::current()) noexcept -> bool;
-  auto Trim() noexcept -> void;
+  auto
+  Trim() noexcept -> void;
 
-  auto Log(const std::string_view message,
-           const std::source_location location) const noexcept -> void;
+  auto
+  Log(const std::string_view message,
+      const std::source_location location) const noexcept -> void;
 
   std::string_view tiny_json_str_;
   size_t cursor_{};
@@ -121,6 +158,6 @@ private:
   TinyJsonParserOptions options_;
 };
 
-} // namespace core
+}  // namespace core
 
-#endif // CORE_TINY_JSON_H
+#endif  // CORE_TINY_JSON_H

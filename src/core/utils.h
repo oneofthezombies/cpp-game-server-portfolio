@@ -13,52 +13,58 @@ namespace core {
 
 using Args = std::vector<std::string_view>;
 
-[[nodiscard]] auto ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
+[[nodiscard]] auto
+ParseArgcArgv(int argc, char *argv[]) noexcept -> Args;
 
 class Tokenizer final {
-public:
+ public:
   explicit Tokenizer(Args &&args) noexcept;
   ~Tokenizer() noexcept = default;
   CLASS_KIND_MOVABLE(Tokenizer);
 
-  auto Current() const noexcept -> std::optional<std::string_view>;
-  auto Next() const noexcept -> std::optional<std::string_view>;
-  auto Eat() noexcept -> void;
+  auto
+  Current() const noexcept -> std::optional<std::string_view>;
+  auto
+  Next() const noexcept -> std::optional<std::string_view>;
+  auto
+  Eat() noexcept -> void;
 
-private:
+ private:
   Args args_;
   size_t index_{};
 };
 
 template <typename T>
   requires std::integral<T> || std::floating_point<T>
-[[nodiscard]] auto ParseNumberString(const std::string_view token) noexcept
-    -> Result<T, Error<int32_t>> {
-  using ResultT = Result<T, Error<int32_t>>;
+[[nodiscard]] auto
+ParseNumberString(const std::string_view token) noexcept -> Result<T> {
+  using ResultT = Result<T>;
 
   T value{};
   auto [ptr, ec] =
       std::from_chars(token.data(), token.data() + token.size(), value);
   if (ec != std::errc{}) {
-    return ResultT{Error{static_cast<int32_t>(ec),
-                         {{"message", std::make_error_code(ec).message()}}}};
+    return ResultT{
+        Error::From(static_cast<int32_t>(ec),
+                    {{"message", std::make_error_code(ec).message()}})};
   }
 
   return ResultT{value};
 }
 
 class Defer final {
-public:
+ public:
   explicit Defer(std::function<void()> &&fn) noexcept;
   ~Defer() noexcept;
   CLASS_KIND_PINNABLE(Defer);
 
-  auto Cancel() noexcept -> void;
+  auto
+  Cancel() noexcept -> void;
 
-private:
+ private:
   std::function<void()> fn_;
 };
 
-} // namespace core
+}  // namespace core
 
-#endif // CORE_UTILS_H
+#endif  // CORE_UTILS_H

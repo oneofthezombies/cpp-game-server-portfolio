@@ -1,18 +1,17 @@
 #include "engine_linux.h"
 
-#include <atomic>
-#include <cassert>
-
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
+#include <atomic>
+#include <cassert>
+
+#include "common.h"
 #include "core/tiny_json.h"
 #include "core/utils.h"
 #include "core/utils_linux.h"
-
-#include "common.h"
 #include "event_loop_linux.h"
 #include "mail_center.h"
 #include "main_event_loop_handler_linux.h"
@@ -21,11 +20,13 @@ using namespace engine;
 
 std::atomic<const MailBox *> signal_mail_box_ptr{nullptr};
 
-auto OnSignal(int signal) -> void {
+auto
+OnSignal(int signal) -> void {
   if (signal == SIGINT) {
     if (signal_mail_box_ptr != nullptr) {
       (*signal_mail_box_ptr)
-          .tx.Send(Mail{"signal", "all",
+          .tx.Send(Mail{"signal",
+                        "all",
                         std::move(core::TinyJson{}.Set("__shutdown", ""))});
     }
   }
@@ -36,13 +37,15 @@ auto OnSignal(int signal) -> void {
       .LogLn();
 }
 
-auto engine::EngineLinux::Builder::Build(Config &&config) const noexcept
+auto
+engine::EngineLinux::Builder::Build(Config &&config) const noexcept
     -> Result<EngineLinux> {
   using ResultT = Result<EngineLinux>;
 
   auto main_event_loop_res = EventLoopLinux::Builder{}.Build(
-      "main", EventLoopHandlerPtr{new MainEventLoopHandlerLinux{
-                  std::string{config.primary_event_loop_name}}});
+      "main",
+      EventLoopHandlerPtr{new MainEventLoopHandlerLinux{
+          std::string{config.primary_event_loop_name}}});
   if (main_event_loop_res.IsErr()) {
     return ResultT{std::move(main_event_loop_res.Err())};
   }
@@ -53,10 +56,11 @@ auto engine::EngineLinux::Builder::Build(Config &&config) const noexcept
 
 engine::EngineLinux::EngineLinux(Config &&config,
                                  EventLoopPtr &&main_event_loop) noexcept
-    : config_{std::move(config)}, main_event_loop_{std::move(main_event_loop)} {
-}
+    : config_{std::move(config)},
+      main_event_loop_{std::move(main_event_loop)} {}
 
-auto engine::EngineLinux::Run() noexcept -> Result<Void> {
+auto
+engine::EngineLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(main_event_loop_ != nullptr && "main_event_loop must not be nullptr");
@@ -74,10 +78,10 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
         []() { signal_mail_box_ptr.store(nullptr); }};
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
       return ResultT{
-          Error{Symbol::kLinuxSignalSetFailed,
-                core::TinyJson{}
-                    .Set("linux_error", core::LinuxError::FromErrno())
-                    .IntoMap()}};
+          Error::From(kLinuxSignalSetFailed,
+                      core::TinyJson{}
+                          .Set("linux_error", core::LinuxError::FromErrno())
+                          .IntoMap())};
     }
 
     if (auto res = main_event_loop_->Init(config_); res.IsErr()) {
@@ -90,10 +94,10 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
 
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
       return ResultT{
-          Error{Symbol::kLinuxSignalResetFailed,
-                core::TinyJson{}
-                    .Set("linux_error", core::LinuxError::FromErrno())
-                    .IntoMap()}};
+          Error::From(kLinuxSignalResetFailed,
+                      core::TinyJson{}
+                          .Set("linux_error", core::LinuxError::FromErrno())
+                          .IntoMap())};
     }
   }
 
@@ -101,15 +105,16 @@ auto engine::EngineLinux::Run() noexcept -> Result<Void> {
   return ResultT{Void{}};
 }
 
-auto engine::EngineLinux::AddEventLoop(std::string &&name,
-                                       EventLoopHandlerPtr &&handler) noexcept
+auto
+engine::EngineLinux::AddEventLoop(std::string &&name,
+                                  EventLoopHandlerPtr &&handler) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto it = event_loop_threads_.find(name);
       it != event_loop_threads_.end()) {
-    return ResultT{Error{Symbol::kEngineEventLoopAlreadyExists,
-                         core::TinyJson{}.Set("name", name).IntoMap()}};
+    return ResultT{Error::From(kEngineEventLoopAlreadyExists,
+                               core::TinyJson{}.Set("name", name).IntoMap())};
   }
 
   auto event_loop_res =
@@ -129,8 +134,9 @@ auto engine::EngineLinux::AddEventLoop(std::string &&name,
   return ResultT{Void{}};
 }
 
-auto engine::EngineLinux::EventLoopThreadMain(
-    EventLoopPtr &&event_loop) noexcept -> void {
+auto
+engine::EngineLinux::EventLoopThreadMain(EventLoopPtr &&event_loop) noexcept
+    -> void {
   assert(event_loop != nullptr && "event_loop must not be nullptr");
 
   if (auto res = event_loop->Run(); res.IsErr()) {

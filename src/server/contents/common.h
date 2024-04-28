@@ -1,38 +1,32 @@
 #ifndef SERVER_CONTENTS_COMMON_H
 #define SERVER_CONTENTS_COMMON_H
 
-#include "server/engine/common.h"
+#include "core/core.h"
 
 namespace contents {
 
 /**
- * Server contents symbols start from 2,000,000
+ * Server contents symbols start from 3,000,000
  */
 enum Symbol : int32_t {
-  kServerContentsBegin = 2'000'000,
+  kServerContentsBegin = 3'000'000,
   // Add symbols after kBegin
-
-  kBattleMailKindNotFound,
-  kBattleMailUnexpectedKind,
-  kBattleMailBattleIdNotFound,
-  kBattleMailBattleIdParsingFailed,
-  kBattleMailFirstSocketIdNotFound,
-  kBattleMailFirstSocketIdParsingFailed,
-  kBattleMailSecondSocketIdNotFound,
-  kBattleMailSecondSocketIdParsingFailed,
 
   // Add symbols before kEnd
   kServerContentsEnd
 };
 
-auto operator<<(std::ostream &os,
-                const Symbol symbol) noexcept -> std::ostream &;
+auto
+operator<<(std::ostream &os, const Symbol symbol) noexcept -> std::ostream &;
 
-using Void = engine::Void;
-using Error = engine::Error;
+using Void = core::Void;
+using Error = core::Error;
 
-template <typename T> using Result = engine::Result<T>;
+template <typename T>
+using Result = core::Result<T>;
 
-} // namespace contents
+using BattleId = uint64_t;
 
-#endif // SERVER_CONTENTS_COMMON_H
+}  // namespace contents
+
+#endif  // SERVER_CONTENTS_COMMON_H

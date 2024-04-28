@@ -1,0 +1,11 @@
+---
+BasedOnStyle: Google
+---
+Language: Cpp
+AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakAfterReturnType: All
+AllowAllArgumentsOnNextLine: false
+AlignAfterOpenBracket: Align
+BinPackArguments: false
+BinPackParameters: false
+---

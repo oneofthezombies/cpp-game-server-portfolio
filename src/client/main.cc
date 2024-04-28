@@ -1,13 +1,13 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <cstring>
 #include <functional>
 #include <iostream>
 #include <ostream>
 #include <string>
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 #include "core/core.h"
 #include "core/tiny_json.h"
@@ -23,7 +23,8 @@ enum Symbol : int32_t {
   kUnknownArgument,
 };
 
-auto operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
+auto
+operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
   os << static_cast<std::underlying_type_t<Symbol>>(symbol);
   return os;
 }
@@ -39,11 +40,13 @@ struct Config final {
   static constexpr uint16_t kUndefinedPort{0};
 };
 
-using Error = core::Error<Symbol>;
+using Error = core::Error;
 
-template <typename T> using Result = core::Result<T, Error>;
+template <typename T>
+using Result = core::Result<T>;
 
-auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
+auto
+ParseArgs(core::Args &&args) noexcept -> Result<Config> {
   using ResultT = Result<Config>;
 
   Config config;
@@ -57,13 +60,13 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
     const auto token = *current;
 
     if (token == "--help") {
-      return ResultT{Error{Symbol::kHelpRequested}};
+      return ResultT{Error::From(kHelpRequested)};
     }
 
     if (token == "--ip") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return ResultT{Error{Symbol::kIpValueNotFound}};
+        return ResultT{Error::From(kIpValueNotFound)};
       }
 
       config.ip = *next;
@@ -74,14 +77,14 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
     if (token == "--port") {
       const auto next = tokenizer.Next();
       if (!next.has_value()) {
-        return ResultT{Error{Symbol::kPortValueNotFound}};
+        return ResultT{Error::From(kPortValueNotFound)};
       }
 
       auto result = core::ParseNumberString<uint16_t>(*next);
       if (result.IsErr()) {
         return ResultT{
-            Error{Symbol::kPortParsingFailed,
-                  core::TinyJson{}.Set("error", result.Err()).IntoMap()}};
+            Error::From(kPortParsingFailed,
+                        core::TinyJson{}.Set("error", result.Err()).IntoMap())};
       }
 
       config.port = result.Ok();
@@ -89,40 +92,41 @@ auto ParseArgs(core::Args &&args) noexcept -> Result<Config> {
       continue;
     }
 
-    return ResultT{Error{Symbol::kUnknownArgument,
-                         core::TinyJson{}.Set("token", token).IntoMap()}};
+    return ResultT{Error::From(kUnknownArgument,
+                               core::TinyJson{}.Set("token", token).IntoMap())};
   }
 
   if (config.ip.empty()) {
-    return ResultT{Error{Symbol::kIpArgNotFound}};
+    return ResultT{Error::From(kIpArgNotFound)};
   }
 
   if (config.port == Config::kUndefinedPort) {
-    return ResultT{Error{Symbol::kPortArgNotFound}};
+    return ResultT{Error::From(kPortArgNotFound)};
   }
 
   return ResultT{std::move(config)};
 }
 
-auto main(int argc, char **argv) noexcept -> int {
+auto
+main(int argc, char **argv) noexcept -> int {
   auto args = core::ParseArgcArgv(argc, argv);
   auto options_res = ParseArgs(std::move(args));
   if (options_res.IsErr()) {
     const auto &error = options_res.Err();
-    if (error.code == Symbol::kHelpRequested) {
+    if (error.code == kHelpRequested) {
       std::cout << "Usage: client [--ip <ip>] [--port <port>] [--room-id "
                    "<room_id>]";
-    } else if (error.code == Symbol::kIpArgNotFound) {
+    } else if (error.code == kIpArgNotFound) {
       std::cout << "Error: --ip argument not found";
-    } else if (error.code == Symbol::kIpValueNotFound) {
+    } else if (error.code == kIpValueNotFound) {
       std::cout << "Error: --ip argument value not found";
-    } else if (error.code == Symbol::kPortArgNotFound) {
+    } else if (error.code == kPortArgNotFound) {
       std::cout << "Error: --port argument not found";
-    } else if (error.code == Symbol::kPortValueNotFound) {
+    } else if (error.code == kPortValueNotFound) {
       std::cout << "Error: --port argument value not found";
-    } else if (error.code == Symbol::kPortParsingFailed) {
+    } else if (error.code == kPortParsingFailed) {
       std::cout << "Error: port parsing failed: " << error;
-    } else if (error.code == Symbol::kUnknownArgument) {
+    } else if (error.code == kUnknownArgument) {
       std::cout << "Error: unknown argument";
     } else {
       std::cout << "Error: " << error;

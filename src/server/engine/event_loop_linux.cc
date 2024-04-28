@@ -1,30 +1,32 @@
 #include "event_loop_linux.h"
 
-#include <cstring>
-
 #include <sys/epoll.h>
 #include <sys/socket.h>
+
+#include <cstring>
 
 #include "core/tiny_json.h"
 #include "core/utils.h"
 #include "core/utils_linux.h"
-
 #include "file_descriptor_linux.h"
 #include "mail_center.h"
+#include "utils_linux.h"
 
 using namespace engine;
 
-auto engine::EventLoopLinux::Builder::Build(
+auto
+engine::EventLoopLinux::Builder::Build(
     std::string &&name,
     EventLoopHandlerPtr &&handler) const noexcept -> Result<EventLoopPtr> {
   using ResultT = Result<EventLoopPtr>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
-    return ResultT{Error{Symbol::kEventLoopLinuxEpollCreate1Failed,
-                         core::TinyJson{}
-                             .Set("linux_error", core::LinuxError::FromErrno())
-                             .IntoMap()}};
+    return ResultT{
+        Error::From(kEventLoopLinuxEpollCreate1Failed,
+                    core::TinyJson{}
+                        .Set("linux_error", core::LinuxError::FromErrno())
+                        .IntoMap())};
   }
 
   auto mail_box_res = MailCenter::Global().Create(std::string{name});
@@ -32,19 +34,21 @@ auto engine::EventLoopLinux::Builder::Build(
     return ResultT{std::move(mail_box_res.Err())};
   }
 
-  return ResultT{EventLoopPtr{
-      new EventLoopLinux{std::move(mail_box_res.Ok()), std::move(name),
-                         std::move(handler), std::move(epoll_fd)}}};
+  return ResultT{EventLoopPtr{new EventLoopLinux{std::move(mail_box_res.Ok()),
+                                                 std::move(name),
+                                                 std::move(handler),
+                                                 std::move(epoll_fd)}}};
 }
 
-engine::EventLoopLinux::EventLoopLinux(MailBox &&mail_box, std::string &&name,
+engine::EventLoopLinux::EventLoopLinux(MailBox &&mail_box,
+                                       std::string &&name,
                                        EventLoopHandlerPtr &&handler,
                                        FileDescriptorLinux &&epoll_fd) noexcept
     : EventLoop{std::move(mail_box), std::move(name), std::move(handler)},
       epoll_fd_{std::move(epoll_fd)} {}
 
-auto engine::EventLoopLinux::Init(const Config &config) noexcept
-    -> Result<Void> {
+auto
+engine::EventLoopLinux::Init(const Config &config) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (auto res = handler_->OnInit(*this, config); res.IsErr()) {
@@ -54,8 +58,9 @@ auto engine::EventLoopLinux::Init(const Config &config) noexcept
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Add(const SocketId socket_id,
-                                 const uint32_t events) const noexcept
+auto
+engine::EventLoopLinux::Add(const SocketId socket_id,
+                            const EventLoopAddOptions &options) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -66,19 +71,21 @@ auto engine::EventLoopLinux::Add(const SocketId socket_id,
 
   const auto fd = fd_res.Ok();
   struct epoll_event ev {};
-  ev.events = events;
+  ev.events = EventLoopAddOptionsToEpollEvents(options);
   ev.data.fd = fd;
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
-    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlAddFailed,
-                         core::TinyJson{}
-                             .Set("linux_error", core::LinuxError::FromErrno())
-                             .IntoMap()}};
+    return ResultT{
+        Error::From(kEventLoopLinuxEpollCtlAddFailed,
+                    core::TinyJson{}
+                        .Set("linux_error", core::LinuxError::FromErrno())
+                        .IntoMap())};
   }
 
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Delete(const SocketId socket_id) const noexcept
+auto
+engine::EventLoopLinux::Remove(const SocketId socket_id) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -89,17 +96,19 @@ auto engine::EventLoopLinux::Delete(const SocketId socket_id) const noexcept
 
   const auto fd = fd_res.Ok();
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
-    return ResultT{Error{Symbol::kEventLoopLinuxEpollCtlDeleteFailed,
-                         core::TinyJson{}
-                             .Set("linux_error", core::LinuxError::FromErrno())
-                             .IntoMap()}};
+    return ResultT{
+        Error::From(kEventLoopLinuxEpollCtlDeleteFailed,
+                    core::TinyJson{}
+                        .Set("linux_error", core::LinuxError::FromErrno())
+                        .IntoMap())};
   }
 
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Write(const SocketId socket_id,
-                                   const std::string_view data) const noexcept
+auto
+engine::EventLoopLinux::Write(const SocketId socket_id,
+                              const std::string_view data) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -119,17 +128,17 @@ auto engine::EventLoopLinux::Write(const SocketId socket_id,
       }
 
       return ResultT{
-          Error{Symbol::kEventLoopLinuxWriteFailed,
-                core::TinyJson{}
-                    .Set("linux_error", core::LinuxError::FromErrno())
-                    .Set("fd", fd)
-                    .IntoMap()}};
+          Error::From(kEventLoopLinuxWriteFailed,
+                      core::TinyJson{}
+                          .Set("linux_error", core::LinuxError::FromErrno())
+                          .Set("fd", fd)
+                          .IntoMap())};
     } else {
       written += count;
 
       if (count == 0) {
-        return ResultT{Error{Symbol::kEventLoopLinuxWriteClosed,
-                             core::TinyJson{}.Set("fd", fd).IntoMap()}};
+        return ResultT{Error::From(kEventLoopLinuxWriteClosed,
+                                   core::TinyJson{}.Set("fd", fd).IntoMap())};
       }
     }
   }
@@ -137,7 +146,8 @@ auto engine::EventLoopLinux::Write(const SocketId socket_id,
   return ResultT{Void{}};
 }
 
-auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
+auto
+engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   struct epoll_event events[kMaxEvents]{};
@@ -145,7 +155,10 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
   while (!shutdown) {
     auto mail = mail_box_.rx.TryReceive();
     if (mail) {
-      if (auto value = mail->body.Get("__shutdown"); value) {
+      if (auto shutdown_res = mail->body.Get("__shutdown");
+          shutdown_res.IsErr()) {
+        return ResultT{std::move(shutdown_res.Err())};
+      } else {
         shutdown = true;
       }
 
@@ -161,10 +174,10 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
       }
 
       return ResultT{
-          Error{Symbol::kEventLoopLinuxEpollWaitFailed,
-                core::TinyJson{}
-                    .Set("linux_error", core::LinuxError::FromErrno())
-                    .IntoMap()}};
+          Error::From(kEventLoopLinuxEpollWaitFailed,
+                      core::TinyJson{}
+                          .Set("linux_error", core::LinuxError::FromErrno())
+                          .IntoMap())};
     }
 
     for (int i = 0; i < fd_count; ++i) {
@@ -182,20 +195,20 @@ auto engine::EventLoopLinux::Run() noexcept -> Result<Void> {
         if (getsockopt(event.data.fd, SOL_SOCKET, SO_ERROR, &code, &code_size) <
             0) {
           return ResultT{
-              Error{Symbol::kEventLoopLinuxGetSocketOptionFailed,
-                    core::TinyJson{}
-                        .Set("linux_error", core::LinuxError::FromErrno())
-                        .Set("fd", event.data.fd)
-                        .Set("socket_id", socket_id)
-                        .IntoMap()}};
+              Error::From(kEventLoopLinuxGetSocketOptionFailed,
+                          core::TinyJson{}
+                              .Set("linux_error", core::LinuxError::FromErrno())
+                              .Set("fd", event.data.fd)
+                              .Set("socket_id", socket_id)
+                              .IntoMap())};
         }
 
         if (code == 0) {
-          return ResultT{Error{Symbol::kEventLoopLinuxSocketErrorZero,
-                               core::TinyJson{}
-                                   .Set("fd", event.data.fd)
-                                   .Set("socket_id", socket_id)
-                                   .IntoMap()}};
+          return ResultT{Error::From(kEventLoopLinuxSocketErrorZero,
+                                     core::TinyJson{}
+                                         .Set("fd", event.data.fd)
+                                         .Set("socket_id", socket_id)
+                                         .IntoMap())};
         }
 
         const auto description = std::string_view{strerror(code)};

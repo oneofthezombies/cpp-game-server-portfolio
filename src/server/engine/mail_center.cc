@@ -2,26 +2,28 @@
 
 #include <mutex>
 
+#include "common.h"
 #include "core/spsc_channel.h"
 #include "core/tiny_json.h"
 
-#include "common.h"
-
 using namespace engine;
 
-engine::Mail::Mail(std::string &&from, std::string &&to,
+engine::Mail::Mail(std::string &&from,
+                   std::string &&to,
                    MailBody &&body) noexcept
     : from{std::move(from)}, to{std::move(to)}, body{std::move(body)} {}
 
-auto engine::Mail::Clone() const noexcept -> Mail {
+auto
+engine::Mail::Clone() const noexcept -> Mail {
   auto from = this->from;
   auto to = this->to;
   auto body = this->body.Clone();
   return Mail{std::move(from), std::move(to), std::move(body)};
 }
 
-auto engine::operator<<(std::ostream &os,
-                        const Mail &mail) noexcept -> std::ostream & {
+auto
+engine::operator<<(std::ostream &os,
+                   const Mail &mail) noexcept -> std::ostream & {
   os << "Mail{";
   os << "from=" << mail.from;
   os << ", ";
@@ -37,13 +39,14 @@ engine::MailBox::MailBox(core::Tx<Mail> &&tx, core::Rx<Mail> &&rx) noexcept
 engine::MailCenter::MailCenter(core::Tx<MailBody> &&run_tx) noexcept
     : run_tx_{std::move(run_tx)} {}
 
-auto engine::MailCenter::Shutdown() noexcept -> void {
+auto
+engine::MailCenter::Shutdown() noexcept -> void {
   run_tx_.Send(std::move(core::TinyJson{}.Set("shutdown", "")));
   run_thread_.join();
 }
 
-auto engine::MailCenter::Create(std::string &&name) noexcept
-    -> Result<MailBox> {
+auto
+engine::MailCenter::Create(std::string &&name) noexcept -> Result<MailBox> {
   using ResultT = Result<MailBox>;
 
   if (auto res = ValidateName(name); res.IsErr()) {
@@ -53,8 +56,8 @@ auto engine::MailCenter::Create(std::string &&name) noexcept
   {
     std::lock_guard lock{mutex_};
     if (const auto it = mail_boxes_.find(name); it != mail_boxes_.end()) {
-      return ResultT{Error{Symbol::kMailBoxAlreadyExists,
-                           core::TinyJson{}.Set("name", name).IntoMap()}};
+      return ResultT{Error::From(kMailBoxAlreadyExists,
+                                 core::TinyJson{}.Set("name", name).IntoMap())};
     }
 
     auto [from_peer_tx, to_office_rx] = core::Channel<Mail>::Builder{}.Build();
@@ -71,48 +74,56 @@ auto engine::MailCenter::Create(std::string &&name) noexcept
   }
 }
 
-auto engine::MailCenter::Delete(std::string &&name) noexcept -> Result<Void> {
+auto
+engine::MailCenter::Delete(std::string &&name) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   std::lock_guard lock{mutex_};
   if (const auto it = mail_boxes_.find(name); it == mail_boxes_.end()) {
-    return ResultT{Error{Symbol::kMailBoxNotFound,
-                         core::TinyJson{}.Set("name", name).IntoMap()}};
+    return ResultT{Error::From(kMailBoxNotFound,
+                               core::TinyJson{}.Set("name", name).IntoMap())};
   }
 
   mail_boxes_.erase(name);
   return ResultT{Void{}};
 }
 
-auto engine::MailCenter::ValidateName(
-    const std::string_view name) const noexcept -> Result<Void> {
+auto
+engine::MailCenter::ValidateName(const std::string_view name) const noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (name.empty()) {
-    return ResultT{Error{Symbol::kMailBoxNameEmpty,
-                         core::TinyJson{}.Set("name", name).IntoMap()}};
+    return ResultT{Error::From(kMailBoxNameEmpty,
+                               core::TinyJson{}.Set("name", name).IntoMap())};
   }
 
   if (name.size() > 64) {
-    return ResultT{Error{Symbol::kMailBoxNameTooLong,
-                         core::TinyJson{}.Set("name", name).IntoMap()}};
+    return ResultT{Error::From(kMailBoxNameTooLong,
+                               core::TinyJson{}.Set("name", name).IntoMap())};
   }
 
   // "all" is reserved for broadcast
   if (name == "all") {
-    return ResultT{Error{Symbol::kMailBoxNameAllReserved,
-                         core::TinyJson{}.Set("name", name).IntoMap()}};
+    return ResultT{Error::From(kMailBoxNameAllReserved,
+                               core::TinyJson{}.Set("name", name).IntoMap())};
   }
 
   return ResultT{Void{}};
 }
 
-auto engine::MailCenter::RunOnThread(core::Rx<MailBody> &&run_rx) noexcept
-    -> void {
+auto
+engine::MailCenter::RunOnThread(core::Rx<MailBody> &&run_rx) noexcept -> void {
   while (true) {
     auto run_event = run_rx.TryReceive();
     if (run_event) {
-      if (auto value = run_event->Get("shutdown"); value) {
+      if (auto shutdown_res = run_event->Get("shutdown");
+          shutdown_res.IsErr()) {
+        core::TinyJson{}
+            .Set("message", "MailCenter shutdown failed")
+            .Set("error", shutdown_res.Err())
+            .LogLn();
+      } else {
         break;
       }
     }
@@ -152,17 +163,20 @@ auto engine::MailCenter::RunOnThread(core::Rx<MailBody> &&run_rx) noexcept
   }
 }
 
-auto engine::MailCenter::StartRunThread(core::Rx<MailBody> &&run_rx) noexcept
+auto
+engine::MailCenter::StartRunThread(core::Rx<MailBody> &&run_rx) noexcept
     -> void {
   run_thread_ = std::thread{RunThreadMain, std::ref(*this), std::move(run_rx)};
 }
 
-auto engine::MailCenter::RunThreadMain(
+auto
+engine::MailCenter::RunThreadMain(
     MailCenter &mail_center, core::Rx<MailBody> &&run_rx) noexcept -> void {
   mail_center.RunOnThread(std::move(run_rx));
 }
 
-auto engine::MailCenter::Global() noexcept -> MailCenter & {
+auto
+engine::MailCenter::Global() noexcept -> MailCenter & {
   static std::unique_ptr<MailCenter> instance{nullptr};
   static std::once_flag flag;
   std::call_once(flag, [] {

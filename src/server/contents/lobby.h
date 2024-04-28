@@ -1,15 +1,14 @@
 #ifndef SERVER_CONTENTS_LOBBY_H
 #define SERVER_CONTENTS_LOBBY_H
 
-#include "server/engine/socket_event_loop_handler.h"
-
 #include "common.h"
+#include "server/engine/socket_event_loop_handler.h"
 
 namespace contents {
 
-class Lobby final : public engine::SocketEventLoopHandler {
-public:
-  using Super = engine::SocketEventLoopHandler;
+class Lobby final : public engine::SocketEventLoopHandler<Lobby> {
+ public:
+  using Super = engine::SocketEventLoopHandler<Lobby>;
 
   explicit Lobby() noexcept = default;
   virtual ~Lobby() noexcept override = default;
@@ -23,17 +22,25 @@ public:
   OnMail(const engine::EventLoop &event_loop,
          const engine::Mail &mail) noexcept -> Result<Void> override;
 
-  [[nodiscard]] virtual auto OnSocketIn(
-      const engine::EventLoop &event_loop,
-      const engine::SocketId socket_id) noexcept -> Result<Void> override;
+  [[nodiscard]] virtual auto
+  OnSocketIn(const engine::EventLoop &event_loop,
+             const engine::SocketId socket_id) noexcept
+      -> Result<Void> override;
 
-private:
-  auto IsMatchable() const noexcept -> bool;
-  auto NextBattleId() noexcept -> uint64_t;
+ private:
+  auto
+  IsMatchable() const noexcept -> bool;
+  auto
+  NextBattleId() noexcept -> BattleId;
 
-  uint64_t next_battle_id_{};
+  static auto
+  OnConnect(Lobby &self,
+            const engine::EventLoop &event_loop,
+            const engine::Mail &mail) noexcept -> Result<Void>;
+
+  BattleId next_battle_id_{};
 };
 
-} // namespace contents
+}  // namespace contents
 
-#endif // SERVER_CONTENTS_LOBBY_H
+#endif  // SERVER_CONTENTS_LOBBY_H
