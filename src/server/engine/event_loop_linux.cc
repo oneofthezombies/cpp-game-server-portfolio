@@ -31,7 +31,7 @@ engine::EventLoopLinux::Builder::Build(
 
   auto mail_box_res = MailCenter::Global().Create(std::string{name});
   if (mail_box_res.IsErr()) {
-    return ResultT{std::move(mail_box_res.Err())};
+    return ResultT{Error::From(std::move(mail_box_res.Err()))};
   }
 
   return ResultT{EventLoopPtr{new EventLoopLinux{std::move(mail_box_res.Ok()),
@@ -66,7 +66,7 @@ engine::EventLoopLinux::Add(const SocketId socket_id,
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{std::move(fd_res.Err())};
+    return ResultT{Error::From(std::move(fd_res.Err()))};
   }
 
   const auto fd = fd_res.Ok();
@@ -91,7 +91,7 @@ engine::EventLoopLinux::Remove(const SocketId socket_id) const noexcept
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{std::move(fd_res.Err())};
+    return ResultT{Error::From(std::move(fd_res.Err()))};
   }
 
   const auto fd = fd_res.Ok();
@@ -114,7 +114,7 @@ engine::EventLoopLinux::Write(const SocketId socket_id,
 
   auto fd_res = FileDescriptorLinux::ParseSocketIdToFd(socket_id);
   if (fd_res.IsErr()) {
-    return ResultT{std::move(fd_res.Err())};
+    return ResultT{Error::From(std::move(fd_res.Err()))};
   }
 
   const auto fd = fd_res.Ok();
@@ -157,7 +157,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
     if (mail) {
       if (auto shutdown_res = mail->body.Get("__shutdown");
           shutdown_res.IsErr()) {
-        return ResultT{std::move(shutdown_res.Err())};
+        return ResultT{Error::From(std::move(shutdown_res.Err()))};
       } else {
         shutdown = true;
       }
@@ -185,7 +185,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
       auto socket_id_res =
           FileDescriptorLinux::ParseFdToSocketId(event.data.fd);
       if (socket_id_res.IsErr()) {
-        return ResultT{std::move(socket_id_res.Err())};
+        return ResultT{Error::From(std::move(socket_id_res.Err()))};
       }
 
       const auto socket_id = socket_id_res.Ok();

@@ -50,7 +50,7 @@ engine::MailCenter::Create(std::string &&name) noexcept -> Result<MailBox> {
   using ResultT = Result<MailBox>;
 
   if (auto res = ValidateName(name); res.IsErr()) {
-    return ResultT{std::move(res.Err())};
+    return ResultT{Error::From(std::move(res.Err()))};
   }
 
   {
