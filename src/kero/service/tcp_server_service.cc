@@ -43,7 +43,7 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   }
 
   const auto port =
-      config.Unwrap().GetConfig().GetOrDefault<uint16_t>("port", 0);
+      config.Unwrap().GetConfig().GetOrDefault<uint64_t>("port", 0);
   if (port == 0) {
     return ResultT::Err(Error::From(
         Dict{}.Set("message", std::string{"port not found in config"}).Take()));
@@ -82,7 +82,7 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
         Errno::FromErrno()
             .IntoDict()
             .Set("message", std::string{"Failed to bind server socket"})
-            .Set("port", static_cast<uint16_t>(port))
+            .Set("port", static_cast<uint64_t>(port))
             .Take()));
   }
 
@@ -121,7 +121,7 @@ kero::TcpServerService::OnEvent(Agent& agent,
                                 const std::string& event,
                                 const Dict& data) noexcept -> void {
   if (event == EventSocketRead::kEvent) {
-    const auto fd = data.GetOrDefault(EventSocketRead::kFd, -1);
+    const auto fd = data.GetOrDefault<int64_t>(EventSocketRead::kFd, -1);
     if (fd == server_fd_) {
       auto io_event_loop =
           agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);

@@ -14,30 +14,12 @@ namespace kero {
 
 template <typename T>
 concept IsDictValueType = std::disjunction_v<std::is_same<T, bool>,
-                                             std::is_same<T, int8_t>,
-                                             std::is_same<T, int16_t>,
-                                             std::is_same<T, int32_t>,
                                              std::is_same<T, int64_t>,
-                                             std::is_same<T, uint8_t>,
-                                             std::is_same<T, uint16_t>,
-                                             std::is_same<T, uint32_t>,
                                              std::is_same<T, uint64_t>,
-                                             std::is_same<T, float>,
                                              std::is_same<T, double>,
                                              std::is_same<T, std::string>>;
 
-using DictValue = std::variant<bool,
-                               int8_t,
-                               int16_t,
-                               int32_t,
-                               int64_t,
-                               uint8_t,
-                               uint16_t,
-                               uint32_t,
-                               uint64_t,
-                               float,
-                               double,
-                               std::string>;
+using DictValue = std::variant<bool, int64_t, uint64_t, double, std::string>;
 
 class Dict final {
  public:

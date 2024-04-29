@@ -69,7 +69,7 @@ kero::ConfigServiceFactory::Create() noexcept -> Result<ServicePtr> {
                         res.TakeErr()));
       };
 
-      (void)config.Set("port", res.TakeOk());
+      (void)config.Set("port", static_cast<uint64_t>(res.TakeOk()));
       scanner.Eat();
     } else {
       return ResultT::Err(
