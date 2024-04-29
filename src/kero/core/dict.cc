@@ -2,6 +2,8 @@
 
 #include <ostream>
 
+#include "kero/log/log_builder.h"
+
 using namespace kero;
 
 auto
@@ -22,6 +24,12 @@ kero::Dict::Clone() const noexcept -> Self {
   }
 
   return clone;
+}
+
+auto
+kero::Dict::Warn(std::string&& message,
+                 std::source_location&& location) const noexcept -> void {
+  log::Warn(std::move(message), std::move(location)).Log();
 }
 
 auto

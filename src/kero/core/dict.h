@@ -1,6 +1,7 @@
 #ifndef KERO_CORE_DICT_H
 #define KERO_CORE_DICT_H
 
+#include <source_location>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -124,7 +125,7 @@ class Dict final {
     const auto [it, inserted] =
         data_.try_emplace(std::move(key), std::move(value));
     if (!inserted) {
-      // TODO: log warning
+      Warn("Overwriting existing data key: " + key);
       it->second = std::move(value);
     }
 
@@ -156,13 +157,18 @@ class Dict final {
   Clone() const noexcept -> Self;
 
  private:
+  auto
+  Warn(std::string&& message,
+       std::source_location&& location =
+           std::source_location::current()) const noexcept -> void;
+
   std::unordered_map<std::string, DictValue> data_;
 
   friend auto
   operator<<(std::ostream& os, const Dict& dict) -> std::ostream&;
 };
 
-[[nodiscard]] auto
+auto
 operator<<(std::ostream& os, const Dict& dict) -> std::ostream&;
 
 }  // namespace kero

@@ -8,6 +8,7 @@
 #include "kero/core/utils_linux.h"
 #include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
@@ -62,7 +63,7 @@ kero::IoEventLoopService::OnDestroy(Agent& agent) noexcept -> void {
   }
 
   if (auto res = Fd::Close(epoll_fd_); res.IsErr()) {
-    // TODO: log error
+    log::Error("Failed to close epoll fd").Data("fd", epoll_fd_).Log();
   }
 }
 

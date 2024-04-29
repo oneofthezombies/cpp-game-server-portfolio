@@ -9,6 +9,7 @@
 #include "kero/log/global_context.h"
 
 namespace kero {
+namespace log {
 
 class LogBuilder final {
  public:
@@ -37,7 +38,7 @@ class LogBuilder final {
     return *this;
   }
 
-  [[nodiscard]] auto
+  auto
   Log() noexcept -> Result<Void>;
 
  private:
@@ -64,6 +65,7 @@ Error(std::string&& message,
       std::source_location&& location = std::source_location::current())
     -> LogBuilder;
 
+}  // namespace log
 }  // namespace kero
 
 #endif  // KERO_LOG_LOG_BUILDER_H

@@ -3,6 +3,7 @@
 #include "kero/engine/constants.h"
 #include "kero/engine/service.h"
 #include "kero/engine/signal_service.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
@@ -17,7 +18,10 @@ kero::Agent::Run() noexcept -> Result<Void> {
 
   auto signal = GetServiceAs<SignalService>(ServiceKind::kSignal);
   if (!signal) {
-    // TODO: log warning
+    return ResultT::Err(Error::From(
+        Dict{}
+            .Set("message", std::string{"Failed to get signal service."})
+            .Take()));
   }
 
   auto is_interrupted = false;
@@ -43,24 +47,28 @@ kero::Agent::Invoke(const std::string& event, const Dict& data) noexcept
     -> void {
   auto it = events_.find(event);
   if (it == events_.end()) {
-    // TODO: log warning
+    log::Warn("Event not found").Data("event", event).Log();
     return;
   }
 
   if (it->second.empty()) {
-    // TODO: log warning
+    log::Warn("No services subscribed to event").Data("event", event).Log();
     return;
   }
 
   for (const auto service_kind : it->second) {
     auto service = GetService(service_kind);
     if (service.IsNone()) {
-      // TODO: log warning
+      log::Warn("Service not found").Data("service", service_kind).Log();
       continue;
     }
 
     service.Unwrap().OnEvent(*this, event, data);
-    // TODO: log service <service> handled event <event> with data <data>
+    log::Debug("Service handled event")
+        .Data("service", service_kind)
+        .Data("event", event)
+        .Data("data", data)
+        .Log();
   }
 }
 
@@ -178,6 +186,6 @@ kero::ThreadAgent::IsRunning() const noexcept -> bool {
 auto
 kero::ThreadAgent::ThreadMain(Agent&& agent) -> void {
   if (auto res = agent.Run(); res.IsErr()) {
-    // TODO: log error
+    log::Error("Agent failed to run").Data("error", res.TakeErr()).Log();
   }
 }

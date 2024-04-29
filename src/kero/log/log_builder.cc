@@ -5,14 +5,14 @@
 
 using namespace kero;
 
-kero::LogBuilder::LogBuilder(std::string&& message,
-                             std::source_location&& location,
-                             const Level level) noexcept
+kero::log::LogBuilder::LogBuilder(std::string&& message,
+                                  std::source_location&& location,
+                                  const Level level) noexcept
     : log_{std::make_unique<kero::Log>(
           std::move(message), std::move(location), level)} {}
 
 auto
-kero::LogBuilder::Log() noexcept -> Result<Void> {
+kero::log::LogBuilder::Log() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (!log_) {
@@ -35,25 +35,25 @@ kero::LogBuilder::Log() noexcept -> Result<Void> {
 }
 
 auto
-kero::Debug(std::string&& message, std::source_location&& location)
+kero::log::Debug(std::string&& message, std::source_location&& location)
     -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kDebug};
 }
 
 auto
-kero::Info(std::string&& message, std::source_location&& location)
+kero::log::Info(std::string&& message, std::source_location&& location)
     -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kInfo};
 }
 
 auto
-kero::Warn(std::string&& message, std::source_location&& location)
+kero::log::Warn(std::string&& message, std::source_location&& location)
     -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kWarn};
 }
 
 auto
-kero::Error(std::string&& message, std::source_location&& location)
+kero::log::Error(std::string&& message, std::source_location&& location)
     -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kError};
 }
