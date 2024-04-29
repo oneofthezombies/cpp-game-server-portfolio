@@ -53,8 +53,6 @@ kero::SignalService::OnUpdate(Agent& agent) noexcept -> void {
   }
 
   actor.Unwrap().SendMail("all", EventShutdown::kEvent, Dict{});
-
-  interrupted_ = false;
 }
 
 auto
