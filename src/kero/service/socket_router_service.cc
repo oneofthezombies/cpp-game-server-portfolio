@@ -1,4 +1,4 @@
-#include "router_service.h"
+#include "socket_router_service.h"
 
 #include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
@@ -8,12 +8,12 @@
 
 using namespace kero;
 
-kero::RouterService::RouterService() noexcept
+kero::SocketRouterService::SocketRouterService() noexcept
     : Service{ServiceKind::kRouter,
               {ServiceKind::kActor, ServiceKind::kConfig}} {}
 
 auto
-kero::RouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::SocketRouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
   if (!agent.SubscribeEvent(EventSocketOpen::kEvent, GetKind())) {
     return ResultT::Err(Error::From(
@@ -34,38 +34,34 @@ kero::RouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
         Dict{}.Set("message", std::string{"ConfigService not found"}).Take()));
   }
 
-  auto routing_target_actor =
-      config.Unwrap().GetConfig().GetOrDefault("routing_target_actor",
-                                               std::string{});
-  if (routing_target_actor.empty()) {
+  auto target_actor =
+      config.Unwrap().GetConfig().GetOrDefault("target_actor", std::string{});
+  if (target_actor.empty()) {
     return ResultT::Err(Error::From(
         Dict{}
-            .Set("message",
-                 std::string{"routing_target_actor not found in config"})
+            .Set("message", std::string{"target_actor not found in config"})
             .Take()));
   }
 
-  routing_target_actor_ = std::move(routing_target_actor);
+  target_actor_ = std::move(target_actor);
 
   return ResultT::Ok(Void{});
 }
 
 auto
-kero::RouterService::OnEvent(Agent& agent,
-                             const std::string& event,
-                             const Dict& data) noexcept -> void {
+kero::SocketRouterService::OnEvent(Agent& agent,
+                                   const std::string& event,
+                                   const Dict& data) noexcept -> void {
   if (event != EventSocketOpen::kEvent) {
     return;
   }
 
-  if (routing_target_actor_.empty()) {
-    log::Error("routing_target_actor must be set for RouterService").Log();
+  if (target_actor_.empty()) {
+    log::Error("target_actor must be set for RouterService").Log();
     return;
   }
 
   agent.GetServiceAs<ActorService>(ServiceKind::kActor)
       .Unwrap()
-      .SendMail(std::string{routing_target_actor_},
-                std::string{event},
-                data.Clone());
+      .SendMail(std::string{target_actor_}, std::string{event}, data.Clone());
 }
