@@ -5,25 +5,35 @@
 
 #include "kero/core/common.h"
 #include "kero/core/dict.h"
+#include "kero/core/result.h"
 
 namespace kero {
 
-class Engine;
+class Agent;
 
 class Component {
  public:
-  explicit Component(std::string&& name) noexcept;
+  using Kind = int32_t;
+
+  explicit Component(const Kind kind) noexcept;
   virtual ~Component() noexcept = default;
   CLASS_KIND_MOVABLE(Component);
 
   [[nodiscard]] auto
-  GetName() const noexcept -> const std::string&;
+  GetKind() const noexcept -> Kind;
 
   template <typename T>
     requires std::is_base_of_v<Component, T>
   [[nodiscard]] auto
-  As(const std::string& name) noexcept -> OptionRef<T&> {
-    if (name != name_) {
+  Is(const Kind kind) const noexcept -> bool {
+    return kind == kind_;
+  }
+
+  template <typename T>
+    requires std::is_base_of_v<Component, T>
+  [[nodiscard]] auto
+  As(const Kind kind) noexcept -> OptionRef<T&> {
+    if (!Is<T>(kind)) {
       return None;
     }
 
@@ -31,20 +41,20 @@ class Component {
   }
 
   virtual auto
-  OnCreate(Engine& engine) noexcept -> void;
+  OnCreate(Agent& agent) noexcept -> Result<Void>;
 
   virtual auto
-  OnDestroy(Engine& engine) noexcept -> void;
+  OnDestroy(Agent& agent) noexcept -> void;
 
   virtual auto
-  OnUpdate(Engine& engine) noexcept -> void;
+  OnUpdate(Agent& agent) noexcept -> void;
 
   virtual auto
-  OnEvent(Engine& engine, const std::string& event, const Dict& data) noexcept
+  OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
       -> void;
 
  private:
-  std::string name_;
+  Kind kind_;
 };
 
 }  // namespace kero

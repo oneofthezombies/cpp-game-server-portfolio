@@ -2,31 +2,31 @@
 
 using namespace kero;
 
-kero::Component::Component(std::string&& name) noexcept
-    : name_{std::move(name)} {}
+kero::Component::Component(const Kind kind) noexcept : kind_{kind} {}
 
 auto
-kero::Component::GetName() const noexcept -> const std::string& {
-  return name_;
+kero::Component::GetKind() const noexcept -> Kind {
+  return kind_;
 }
 
 auto
-kero::Component::OnCreate(Engine& engine) noexcept -> void {
+kero::Component::OnCreate(Agent& agent) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
+  return ResultT::Ok(Void{});
+}
+
+auto
+kero::Component::OnDestroy(Agent& agent) noexcept -> void {
   // noop
 }
 
 auto
-kero::Component::OnDestroy(Engine& engine) noexcept -> void {
+kero::Component::OnUpdate(Agent& agent) noexcept -> void {
   // noop
 }
 
 auto
-kero::Component::OnUpdate(Engine& engine) noexcept -> void {
-  // noop
-}
-
-auto
-kero::Component::OnEvent(Engine& engine,
+kero::Component::OnEvent(Agent& agent,
                          const std::string& event,
                          const Dict& data) noexcept -> void {
   // noop

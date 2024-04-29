@@ -46,24 +46,28 @@ class Actor final : public Component {
   CLASS_KIND_MOVABLE(Actor);
 
   virtual auto
-  OnCreate(Engine &engine) noexcept -> void override;
+  OnCreate(Agent &agent) noexcept -> Result<Void> override;
 
   virtual auto
-  OnUpdate(Engine &engine) noexcept -> void override;
+  OnUpdate(Agent &agent) noexcept -> void override;
 
   virtual auto
-  OnEvent(Engine &engine, const std::string &event, const Dict &data) noexcept
+  OnEvent(Agent &agent, const std::string &event, const Dict &data) noexcept
       -> void override;
+
+  [[nodiscard]] auto
+  GetName() const noexcept -> const std::string &;
 
  private:
   MailBox mail_box_;
+  std::string name_;
 };
 
 using ActorPtr = std::unique_ptr<Actor>;
 
 class ActorSystem final {
  public:
-  enum : int32_t {
+  enum : Error::Code {
     kEmptyNameNotAllowed = 1,
     kNameTooLong = 2,
     kMailBoxNameAlreadyExists = 3,

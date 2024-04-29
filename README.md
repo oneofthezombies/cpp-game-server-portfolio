@@ -1,7 +1,16 @@
-# Rock, Paper, Scissors, Lizard, Spock
+# Kero Modular Server Engine
 
-The project is a 1:1 matching multiplayer __Rock, Paper, Scissors, Lizard, Spock__ game.  
-It was implemented using `C++ Standard 20` and `Linux epoll` without the use of third-party.
+This project is component based modular server engine.  
+It was implemented using `C++ Standard 20` and `Linux epoll` without the use of third-party.  
+
+The example is a 1:1 matching multiplayer __Rock, Paper, Scissors, Lizard, Spock__ game.  
+
+# Features
+
+- Component based modular system
+- Actor system
+- IO event loop system
+- Asynchronous structured logging system
 
 # Prerequisites
 

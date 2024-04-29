@@ -1,7 +1,7 @@
 #include "actor_system.h"
 
-#include "kero/engine/engine.h"
-#include "kero/engine/events.h"
+#include "kero/engine/agent.h"
+#include "kero/engine/constants.h"
 
 using namespace kero;
 
@@ -17,39 +17,45 @@ kero::MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
     : tx{std::move(tx)}, rx{std::move(rx)} {}
 
 kero::Actor::Actor(std::string &&name, MailBox &&mail_box) noexcept
-    : Component{std::move(name)}, mail_box_{std::move(mail_box)} {}
+    : Component{ComponentKind::kActor},
+      mail_box_{std::move(mail_box)},
+      name_{std::move(name)} {}
 
 auto
-kero::Actor::OnCreate(Engine &engine) noexcept -> void {
-  if (!engine.SubscribeEvent(kEventMailToSend, GetName())) {
+kero::Actor::OnCreate(Agent &agent) noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  if (!agent.SubscribeEvent(EventMailToSend::kEvent, GetKind())) {
     // TODO: log error
   }
+
+  return ResultT::Ok(Void{});
 }
 
 auto
-kero::Actor::OnUpdate(Engine &engine) noexcept -> void {
+kero::Actor::OnUpdate(Agent &agent) noexcept -> void {
   auto mail = mail_box_.rx.TryReceive();
   if (mail.IsNone()) {
     return;
   }
 
   auto [from, to, body] = mail.TakeUnwrap();
-  engine.Dispatch(kEventMailReceived,
-                  body.Set("__from", std::string{from})
-                      .Set("__to", std::string{to})
-                      .Take());
+  agent.Dispatch(EventMailReceived::kEvent,
+                 body.Set(EventMailToSend::kFrom, std::string{from})
+                     .Set(EventMailReceived::kTo, std::string{to})
+                     .Take());
 }
 
 auto
-kero::Actor::OnEvent(Engine &engine,
+kero::Actor::OnEvent(Agent &agent,
                      const std::string &event,
                      const Dict &data) noexcept -> void {
-  if (event != kEventMailToSend) {
+  if (event != EventMailToSend::kEvent) {
     return;
   }
 
   auto clone = data.Clone();
-  auto to = clone.TakeOrDefault("__to", std::string{});
+  auto to = clone.TakeOrDefault(EventMailToSend::kTo, std::string{});
   if (to.empty()) {
     // TODO: log error
     return;
@@ -57,6 +63,11 @@ kero::Actor::OnEvent(Engine &engine,
 
   mail_box_.tx.Send(
       Mail{std::string{GetName()}, std::string{to}, clone.Take()});
+}
+
+auto
+kero::Actor::GetName() const noexcept -> const std::string & {
+  return name_;
 }
 
 kero::ActorSystem::ActorSystem(Tx<Dict> &&run_tx,

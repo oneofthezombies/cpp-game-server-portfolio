@@ -60,6 +60,16 @@ class Result {
     return Result{std::forward<Error>(error)};
   }
 
+  static auto
+  Ok(T&& value) noexcept -> Result<T> {
+    return Result<T>::From(std::forward<T>(value));
+  }
+
+  static auto
+  Err(Error&& error) noexcept -> Result<T> {
+    return Result<T>::From(std::forward<Error>(error));
+  }
+
  private:
   std::variant<std::monostate, T, Error> data_;
 };
