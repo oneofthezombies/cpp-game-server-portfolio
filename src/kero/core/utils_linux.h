@@ -1,5 +1,5 @@
-#ifndef KERO_ENGINE_UTILS_LINUX_H
-#define KERO_ENGINE_UTILS_LINUX_H
+#ifndef KERO_CORE_UTILS_LINUX_H
+#define KERO_CORE_UTILS_LINUX_H
 
 #include "kero/core/common.h"
 #include "kero/core/result.h"
@@ -48,4 +48,4 @@ struct Errno final {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_UTILS_LINUX_H
+#endif  // KERO_CORE_UTILS_LINUX_H

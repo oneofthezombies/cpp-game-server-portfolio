@@ -1,8 +1,8 @@
 #ifndef KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
 #define KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
 
+#include "kero/core/utils_linux.h"
 #include "kero/engine/service.h"
-#include "kero/engine/utils_linux.h"
 
 struct epoll_event;
 
@@ -36,7 +36,7 @@ class IoEventLoopService final : public Service {
 
  private:
   auto
-  OnUpdateEpollEvent(const struct ::epoll_event& event) noexcept
+  OnUpdateEpollEvent(Agent& agent, const struct ::epoll_event& event) noexcept
       -> Result<Void>;
 
   Fd::Value epoll_fd_{Fd::kUnspecifiedInitialValue};

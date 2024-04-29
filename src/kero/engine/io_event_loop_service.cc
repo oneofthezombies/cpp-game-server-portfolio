@@ -5,8 +5,9 @@
 
 #include <cstring>
 
+#include "kero/core/utils_linux.h"
+#include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
-#include "kero/engine/utils_linux.h"
 
 using namespace kero;
 
@@ -85,7 +86,7 @@ kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
 
   for (int i = 0; i < fd_count; ++i) {
     const auto& event = events[i];
-    if (auto res = OnUpdateEpollEvent(event); res.IsErr()) {
+    if (auto res = OnUpdateEpollEvent(agent, event); res.IsErr()) {
       // TODO: log error
       continue;
     }
@@ -94,7 +95,7 @@ kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
 
 auto
 kero::IoEventLoopService::OnUpdateEpollEvent(
-    const struct epoll_event& event) noexcept -> Result<Void> {
+    Agent& agent, const struct epoll_event& event) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (event.events & EPOLLERR) {
@@ -119,7 +120,8 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     }
 
     const auto description = std::string_view{strerror(code)};
-    // TODO: propagate socket error event
+    agent.Dispatch("socket_error",
+                   Dict{}.Set("fd", static_cast<int64_t>(event.data.fd)));
   }
 
   if (event.events & EPOLLHUP) {

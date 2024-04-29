@@ -13,6 +13,7 @@ struct ServiceKind {
     kIoEventLoop = 3,
     kTcpServer = 4,
     kConfig = 5,
+    kSocket = 6,
   };
 };
 
