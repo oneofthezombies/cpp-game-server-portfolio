@@ -171,6 +171,7 @@
 #include "kero/engine/config_service.h"
 #include "kero/engine/io_event_loop_service.h"
 #include "kero/engine/signal_service.h"
+#include "kero/engine/socket_pool_service.h"
 #include "kero/engine/tcp_server_service.h"
 #include "kero/log/center.h"
 #include "kero/log/core.h"
@@ -199,7 +200,7 @@ main(int argc, char** argv) -> int {
     }
   }};
 
-  auto agent = kero::Agent{};
+  auto main_agent = kero::Agent{};
 
   {
     auto actor_res = actor_system->CreateActorService("main");
@@ -210,7 +211,7 @@ main(int argc, char** argv) -> int {
       return 1;
     }
 
-    if (auto res = agent.AddService(actor_res.TakeOk()); !res) {
+    if (auto res = main_agent.AddService(actor_res.TakeOk()); !res) {
       kero::log::Error("Agent failed to add actor service").Log();
       return 1;
     }
@@ -225,30 +226,96 @@ main(int argc, char** argv) -> int {
       return 1;
     }
 
-    auto config = config_res.TakeOk();
-    if (auto res = agent.AddService(std::move(config)); !res) {
+    if (auto res = main_agent.AddService(config_res.TakeOk()); !res) {
       kero::log::Error("Agent failed to add config service").Log();
       return 1;
     }
   }
 
-  if (auto res = agent.AddService(std::make_unique<kero::SignalService>());
+  if (auto res = main_agent.AddService(std::make_unique<kero::SignalService>());
       !res) {
     kero::log::Error("Agent failed to add signal service").Log();
     return 1;
   }
 
-  if (!agent.AddService(std::make_unique<kero::IoEventLoopService>())) {
-    kero::log::Error("Agent failed to add io event loop service").Log();
-    return 1;
-  }
-
-  if (!agent.AddService(std::make_unique<kero::TcpServerService>())) {
+  if (!main_agent.AddService(std::make_unique<kero::TcpServerService>())) {
     kero::log::Error("Agent failed to add tcp server service").Log();
     return 1;
   }
 
-  if (auto res = agent.Run(); res.IsErr()) {
+  if (!main_agent.AddService(std::make_unique<kero::IoEventLoopService>())) {
+    kero::log::Error("Agent failed to add io event loop service").Log();
+    return 1;
+  }
+
+  kero::Agent lobby_agent{};
+  {
+    auto lobby_res = actor_system->CreateActorService("lobby");
+    if (lobby_res.IsErr()) {
+      kero::log::Error("Actor system failed to create lobby actor service")
+          .Data("error", lobby_res.TakeErr())
+          .Log();
+      return 1;
+    }
+
+    if (!lobby_agent.AddService(std::make_unique<kero::IoEventLoopService>())) {
+      kero::log::Error("Agent failed to add io event loop service").Log();
+      return 1;
+    }
+
+    if (!lobby_agent.AddService(std::make_unique<kero::SocketPoolService>())) {
+      kero::log::Error("Agent failed to add socket pool service").Log();
+      return 1;
+    }
+  }
+
+  kero::Agent battle_agent{};
+  {
+    auto battle_res = actor_system->CreateActorService("battle");
+    if (battle_res.IsErr()) {
+      kero::log::Error("Actor system failed to create battle actor service")
+          .Data("error", battle_res.TakeErr())
+          .Log();
+      return 1;
+    }
+
+    if (!battle_agent.AddService(
+            std::make_unique<kero::IoEventLoopService>())) {
+      kero::log::Error("Agent failed to add io event loop service").Log();
+      return 1;
+    }
+
+    if (!battle_agent.AddService(std::make_unique<kero::SocketPoolService>())) {
+      kero::log::Error("Agent failed to add socket pool service").Log();
+      return 1;
+    }
+  }
+
+  kero::ThreadAgent lobby_thread_agent{};
+  if (!lobby_thread_agent.Start(std::move(lobby_agent))) {
+    kero::log::Error("Lobby thread agent failed to start").Log();
+    return 1;
+  }
+
+  kero::Defer defer_lobby_thread_agent{[&lobby_thread_agent] {
+    if (!lobby_thread_agent.Stop()) {
+      kero::log::Error("Lobby thread agent stop failed").Log();
+    }
+  }};
+
+  kero::ThreadAgent battle_thread_agent{};
+  if (!battle_thread_agent.Start(std::move(battle_agent))) {
+    kero::log::Error("Battle thread agent failed to start").Log();
+    return 1;
+  }
+
+  kero::Defer defer_battle_thread_agent{[&battle_thread_agent] {
+    if (!battle_thread_agent.Stop()) {
+      kero::log::Error("Battle thread agent stop failed").Log();
+    }
+  }};
+
+  if (auto res = main_agent.Run(); res.IsErr()) {
     if (res.Err().code == kero::Agent::kInterrupted) {
       kero::log::Info("Agent interrupted").Log();
       return 0;
