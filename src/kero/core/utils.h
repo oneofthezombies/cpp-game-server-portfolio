@@ -21,7 +21,7 @@ ParseNumberString(const std::string_view token) noexcept -> Result<T> {
     return ResultT::Err(
         Error::From(Dict{}
                         .Set("kind", std::string{"errc"})
-                        .Set("code", static_cast<int64_t>(ec))
+                        .Set("code", static_cast<double>(ec))
                         .Set("message", std::make_error_code(ec).message())
                         .Take()));
   }

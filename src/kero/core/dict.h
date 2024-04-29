@@ -14,18 +14,18 @@ namespace kero {
 
 template <typename T>
 concept IsDictValueType = std::disjunction_v<std::is_same<T, bool>,
-                                             std::is_same<T, int64_t>,
-                                             std::is_same<T, uint64_t>,
                                              std::is_same<T, double>,
                                              std::is_same<T, std::string>>;
 
-using DictValue = std::variant<bool, int64_t, uint64_t, double, std::string>;
+using DictValue = std::variant<bool, double, std::string>;
 
 class Dict final {
  public:
   using Self = Dict;
+  using Data = std::unordered_map<std::string, DictValue>;
 
-  Dict() noexcept = default;
+  explicit Dict() noexcept = default;
+  explicit Dict(Data&& data) noexcept;
   ~Dict() noexcept = default;
   CLASS_KIND_MOVABLE(Dict);
 
@@ -138,13 +138,18 @@ class Dict final {
   [[nodiscard]] auto
   Clone() const noexcept -> Self;
 
+  [[nodiscard]] auto
+  AsRaw() const noexcept -> const Data& {
+    return data_;
+  }
+
  private:
   auto
   Warn(std::string&& message,
        std::source_location&& location =
            std::source_location::current()) const noexcept -> void;
 
-  std::unordered_map<std::string, DictValue> data_;
+  Data data_;
 
   friend auto
   operator<<(std::ostream& os, const Dict& dict) -> std::ostream&;

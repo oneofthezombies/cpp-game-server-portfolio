@@ -114,7 +114,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
           Errno::FromErrno()
               .IntoDict()
               .Set("message", std::string{"Failed to get socket error"})
-              .Set("fd", static_cast<int64_t>(event.data.fd))
+              .Set("fd", static_cast<double>(event.data.fd))
               .Take()));
     }
 
@@ -122,7 +122,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
       return ResultT::Err(
           Error::From(Dict{}
                           .Set("message", std::string{"Socket error is zero"})
-                          .Set("fd", static_cast<int64_t>(event.data.fd))
+                          .Set("fd", static_cast<double>(event.data.fd))
                           .Take()));
     }
 
@@ -130,8 +130,8 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     agent.Invoke(
         EventSocketError::kEvent,
         Dict{}
-            .Set(EventSocketError::kFd, static_cast<int64_t>(event.data.fd))
-            .Set(EventSocketError::kErrorCode, static_cast<int64_t>(code))
+            .Set(EventSocketError::kFd, static_cast<double>(event.data.fd))
+            .Set(EventSocketError::kErrorCode, static_cast<double>(code))
             .Set(EventSocketError::kErrorDescription,
                  std::string{description}));
   }
@@ -139,7 +139,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   if (event.events & EPOLLHUP) {
     agent.Invoke(
         EventSocketClose::kEvent,
-        Dict{}.Set(EventSocketClose::kFd, static_cast<int64_t>(event.data.fd)));
+        Dict{}.Set(EventSocketClose::kFd, static_cast<double>(event.data.fd)));
 
     if (auto res = Fd::Close(event.data.fd); res.IsErr()) {
       return ResultT::Err(Error::From(res.TakeErr()));
@@ -149,7 +149,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   if (event.events & EPOLLIN) {
     agent.Invoke(
         EventSocketRead::kEvent,
-        Dict{}.Set(EventSocketRead::kFd, static_cast<int64_t>(event.data.fd)));
+        Dict{}.Set(EventSocketRead::kFd, static_cast<double>(event.data.fd)));
   }
 
   return ResultT::Ok(Void{});
@@ -173,7 +173,7 @@ kero::IoEventLoopService::AddFd(const Fd::Value fd,
         Errno::FromErrno()
             .IntoDict()
             .Set("message", std::string{"Failed to add fd to epoll"})
-            .Set("fd", static_cast<int64_t>(fd))
+            .Set("fd", static_cast<double>(fd))
             .Take()));
   }
 
@@ -194,7 +194,7 @@ kero::IoEventLoopService::RemoveFd(const Fd::Value fd) const noexcept
         Errno::FromErrno()
             .IntoDict()
             .Set("message", std::string{"Failed to remove fd from epoll"})
-            .Set("fd", static_cast<int64_t>(fd))
+            .Set("fd", static_cast<double>(fd))
             .Take()));
   }
 
@@ -221,7 +221,7 @@ kero::IoEventLoopService::WriteToFd(const Fd::Value fd,
           Errno::FromErrno()
               .IntoDict()
               .Set("message", std::string{"Failed to send data to fd"})
-              .Set("fd", static_cast<int64_t>(fd))
+              .Set("fd", static_cast<double>(fd))
               .Set("data", std::string{data_ptr, data_size})
               .Take()));
     }
@@ -255,16 +255,16 @@ kero::IoEventLoopService::ReadFromFd(Agent& agent,
           Errno::FromErrno()
               .IntoDict()
               .Set("message", std::string{"Failed to read data from fd"})
-              .Set("fd", static_cast<int64_t>(fd))
+              .Set("fd", static_cast<double>(fd))
               .Take()));
     }
 
     if (read == 0) {
       agent.Invoke(EventSocketClose::kEvent,
-                   Dict{}.Set(EventSocketClose::kFd, static_cast<int64_t>(fd)));
+                   Dict{}.Set(EventSocketClose::kFd, static_cast<double>(fd)));
       return ResultT::Err(
           Error::From(kSocketClosed,
-                      Dict{}.Set("fd", static_cast<int64_t>(fd)).Take()));
+                      Dict{}.Set("fd", static_cast<double>(fd)).Take()));
     }
 
     total_read += read;

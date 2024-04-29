@@ -6,6 +6,8 @@
 
 using namespace kero;
 
+kero::Dict::Dict(Data&& data) noexcept : data_{std::move(data)} {}
+
 auto
 kero::Dict::Has(const std::string& key) const noexcept -> bool {
   return data_.find(key) != data_.end();

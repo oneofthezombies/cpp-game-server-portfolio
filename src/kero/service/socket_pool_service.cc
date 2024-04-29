@@ -49,7 +49,7 @@ kero::SocketPoolService::OnEvent(Agent& agent,
 auto
 kero::SocketPoolService::OnSocketOpen(Agent& agent, const Dict& data) noexcept
     -> void {
-  auto fd = data.GetOrDefault<int64_t>(EventSocketOpen::kFd, -1);
+  auto fd = data.GetOrDefault<double>(EventSocketOpen::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
     return;
@@ -75,7 +75,7 @@ kero::SocketPoolService::OnSocketOpen(Agent& agent, const Dict& data) noexcept
 auto
 kero::SocketPoolService::OnSocketClose(Agent& agent, const Dict& data) noexcept
     -> void {
-  auto fd = data.GetOrDefault<int64_t>(EventSocketClose::kFd, -1);
+  auto fd = data.GetOrDefault<double>(EventSocketClose::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
     return;

@@ -61,7 +61,7 @@ auto
 kero::Errno::IntoDict() const noexcept -> Dict {
   return Dict{}
       .Set("error_kind", std::string{"errno"})
-      .Set("errno_code", static_cast<int64_t>(code))
+      .Set("errno_code", static_cast<double>(code))
       .Set("errno_description", std::string{description})
       .Take();
 }
