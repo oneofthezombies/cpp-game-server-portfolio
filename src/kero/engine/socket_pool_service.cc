@@ -3,6 +3,7 @@
 #include "io_event_loop_service.h"
 #include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
@@ -48,7 +49,7 @@ kero::SocketPoolService::OnEvent(Agent& agent,
   } else if (event == EventSocketClose::kEvent) {
     OnSocketClose(agent, data);
   } else {
-    // TODO: log error
+    log::Error("Unknown event").Data("event", event).Log();
   }
 }
 
@@ -57,21 +58,21 @@ kero::SocketPoolService::OnSocketOpen(Agent& agent, const Dict& data) noexcept
     -> void {
   auto fd = data.GetOrDefault<int64_t>(EventSocketOpen::kFd, -1);
   if (fd == -1) {
-    // TODO: log error
+    log::Error("Failed to get fd from event data").Log();
     return;
   }
 
   auto io_event_loop =
       agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
   if (!io_event_loop) {
-    // TODO: log error
+    log::Error("Failed to get IoEventLoopService").Log();
     return;
   }
 
   if (auto res =
           io_event_loop.Unwrap().AddFd(fd, {.in = true, .edge_trigger = true});
       res.IsErr()) {
-    // TODO: log error
+    log::Error("Failed to add fd to epoll").Data("fd", fd).Log();
     return;
   }
 
@@ -83,7 +84,7 @@ kero::SocketPoolService::OnSocketClose(Agent& agent, const Dict& data) noexcept
     -> void {
   auto fd = data.GetOrDefault<int64_t>(EventSocketClose::kFd, -1);
   if (fd == -1) {
-    // TODO: log error
+    log::Error("Failed to get fd from event data").Log();
     return;
   }
 
@@ -92,12 +93,12 @@ kero::SocketPoolService::OnSocketClose(Agent& agent, const Dict& data) noexcept
   auto io_event_loop =
       agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
   if (!io_event_loop) {
-    // TODO: log error
+    log::Error("Failed to get IoEventLoopService").Log();
     return;
   }
 
   if (auto res = io_event_loop.Unwrap().RemoveFd(fd); res.IsErr()) {
-    // TODO: log error
+    log::Error("Failed to remove fd from epoll").Data("fd", fd).Log();
     return;
   }
 }

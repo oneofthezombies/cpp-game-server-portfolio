@@ -60,8 +60,14 @@ kero::Errno::FromErrno() noexcept -> Errno {
 auto
 kero::Errno::IntoDict() const noexcept -> Dict {
   return Dict{}
-      .Set("kind", std::string{"errno"})
+      .Set("error_kind", std::string{"errno"})
       .Set("errno_code", static_cast<int32_t>(code))
       .Set("errno_description", std::string{description})
       .Take();
+}
+
+auto
+kero::operator<<(std::ostream& os, const Errno& err) -> std::ostream& {
+  return os << "Errno{code: " << err.code
+            << ", description: " << err.description << "}";
 }

@@ -70,7 +70,7 @@ kero::IoEventLoopService::OnDestroy(Agent& agent) noexcept -> void {
 auto
 kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
   if (!Fd::IsValid(epoll_fd_)) {
-    // TODO: log error
+    log::Error("Invalid epoll fd").Data("fd", epoll_fd_).Log();
     return;
   }
 
@@ -81,14 +81,20 @@ kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
       return;
     }
 
-    // TODO: log error
+    log::Error("Failed to wait for epoll events")
+        .Data("fd", epoll_fd_)
+        .Data("errno", Errno::FromErrno())
+        .Log();
     return;
   }
 
   for (int i = 0; i < fd_count; ++i) {
     const auto& event = events[i];
     if (auto res = OnUpdateEpollEvent(agent, event); res.IsErr()) {
-      // TODO: log error
+      log::Error("Failed to update epoll event")
+          .Data("fd", event.data.fd)
+          .Data("error", res.TakeErr())
+          .Log();
       continue;
     }
   }
@@ -238,7 +244,10 @@ kero::IoEventLoopService::ReadFromFd(Agent& agent,
     const auto read = recv(fd, buffer.data(), buffer.size(), 0);
     if (read == -1) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        // TODO: log error
+        log::Error("Failed to read data from fd")
+            .Data("fd", fd)
+            .Data("errno", Errno::FromErrno())
+            .Log();
         continue;
       }
 

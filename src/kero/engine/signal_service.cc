@@ -6,6 +6,7 @@
 #include "kero/engine/actor_system.h"
 #include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
@@ -32,8 +33,9 @@ kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
 auto
 kero::SignalService::OnDestroy(Agent& agent) noexcept -> void {
   if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
-    // TODO: log error using errno
-    const auto err = Errno::FromErrno();
+    log::Error("Failed to reset signal handler")
+        .Data("errno", Errno::FromErrno())
+        .Log();
   }
 }
 
@@ -45,7 +47,7 @@ kero::SignalService::OnUpdate(Agent& agent) noexcept -> void {
 
   auto actor = agent.GetServiceAs<ActorService>(ServiceKind::kActor);
   if (!actor) {
-    // TODO: log error
+    log::Error("Failed to get ActorService").Log();
     return;
   }
 

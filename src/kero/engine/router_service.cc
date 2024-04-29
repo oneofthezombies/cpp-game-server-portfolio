@@ -4,6 +4,7 @@
 #include "kero/engine/agent.h"
 #include "kero/engine/config_service.h"
 #include "kero/engine/constants.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
@@ -56,7 +57,7 @@ kero::RouterService::OnEvent(Agent& agent,
   }
 
   if (routing_target_actor_.empty()) {
-    // TODO: log error
+    log::Error("routing_target_actor must be set for RouterService").Log();
     return;
   }
 

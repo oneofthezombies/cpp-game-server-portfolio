@@ -7,6 +7,7 @@
 #include "kero/engine/config_service.h"
 #include "kero/engine/constants.h"
 #include "kero/engine/io_event_loop_service.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
@@ -106,7 +107,10 @@ kero::TcpServerService::OnDestroy(Agent& agent) noexcept -> void {
   }
 
   if (auto res = Fd::Close(server_fd_); res.IsErr()) {
-    // TODO: log error
+    log::Error("Failed to close server fd")
+        .Data("fd", server_fd_)
+        .Data("error", res.TakeErr())
+        .Log();
   }
 }
 
@@ -120,7 +124,7 @@ kero::TcpServerService::OnEvent(Agent& agent,
       auto io_event_loop =
           agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
       if (!io_event_loop) {
-        // TODO: log error
+        log::Error("Failed to get IoEventLoopService").Log();
         return;
       }
 
@@ -129,12 +133,18 @@ kero::TcpServerService::OnEvent(Agent& agent,
       auto client_fd =
           accept(server_fd_, (struct sockaddr*)&client_addr, &addrlen);
       if (!Fd::IsValid(client_fd)) {
-        // TODO: log error
+        log::Error("Failed to accept client connection")
+            .Data("server_fd", server_fd_)
+            .Data("errno", Errno::FromErrno())
+            .Log();
         return;
       }
 
       if (auto res = Fd::UpdateNonBlocking(client_fd); res.IsErr()) {
-        // TODO: log error
+        log::Error("Failed to update client fd to non-blocking")
+            .Data("client_fd", client_fd)
+            .Data("error", res.TakeErr())
+            .Log();
         return;
       }
 

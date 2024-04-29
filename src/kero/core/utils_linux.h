@@ -46,6 +46,9 @@ struct Errno final {
   explicit Errno(const Value code, const std::string_view description) noexcept;
 };
 
+auto
+operator<<(std::ostream& os, const Errno& err) -> std::ostream&;
+
 }  // namespace kero
 
 #endif  // KERO_CORE_UTILS_LINUX_H
