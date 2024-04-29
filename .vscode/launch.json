@@ -17,7 +17,7 @@
       "type": "lldb",
       "request": "launch",
       "name": "Debug Client Without Build",
-      "program": "${workspaceFolder}/build/src/client/client",
+      "program": "${workspaceFolder}/build/examples/rock_paper_scissors_lizard_spock/client",
       "args": [],
       "cwd": "${workspaceFolder}"
     },

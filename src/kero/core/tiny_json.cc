@@ -159,25 +159,6 @@ auto
 kero::TinyJson::ParseKey() noexcept -> Result<std::string> {
   using ResultT = Result<std::string>;
 
-  Trim();
-  auto current = Current();
-  if (current.IsErr()) {
-    return ResultT::Err(Error::From(current.TakeErr()));
-  }
-
-  if (current.Ok() != '"') {
-    return ResultT::Err(
-        Error::From(Dict{}
-                        .Set("kind", std::string{"key"})
-                        .Set("message", std::string{"invalid key"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Take()));
-  }
-
-  if (auto res = Advance(); res.IsErr()) {
-    return ResultT::Err(Error::From(res.TakeErr()));
-  }
-
   auto key = ParseString();
   if (key.IsErr()) {
     return ResultT::Err(Error::From(key.TakeErr()));
