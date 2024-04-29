@@ -218,7 +218,7 @@ main(int argc, char** argv) -> int {
   }
 
   {
-    auto config_res = kero::ConfigService::FromArgs(argc, argv);
+    auto config_res = kero::ConfigServiceFactory{argc, argv}.Create();
     if (config_res.IsErr()) {
       kero::log::Error("Config service failed to parse args")
           .Data("error", config_res.TakeErr())

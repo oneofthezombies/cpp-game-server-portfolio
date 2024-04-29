@@ -51,7 +51,7 @@ ParseArgs(int argc, char **argv) noexcept -> Result<Config> {
   using ResultT = Result<Config>;
 
   Config config;
-  kero::ArgsScanner scanner = kero::ArgsScanner::FromArgs(argc, argv);
+  kero::ArgsScanner scanner{kero::Args{argv, argv + argc}};
 
   // Skip the first argument which is the program name
   scanner.Eat();

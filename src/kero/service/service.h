@@ -75,6 +75,16 @@ class Service {
 
 using ServicePtr = std::unique_ptr<Service>;
 
+class ServiceFactory {
+ public:
+  explicit ServiceFactory() noexcept = default;
+  virtual ~ServiceFactory() noexcept = default;
+  CLASS_KIND_MOVABLE(ServiceFactory);
+
+  [[nodiscard]] virtual auto
+  Create() noexcept -> Result<ServicePtr> = 0;
+};
+
 }  // namespace kero
 
 #endif  // KERO_SERVICE_SERVICE_H

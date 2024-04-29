@@ -13,6 +13,7 @@ using Args = std::vector<std::string>;
 
 class ArgsScanner final {
  public:
+  explicit ArgsScanner(Args &&args) noexcept;
   ~ArgsScanner() noexcept = default;
   CLASS_KIND_MOVABLE(ArgsScanner);
 
@@ -25,12 +26,7 @@ class ArgsScanner final {
   auto
   Eat() noexcept -> void;
 
-  [[nodiscard]] static auto
-  FromArgs(int argc, char **argv) noexcept -> ArgsScanner;
-
  private:
-  explicit ArgsScanner(Args &&args) noexcept;
-
   Args args_;
   size_t index_{};
 };

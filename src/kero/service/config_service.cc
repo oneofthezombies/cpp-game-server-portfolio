@@ -35,13 +35,15 @@ kero::ConfigService::GetConfig() noexcept -> Dict& {
   return config_;
 }
 
+kero::ConfigServiceFactory::ConfigServiceFactory(int argc, char** argv) noexcept
+    : args_{Args{argv, argv + argc}} {}
+
 auto
-kero::ConfigService::FromArgs(int argc, char** argv) noexcept
-    -> Result<ServicePtr> {
+kero::ConfigServiceFactory::Create() noexcept -> Result<ServicePtr> {
   using ResultT = Result<ServicePtr>;
 
   Dict config{};
-  ArgsScanner scanner{ArgsScanner::FromArgs(argc, argv)};
+  ArgsScanner scanner{std::move(args_)};
 
   // Skip the first argument which is the program name
   scanner.Eat();

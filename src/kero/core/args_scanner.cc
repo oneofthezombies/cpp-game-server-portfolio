@@ -27,8 +27,3 @@ kero::ArgsScanner::Eat() noexcept -> void {
     index_ += 1;
   }
 }
-
-auto
-kero::ArgsScanner::FromArgs(int argc, char **argv) noexcept -> ArgsScanner {
-  return ArgsScanner{Args{argv, argv + argc}};
-}

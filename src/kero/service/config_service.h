@@ -1,18 +1,14 @@
 #ifndef KERO_SERVICE_CONFIG_SERVICE_H
 #define KERO_SERVICE_CONFIG_SERVICE_H
 
+#include "kero/core/args_scanner.h"
+#include "kero/core/common.h"
 #include "kero/service/service.h"
 
 namespace kero {
 
 class ConfigService final : public Service {
  public:
-  enum : Error::Code {
-    kPortNotFound = 1,
-    kPortParsingFailed,
-    kUnknownArgument
-  };
-
   virtual ~ConfigService() noexcept override = default;
   CLASS_KIND_MOVABLE(ConfigService);
 
@@ -31,13 +27,31 @@ class ConfigService final : public Service {
   [[nodiscard]] auto
   GetConfig() noexcept -> Dict&;
 
-  [[nodiscard]] static auto
-  FromArgs(int argc, char** argv) noexcept -> Result<ServicePtr>;
-
  private:
   explicit ConfigService(Dict&& config) noexcept;
 
   Dict config_;
+
+  friend class ConfigServiceFactory;
+};
+
+class ConfigServiceFactory final : public ServiceFactory {
+ public:
+  enum : Error::Code {
+    kPortNotFound = 1,
+    kPortParsingFailed,
+    kUnknownArgument
+  };
+
+  explicit ConfigServiceFactory(int argc, char** argv) noexcept;
+  virtual ~ConfigServiceFactory() noexcept override = default;
+  CLASS_KIND_PINNABLE(ConfigServiceFactory);
+
+  [[nodiscard]] virtual auto
+  Create() noexcept -> Result<ServicePtr> override;
+
+ private:
+  Args args_;
 };
 
 }  // namespace kero
