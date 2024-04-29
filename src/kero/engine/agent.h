@@ -12,7 +12,7 @@
 
 namespace kero {
 
-class Agent final {
+class Agent {
  public:
   enum : Error::Code {
     kInterrupted = 1,
