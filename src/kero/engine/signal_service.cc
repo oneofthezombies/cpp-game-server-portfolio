@@ -17,8 +17,9 @@ kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
 
   interrupted_ = false;
 
-  if (!agent.HasServiceIs<Actor>(ServiceKind::kActor)) {
-    return ResultT::Err(Error::From(kActorServiceNotFound));
+  if (!agent.HasServiceIs<ActorService>(ServiceKind::kActor)) {
+    return ResultT::Err(Error::From(
+        Dict{}.Set("message", std::string{"ActorService not found"}).Take()));
   }
 
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
@@ -38,18 +39,19 @@ kero::SignalService::OnDestroy(Agent& agent) noexcept -> void {
 
 auto
 kero::SignalService::OnUpdate(Agent& agent) noexcept -> void {
-  if (interrupted_) {
-    auto actor = agent.GetServiceAs<Actor>(ServiceKind::kActor);
-    auto from = actor ? actor.Unwrap().GetName() : "unknown";
-
-    agent.Invoke(EventMailToSend::kEvent,
-                 Dict{}
-                     .Set(EventMailToSend::kFrom, std::move(from))
-                     .Set(EventMailToSend::kTo, std::string{"all"})
-                     .Take());
-
-    interrupted_ = false;
+  if (!interrupted_) {
+    return;
   }
+
+  auto actor = agent.GetServiceAs<ActorService>(ServiceKind::kActor);
+  if (!actor) {
+    // TODO: log error
+    return;
+  }
+
+  actor.Unwrap().SendMail("all", Dict{}.Set(kMessageShutdown, true).Take());
+
+  interrupted_ = false;
 }
 
 auto

@@ -9,10 +9,6 @@ namespace kero {
 
 class SignalService final : public Service {
  public:
-  enum : Error::Code {
-    kActorServiceNotFound = 1,
-  };
-
   explicit SignalService() noexcept;
   virtual ~SignalService() noexcept override = default;
   CLASS_KIND_MOVABLE(SignalService);

@@ -39,21 +39,17 @@ struct MailBox final {
   friend class ActorSystem;
 };
 
-class Actor final : public Service {
+class ActorService final : public Service {
  public:
-  explicit Actor(std::string &&name, MailBox &&mail_box) noexcept;
-  virtual ~Actor() noexcept override = default;
-  CLASS_KIND_MOVABLE(Actor);
+  explicit ActorService(std::string &&name, MailBox &&mail_box) noexcept;
+  virtual ~ActorService() noexcept override = default;
+  CLASS_KIND_MOVABLE(ActorService);
 
   [[nodiscard]] virtual auto
   OnCreate(Agent &agent) noexcept -> Result<Void> override;
 
   virtual auto
   OnUpdate(Agent &agent) noexcept -> void override;
-
-  virtual auto
-  OnEvent(Agent &agent, const std::string &event, const Dict &data) noexcept
-      -> void override;
 
   [[nodiscard]] auto
   GetName() const noexcept -> const std::string &;
@@ -66,7 +62,7 @@ class Actor final : public Service {
   std::string name_;
 };
 
-using ActorPtr = std::unique_ptr<Actor>;
+using ActorServicePtr = std::unique_ptr<ActorService>;
 
 class ActorSystem;
 
@@ -108,7 +104,7 @@ class ActorSystem final : public std::enable_shared_from_this<ActorSystem> {
   IsRunning() const noexcept -> bool;
 
   [[nodiscard]] auto
-  CreateActor(std::string &&name) noexcept -> Result<ActorPtr>;
+  CreateActorService(std::string &&name) noexcept -> Result<ActorServicePtr>;
 
   [[nodiscard]] auto
   DeleteMailBox(const std::string &name) noexcept -> bool;

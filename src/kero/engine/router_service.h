@@ -16,6 +16,9 @@ class RouterService final : public Service {
   virtual auto
   OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
       -> void override;
+
+ private:
+  std::string root_actor_;
 };
 
 }  // namespace kero

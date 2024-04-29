@@ -20,12 +20,6 @@ struct ServiceKind {
 
 constexpr auto kMessageShutdown = "shutdown";
 
-struct EventMailToSend {
-  static constexpr auto kEvent = "mail_to_send";
-  static constexpr auto kFrom = "from";
-  static constexpr auto kTo = "to";
-};
-
 struct EventMailReceived {
   static constexpr auto kEvent = "mail_received";
   static constexpr auto kFrom = "from";
