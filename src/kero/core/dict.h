@@ -47,6 +47,24 @@ class Dict final {
     return std::get<T>(value);
   }
 
+  [[nodiscard]] auto
+  GetOrDefault(const std::string& key, const bool default_value) const noexcept
+      -> bool;
+
+  [[nodiscard]] auto
+  GetOrDefault(const std::string& key,
+               const double default_value) const noexcept -> double;
+
+  [[nodiscard]] auto
+  GetOrDefault(const std::string& key,
+               const std::string& default_value) const noexcept
+      -> const std::string&;
+
+  [[nodiscard]] auto
+  GetOrDefault(const std::string& key,
+               const std::string_view default_value) const noexcept
+      -> const std::string&;
+
   template <typename T>
     requires IsDictValueType<T>
   [[nodiscard]] auto
@@ -63,6 +81,17 @@ class Dict final {
 
     return OptionRef<const T&>{std::get<T>(value)};
   }
+
+  [[nodiscard]] auto
+  TryGetAsBool(const std::string& key) const noexcept -> OptionRef<const bool&>;
+
+  [[nodiscard]] auto
+  TryGetAsDouble(const std::string& key) const noexcept
+      -> OptionRef<const double&>;
+
+  [[nodiscard]] auto
+  TryGetAsString(const std::string& key) const noexcept
+      -> OptionRef<const std::string&>;
 
   template <typename T>
     requires IsDictValueType<T>
@@ -82,6 +111,21 @@ class Dict final {
     return std::move(std::get<T>(value));
   }
 
+  [[nodiscard]] auto
+  TakeOrDefault(const std::string& key, bool default_value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  TakeOrDefault(const std::string& key, double default_value) noexcept
+      -> double;
+
+  [[nodiscard]] auto
+  TakeOrDefault(const std::string& key, std::string&& default_value) noexcept
+      -> std::string;
+
+  [[nodiscard]] auto
+  TakeOrDefault(const std::string& key,
+                const std::string_view default_value) noexcept -> std::string;
+
   template <typename T>
     requires IsDictValueType<T>
   [[nodiscard]] auto
@@ -100,6 +144,15 @@ class Dict final {
     return Option<T>{std::move(std::get<T>(value))};
   }
 
+  [[nodiscard]] auto
+  TryTakeAsBool(const std::string& key) noexcept -> Option<bool>;
+
+  [[nodiscard]] auto
+  TryTakeAsDouble(const std::string& key) noexcept -> Option<double>;
+
+  [[nodiscard]] auto
+  TryTakeAsString(const std::string& key) noexcept -> Option<std::string>;
+
   template <typename T>
     requires IsDictValueType<T>
   [[nodiscard]] auto
@@ -114,6 +167,18 @@ class Dict final {
     return *this;
   }
 
+  [[nodiscard]] auto
+  Set(std::string&& key, bool value) noexcept -> Self&;
+
+  [[nodiscard]] auto
+  Set(std::string&& key, const double value) noexcept -> Self&;
+
+  [[nodiscard]] auto
+  Set(std::string&& key, const std::string_view value) noexcept -> Self&;
+
+  [[nodiscard]] auto
+  Set(std::string&& key, std::string&& value) noexcept -> Self&;
+
   template <typename T>
     requires IsDictValueType<T>
   [[nodiscard]] auto
@@ -124,10 +189,19 @@ class Dict final {
   }
 
   [[nodiscard]] auto
-  Remove(const std::string& key) noexcept -> Self& {
-    data_.erase(key);
-    return *this;
-  }
+  TrySet(std::string&& key, bool value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  TrySet(std::string&& key, double value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  TrySet(std::string&& key, const std::string_view value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  TrySet(std::string&& key, std::string&& value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  Remove(const std::string& key) noexcept -> Self&;
 
   [[nodiscard]] auto
   Has(const std::string& key) const noexcept -> bool;
@@ -139,9 +213,10 @@ class Dict final {
   Clone() const noexcept -> Self;
 
   [[nodiscard]] auto
-  AsRaw() const noexcept -> const Data& {
-    return data_;
-  }
+  AsRaw() const noexcept -> const Data&;
+
+  [[nodiscard]] auto
+  AsRaw() noexcept -> Data&;
 
  private:
   auto
