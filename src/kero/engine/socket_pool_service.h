@@ -22,7 +22,12 @@ class SocketPoolService final : public Service {
       -> void override;
 
  private:
-  std::unordered_set<Fd::Value> fds_;
+  auto
+  OnSocketOpen(Agent& agent, const Dict& data) noexcept -> void;
+  auto
+  OnSocketClose(Agent& agent, const Dict& data) noexcept -> void;
+
+  std::unordered_set<Fd::Value> sockets_;
 };
 
 }  // namespace kero
