@@ -18,13 +18,8 @@ struct ServiceKind {
   };
 };
 
-constexpr auto kMessageShutdown = "shutdown";
-
-struct EventMailReceived {
-  static constexpr auto kEvent = "mail_received";
-  static constexpr auto kFrom = "from";
-  static constexpr auto kTo = "to";
-  static constexpr auto kBody = "body";
+struct EventShutdown {
+  static constexpr auto kEvent = "shutdown";
 };
 
 struct EventSocketError {

@@ -125,7 +125,7 @@ class Dict final {
     const auto [it, inserted] =
         data_.try_emplace(std::move(key), std::move(value));
     if (!inserted) {
-      assert(false && "Key already exists. Overwrite the value");
+      // TODO: log warning
       it->second = std::move(value);
     }
 

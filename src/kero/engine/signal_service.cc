@@ -49,7 +49,7 @@ kero::SignalService::OnUpdate(Agent& agent) noexcept -> void {
     return;
   }
 
-  actor.Unwrap().SendMail("all", Dict{}.Set(kMessageShutdown, true).Take());
+  actor.Unwrap().SendMail("all", EventShutdown::kEvent, Dict{});
 
   interrupted_ = false;
 }

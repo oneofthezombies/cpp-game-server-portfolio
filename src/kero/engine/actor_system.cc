@@ -5,12 +5,21 @@
 
 using namespace kero;
 
-kero::Mail::Mail(std::string &&from, std::string &&to, Dict &&body) noexcept
-    : from{std::move(from)}, to{std::move(to)}, body{std::move(body)} {}
+kero::Mail::Mail(std::string &&from,
+                 std::string &&to,
+                 std::string &&event,
+                 Dict &&body) noexcept
+    : from{std::move(from)},
+      to{std::move(to)},
+      event{std::move(event)},
+      body{std::move(body)} {}
 
 auto
 kero::Mail::Clone() const noexcept -> Mail {
-  return Mail{std::string{from}, std::string{to}, body.Clone()};
+  return Mail{std::string{from},
+              std::string{to},
+              std::string{event},
+              body.Clone()};
 }
 
 kero::MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
@@ -36,10 +45,10 @@ kero::ActorService::OnUpdate(Agent &agent) noexcept -> void {
     return;
   }
 
-  auto [from, to, body] = mail.TakeUnwrap();
-  agent.Invoke(EventMailReceived::kEvent,
-               body.Set(EventMailReceived::kFrom, std::string{from})
-                   .Set(EventMailReceived::kTo, std::string{to})
+  auto [from, to, event, body] = mail.TakeUnwrap();
+  agent.Invoke(event,
+               body.Set("__from", std::string{from})
+                   .Set("__to", std::string{to})
                    .Take());
 }
 
@@ -49,8 +58,13 @@ kero::ActorService::GetName() const noexcept -> const std::string & {
 }
 
 auto
-kero::ActorService::SendMail(std::string &&to, Dict &&body) noexcept -> void {
-  mail_box_.tx.Send(Mail{std::string{name_}, std::move(to), std::move(body)});
+kero::ActorService::SendMail(std::string &&to,
+                             std::string &&event,
+                             Dict &&body) noexcept -> void {
+  mail_box_.tx.Send(Mail{std::string{name_},
+                         std::move(to),
+                         std::move(event),
+                         std::move(body)});
 }
 
 kero::ActorSystem::ActorSystem() noexcept
@@ -83,7 +97,7 @@ kero::ActorSystem::Stop() noexcept -> bool {
     return false;
   }
 
-  run_channel_.tx.Send(Dict{}.Set(kMessageShutdown, true).Take());
+  run_channel_.tx.Send(Dict{}.Set(EventShutdown::kEvent, true).Take());
   run_thread_.join();
   return true;
 }
@@ -155,7 +169,7 @@ auto
 kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
   while (true) {
     if (auto message = self->run_channel_.rx.TryReceive(); message.IsSome()) {
-      if (message.TakeUnwrap().Has(kMessageShutdown)) {
+      if (message.TakeUnwrap().Has(EventShutdown::kEvent)) {
         break;
       }
     }
@@ -168,7 +182,7 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
           continue;
         }
 
-        auto [from, to, body] = mail.TakeUnwrap();
+        auto [from, to, event, body] = mail.TakeUnwrap();
 
         // broadcast
         if (to == "all") {
@@ -177,8 +191,10 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
               continue;
             }
 
-            other_mail_box.tx.Send(
-                Mail{std::string{from}, std::string{name}, body.Clone()});
+            other_mail_box.tx.Send(Mail{std::string{from},
+                                        std::string{name},
+                                        std::string{event},
+                                        body.Clone()});
           }
 
           continue;
@@ -190,8 +206,10 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
           continue;
         }
 
-        it->second.tx.Send(
-            Mail{std::string{from}, std::string{to}, body.Clone()});
+        it->second.tx.Send(Mail{std::string{from},
+                                std::string{to},
+                                std::string{event},
+                                body.Clone()});
       }
     }
   }

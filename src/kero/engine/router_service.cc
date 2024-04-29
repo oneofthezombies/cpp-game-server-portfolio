@@ -31,16 +31,18 @@ kero::RouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
         Dict{}.Set("message", std::string{"ConfigService not found"}).Take()));
   }
 
-  auto root_actor =
-      config.Unwrap().GetConfig().GetOrDefault("root_actor", std::string{});
-  if (root_actor.empty()) {
+  auto routing_target_actor =
+      config.Unwrap().GetConfig().GetOrDefault("routing_target_actor",
+                                               std::string{});
+  if (routing_target_actor.empty()) {
     return ResultT::Err(Error::From(
         Dict{}
-            .Set("message", std::string{"root_actor not found in config"})
+            .Set("message",
+                 std::string{"routing_target_actor not found in config"})
             .Take()));
   }
 
-  root_actor_ = std::move(root_actor);
+  routing_target_actor_ = std::move(routing_target_actor);
 
   return ResultT::Ok(Void{});
 }
@@ -53,12 +55,14 @@ kero::RouterService::OnEvent(Agent& agent,
     return;
   }
 
-  if (root_actor_.empty()) {
+  if (routing_target_actor_.empty()) {
     // TODO: log error
     return;
   }
 
   agent.GetServiceAs<ActorService>(ServiceKind::kActor)
       .Unwrap()
-      .SendMail(std::string{root_actor_}, data.Clone());
+      .SendMail(std::string{routing_target_actor_},
+                std::string{event},
+                data.Clone());
 }

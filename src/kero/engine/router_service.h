@@ -18,7 +18,7 @@ class RouterService final : public Service {
       -> void override;
 
  private:
-  std::string root_actor_;
+  std::string routing_target_actor_;
 };
 
 }  // namespace kero

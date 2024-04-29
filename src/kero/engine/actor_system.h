@@ -15,10 +15,14 @@ namespace kero {
 struct Mail final {
   std::string from;
   std::string to;
+  std::string event;
   Dict body;
 
   explicit Mail() noexcept = default;
-  explicit Mail(std::string &&from, std::string &&to, Dict &&body) noexcept;
+  explicit Mail(std::string &&from,
+                std::string &&to,
+                std::string &&event,
+                Dict &&body) noexcept;
   ~Mail() noexcept = default;
   CLASS_KIND_MOVABLE(Mail);
 
@@ -55,7 +59,7 @@ class ActorService final : public Service {
   GetName() const noexcept -> const std::string &;
 
   auto
-  SendMail(std::string &&to, Dict &&body) noexcept -> void;
+  SendMail(std::string &&to, std::string &&event, Dict &&body) noexcept -> void;
 
  private:
   MailBox mail_box_;
