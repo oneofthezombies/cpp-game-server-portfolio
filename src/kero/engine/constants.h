@@ -14,6 +14,7 @@ struct ServiceKind {
     kTcpServer = 4,
     kConfig = 5,
     kSocket = 6,
+    kRouter = 7,
   };
 };
 

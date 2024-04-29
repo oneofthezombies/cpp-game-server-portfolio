@@ -17,12 +17,6 @@ class SocketService final : public Service {
   [[nodiscard]] virtual auto
   OnCreate(Agent& agent) noexcept -> Result<Void> override;
 
-  virtual auto
-  OnDestroy(Agent& agent) noexcept -> void override;
-
-  virtual auto
-  OnUpdate(Agent& agent) noexcept -> void override;
-
  private:
   std::unordered_set<Fd::Value> fds_;
 };
