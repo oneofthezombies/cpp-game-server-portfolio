@@ -4,10 +4,10 @@
 #include <thread>
 #include <unordered_map>
 
-#include "kero/core/channel.h"
 #include "kero/core/common.h"
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
+#include "kero/core/spsc_channel.h"
 #include "kero/engine/service.h"
 
 namespace kero {
@@ -31,14 +31,14 @@ struct Mail final {
 };
 
 struct MailBox final {
-  Tx<Mail> tx;
-  Rx<Mail> rx;
+  spsc::Tx<Mail> tx;
+  spsc::Rx<Mail> rx;
 
   ~MailBox() noexcept = default;
   CLASS_KIND_MOVABLE(MailBox);
 
  private:
-  explicit MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept;
+  explicit MailBox(spsc::Tx<Mail> &&tx, spsc::Rx<Mail> &&rx) noexcept;
 
   friend class ActorSystem;
 };
@@ -122,7 +122,7 @@ class ActorSystem final : public std::enable_shared_from_this<ActorSystem> {
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;
-  Channel<Dict> run_channel_;
+  spsc::Channel<Dict> run_channel_;
   std::thread run_thread_;
 
   static constexpr auto kMaxNameLength = 64;

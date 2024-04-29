@@ -8,6 +8,7 @@
 #include "kero/core/option.h"
 
 namespace kero {
+namespace spsc {
 
 template <typename T>
   requires std::movable<T>
@@ -142,6 +143,7 @@ struct Channel final {
       : tx{std::move(tx)}, rx{std::move(rx)} {}
 };
 
+}  // namespace spsc
 }  // namespace kero
 
 #endif  // KERO_CORE_CHANNEL_H

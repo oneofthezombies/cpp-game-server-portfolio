@@ -1,7 +1,6 @@
 #ifndef KERO_CORE_DICT_H
 #define KERO_CORE_DICT_H
 
-#include <cassert>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -158,7 +157,13 @@ class Dict final {
 
  private:
   std::unordered_map<std::string, DictValue> data_;
+
+  friend auto
+  operator<<(std::ostream& os, const Dict& dict) -> std::ostream&;
 };
+
+[[nodiscard]] auto
+operator<<(std::ostream& os, const Dict& dict) -> std::ostream&;
 
 }  // namespace kero
 

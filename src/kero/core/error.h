@@ -75,6 +75,9 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 };
 
+auto
+operator<<(std::ostream &os, const Error &error) -> std::ostream &;
+
 }  // namespace kero
 
 #endif  // KERO_CORE_ERROR_H

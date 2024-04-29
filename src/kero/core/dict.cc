@@ -1,5 +1,7 @@
 #include "dict.h"
 
+#include <ostream>
+
 using namespace kero;
 
 auto
@@ -20,4 +22,16 @@ kero::Dict::Clone() const noexcept -> Self {
   }
 
   return clone;
+}
+
+auto
+kero::operator<<(std::ostream& os, const Dict& dict) -> std::ostream& {
+  os << "{";
+  for (const auto& [key, value] : dict.data_) {
+    os << key << ": ";
+    std::visit([&os](const auto& value) { os << value; }, value);
+    os << ", ";
+  }
+  os << "}";
+  return os;
 }

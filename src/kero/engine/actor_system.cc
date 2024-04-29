@@ -22,7 +22,7 @@ kero::Mail::Clone() const noexcept -> Mail {
               body.Clone()};
 }
 
-kero::MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
+kero::MailBox::MailBox(spsc::Tx<Mail> &&tx, spsc::Rx<Mail> &&rx) noexcept
     : tx{std::move(tx)}, rx{std::move(rx)} {}
 
 kero::ActorService::ActorService(std::string &&name,
@@ -68,7 +68,7 @@ kero::ActorService::SendMail(std::string &&to,
 }
 
 kero::ActorSystem::ActorSystem() noexcept
-    : run_channel_{Channel<Dict>::Builder{}.Build()} {}
+    : run_channel_{spsc::Channel<Dict>::Builder{}.Build()} {}
 
 auto
 kero::ActorSystem::Builder::Build() noexcept -> ActorSystemPtr {
@@ -121,12 +121,12 @@ kero::ActorSystem::CreateActorService(std::string &&name) noexcept
                     Dict{}.Set("name", std::string{name}).Take())};
   }
 
-  auto [from_actor_tx, to_system_rx] = Channel<Mail>::Builder{}.Build();
-  auto [from_system_tx, to_actor_rx] = Channel<Mail>::Builder{}.Build();
+  auto [from_actor_tx, to_system_rx] = spsc::Channel<Mail>::Builder{}.Build();
+  auto [from_system_tx, to_actor_rx] = spsc::Channel<Mail>::Builder{}.Build();
 
   mail_boxes_.try_emplace(std::move(name),
-                          MailBox{Tx<Mail>{std::move(from_system_tx)},
-                                  Rx<Mail>{std::move(to_system_rx)}});
+                          MailBox{spsc::Tx<Mail>{std::move(from_system_tx)},
+                                  spsc::Rx<Mail>{std::move(to_system_rx)}});
 
   return Result<ActorServicePtr>{std::make_unique<ActorService>(
       std::move(name),

@@ -74,3 +74,19 @@ kero::Error::From(Error &&cause, std::source_location &&location) noexcept
                std::move(location),
                std::make_unique<Error>(std::move(cause))};
 }
+
+auto
+kero::operator<<(std::ostream &os, const Error &error) -> std::ostream & {
+  os << "Error{";
+  os << "code: " << static_cast<int32_t>(error.code) << ", ";
+  os << "details: " << error.details << ", ";
+  os << "location: " << error.location.file_name() << ":"
+     << error.location.line() << ":" << error.location.column() << " "
+     << error.location.function_name();
+  if (error.cause) {
+    os << ", ";
+    os << "cause: " << *error.cause;
+  }
+  os << "}";
+  return os;
+}

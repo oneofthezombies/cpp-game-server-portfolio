@@ -74,6 +74,21 @@ class Result {
   std::variant<std::monostate, T, Error> data_;
 };
 
+template <typename T>
+[[nodiscard]] auto
+operator<<(std::ostream& os, const Result<T>& result) -> std::ostream& {
+  if (result.IsOk()) {
+    os << "Ok{";
+    os << result.Ok();
+    os << "}";
+  } else {
+    os << "Err{";
+    os << result.Err();
+    os << "}";
+  }
+  return os;
+}
+
 }  // namespace kero
 
 #endif  // KERO_CORE_RESULT_H
