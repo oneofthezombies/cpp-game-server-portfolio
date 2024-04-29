@@ -19,7 +19,7 @@ class Agent {
   };
 
   explicit Agent() noexcept = default;
-  ~Agent() noexcept = default;
+  virtual ~Agent() noexcept = default;
   CLASS_KIND_MOVABLE(Agent);
 
   [[nodiscard]] auto
