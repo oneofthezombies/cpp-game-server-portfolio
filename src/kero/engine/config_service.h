@@ -1,11 +1,11 @@
-#ifndef KERO_ENGINE_CONFIG_COMPONENT_H
-#define KERO_ENGINE_CONFIG_COMPONENT_H
+#ifndef KERO_ENGINE_CONFIG_SERVICE_H
+#define KERO_ENGINE_CONFIG_SERVICE_H
 
-#include "kero/engine/component.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
-class ConfigComponent final : public Component {
+class ConfigService final : public Service {
  public:
   enum : Error::Code {
     kPortNotFound = 1,
@@ -13,8 +13,8 @@ class ConfigComponent final : public Component {
     kUnknownArgument
   };
 
-  virtual ~ConfigComponent() noexcept override = default;
-  CLASS_KIND_MOVABLE(ConfigComponent);
+  virtual ~ConfigService() noexcept override = default;
+  CLASS_KIND_MOVABLE(ConfigService);
 
   [[nodiscard]] virtual auto
   OnCreate(Agent& agent) noexcept -> Result<Void> override;
@@ -29,14 +29,14 @@ class ConfigComponent final : public Component {
   GetConfig() const noexcept -> const Dict&;
 
   [[nodiscard]] static auto
-  FromArgs(int argc, char** argv) noexcept -> Result<ComponentPtr>;
+  FromArgs(int argc, char** argv) noexcept -> Result<ServicePtr>;
 
  private:
-  explicit ConfigComponent(Dict&& config) noexcept;
+  explicit ConfigService(Dict&& config) noexcept;
 
   Dict config_;
 };
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_CONFIG_COMPONENT_H
+#endif  // KERO_ENGINE_CONFIG_SERVICE_H

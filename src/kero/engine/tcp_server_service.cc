@@ -1,37 +1,34 @@
-#include "tcp_server_component.h"
+#include "tcp_server_service.h"
 
 #include <netinet/in.h>
 #include <sys/socket.h>
 
 #include "kero/engine/agent.h"
-#include "kero/engine/config_component.h"
+#include "kero/engine/config_service.h"
 #include "kero/engine/constants.h"
-#include "kero/engine/io_event_loop_component.h"
+#include "kero/engine/io_event_loop_service.h"
 
 using namespace kero;
 
-kero::TcpServerComponent::TcpServerComponent() noexcept
-    : Component{ComponentKind::kTcpServer} {}
+kero::TcpServerService::TcpServerService() noexcept
+    : Service{ServiceKind::kTcpServer} {}
 
 auto
-kero::TcpServerComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  const auto config =
-      agent.GetComponentAs<ConfigComponent>(ComponentKind::kConfig);
+  const auto config = agent.GetServiceAs<ConfigService>(ServiceKind::kConfig);
   if (!config) {
     return ResultT::Err(Error::From(
-        Dict{}
-            .Set("message", std::string{"ConfigComponent not found"})
-            .Take()));
+        Dict{}.Set("message", std::string{"ConfigService not found"}).Take()));
   }
 
   const auto io_event_loop =
-      agent.GetComponentAs<IoEventLoopComponent>(ComponentKind::kIoEventLoop);
+      agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
   if (!io_event_loop) {
     return ResultT::Err(Error::From(
         Dict{}
-            .Set("message", std::string{"IoEventLoopComponent not found"})
+            .Set("message", std::string{"IoEventLoopService not found"})
             .Take()));
   }
 
@@ -95,7 +92,7 @@ kero::TcpServerComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
 }
 
 auto
-kero::TcpServerComponent::OnDestroy(Agent& agent) noexcept -> void {
+kero::TcpServerService::OnDestroy(Agent& agent) noexcept -> void {
   if (!Fd::IsValid(server_fd_)) {
     return;
   }

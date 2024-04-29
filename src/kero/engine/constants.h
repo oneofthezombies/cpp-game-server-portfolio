@@ -1,12 +1,12 @@
 #ifndef KERO_ENGINE_CONSTANTS_H
 #define KERO_ENGINE_CONSTANTS_H
 
-#include "kero/engine/component.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
-struct ComponentKind {
-  enum : Component::Kind {
+struct ServiceKind {
+  enum : Service::Kind {
     kUnspecified = 0,
     kSignal = 1,
     kActor = 2,

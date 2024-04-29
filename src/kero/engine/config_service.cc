@@ -1,6 +1,4 @@
-#include "config_component.h"
-
-#include <type_traits>
+#include "config_service.h"
 
 #include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
@@ -8,31 +6,31 @@
 
 using namespace kero;
 
-kero::ConfigComponent::ConfigComponent(Dict&& config) noexcept
-    : Component{ComponentKind::kConfig}, config_{std::move(config)} {}
+kero::ConfigService::ConfigService(Dict&& config) noexcept
+    : Service{ServiceKind::kConfig}, config_{std::move(config)} {}
 
 auto
-kero::ConfigComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::ConfigService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   return ResultT::Ok(Void{});
 }
 
 auto
-kero::ConfigComponent::OnDestroy(Agent& agent) noexcept -> void {}
+kero::ConfigService::OnDestroy(Agent& agent) noexcept -> void {}
 
 auto
-kero::ConfigComponent::OnUpdate(Agent& agent) noexcept -> void {}
+kero::ConfigService::OnUpdate(Agent& agent) noexcept -> void {}
 
 auto
-kero::ConfigComponent::GetConfig() const noexcept -> const Dict& {
+kero::ConfigService::GetConfig() const noexcept -> const Dict& {
   return config_;
 }
 
 auto
-kero::ConfigComponent::FromArgs(int argc, char** argv) noexcept
-    -> Result<ComponentPtr> {
-  using ResultT = Result<ComponentPtr>;
+kero::ConfigService::FromArgs(int argc, char** argv) noexcept
+    -> Result<ServicePtr> {
+  using ResultT = Result<ServicePtr>;
 
   Dict config{};
   ArgsScanner scanner{ArgsScanner::FromArgs(argc, argv)};
@@ -70,5 +68,5 @@ kero::ConfigComponent::FromArgs(int argc, char** argv) noexcept
     }
   }
 
-  return ComponentPtr{new ConfigComponent{std::move(config)}};
+  return ServicePtr{new ConfigService{std::move(config)}};
 }

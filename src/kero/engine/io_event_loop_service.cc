@@ -1,4 +1,4 @@
-#include "io_event_loop_component.h"
+#include "io_event_loop_service.h"
 
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -14,7 +14,7 @@ namespace {
 
 [[nodiscard]] static auto
 AddOptionsToEpollEvents(
-    const kero::IoEventLoopComponent::AddOptions options) noexcept -> uint32_t {
+    const kero::IoEventLoopService::AddOptions options) noexcept -> uint32_t {
   uint32_t events{0};
 
   if (options.in) {
@@ -34,11 +34,11 @@ AddOptionsToEpollEvents(
 
 }  // namespace
 
-kero::IoEventLoopComponent::IoEventLoopComponent() noexcept
-    : Component{ComponentKind::kIoEventLoop} {}
+kero::IoEventLoopService::IoEventLoopService() noexcept
+    : Service{ServiceKind::kIoEventLoop} {}
 
 auto
-kero::IoEventLoopComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::IoEventLoopService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   const auto epoll_fd = epoll_create1(0);
@@ -55,7 +55,7 @@ kero::IoEventLoopComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
 }
 
 auto
-kero::IoEventLoopComponent::OnDestroy(Agent& agent) noexcept -> void {
+kero::IoEventLoopService::OnDestroy(Agent& agent) noexcept -> void {
   if (!Fd::IsValid(epoll_fd_)) {
     return;
   }
@@ -66,7 +66,7 @@ kero::IoEventLoopComponent::OnDestroy(Agent& agent) noexcept -> void {
 }
 
 auto
-kero::IoEventLoopComponent::OnUpdate(Agent& agent) noexcept -> void {
+kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
   if (!Fd::IsValid(epoll_fd_)) {
     // TODO: log error
     return;
@@ -93,7 +93,7 @@ kero::IoEventLoopComponent::OnUpdate(Agent& agent) noexcept -> void {
 }
 
 auto
-kero::IoEventLoopComponent::OnUpdateEpollEvent(
+kero::IoEventLoopService::OnUpdateEpollEvent(
     const struct epoll_event& event) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -138,8 +138,8 @@ kero::IoEventLoopComponent::OnUpdateEpollEvent(
 }
 
 auto
-kero::IoEventLoopComponent::AddFd(const Fd::Value fd,
-                                  const AddOptions options) noexcept
+kero::IoEventLoopService::AddFd(const Fd::Value fd,
+                                const AddOptions options) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 

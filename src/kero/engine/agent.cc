@@ -1,8 +1,8 @@
 #include "agent.h"
 
-#include "kero/engine/component.h"
 #include "kero/engine/constants.h"
-#include "kero/engine/signal_component.h"
+#include "kero/engine/service.h"
+#include "kero/engine/signal_service.h"
 
 using namespace kero;
 
@@ -10,12 +10,12 @@ auto
 kero::Agent::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  auto res = CreateComponents();
+  auto res = CreateServices();
   if (res.IsErr()) {
     return ResultT::Err(Error::From(res.TakeErr()));
   }
 
-  auto signal = GetComponentAs<SignalComponent>(ComponentKind::kSignal);
+  auto signal = GetServiceAs<SignalService>(ServiceKind::kSignal);
   if (!signal) {
     // TODO: log warning
   }
@@ -26,10 +26,10 @@ kero::Agent::Run() noexcept -> Result<Void> {
       is_interrupted = signal.Unwrap().IsInterrupted();
     }
 
-    UpdateComponents();
+    UpdateServices();
   }
 
-  DestroyComponents();
+  DestroyServices();
 
   if (is_interrupted) {
     return ResultT::Err(Error::From(kInterrupted));
@@ -46,75 +46,74 @@ kero::Agent::Dispatch(const std::string& event, const Dict& data) noexcept
     return;
   }
 
-  for (const auto component_kind : it->second) {
-    auto component = GetComponent(component_kind);
-    if (component.IsNone()) {
+  for (const auto service_kind : it->second) {
+    auto service = GetService(service_kind);
+    if (service.IsNone()) {
       continue;
     }
 
-    component.Unwrap().OnEvent(*this, event, data);
+    service.Unwrap().OnEvent(*this, event, data);
   }
 }
 
 auto
 kero::Agent::SubscribeEvent(const std::string& event,
-                            const Component::Kind component_kind) noexcept
-    -> bool {
+                            const Service::Kind service_kind) noexcept -> bool {
   auto it = events_.find(event);
   if (it == events_.end()) {
     it = events_.try_emplace(event).first;
   }
 
-  auto& component_kinds = it->second;
-  if (component_kinds.contains(component_kind)) {
+  auto& service_kinds = it->second;
+  if (service_kinds.contains(service_kind)) {
     return false;
   }
 
-  component_kinds.insert(component_kind);
+  service_kinds.insert(service_kind);
   return true;
 }
 
 auto
 kero::Agent::UnsubscribeEvent(const std::string& event,
-                              const Component::Kind component_kind) noexcept
+                              const Service::Kind service_kind) noexcept
     -> bool {
   auto it = events_.find(event);
   if (it == events_.end()) {
     return false;
   }
 
-  auto& component_kinds = it->second;
-  if (!component_kinds.contains(component_kind)) {
+  auto& service_kinds = it->second;
+  if (!service_kinds.contains(service_kind)) {
     return false;
   }
 
-  component_kinds.erase(component_kind);
+  service_kinds.erase(service_kind);
   return true;
 }
 
 auto
-kero::Agent::GetComponent(const Component::Kind component_kind) const noexcept
-    -> OptionRef<Component&> {
-  auto it = components_.find(component_kind);
-  if (it == components_.end()) {
+kero::Agent::GetService(const Service::Kind service_kind) const noexcept
+    -> OptionRef<Service&> {
+  auto it = services_.find(service_kind);
+  if (it == services_.end()) {
     return None;
   }
 
-  return OptionRef<Component&>{*it->second};
+  return OptionRef<Service&>{*it->second};
 }
 
 auto
-kero::Agent::HasComponent(const Component::Kind component_kind) const noexcept
+kero::Agent::HasService(const Service::Kind service_kind) const noexcept
     -> bool {
-  return components_.contains(component_kind);
+  return services_.contains(service_kind);
 }
 
 auto
-kero::Agent::CreateComponents() noexcept -> Result<Void> {
+kero::Agent::CreateServices() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  for (auto& [_, component] : components_) {
-    auto res = component->OnCreate(*this);
+  for (auto& [_, service] : services_) {
+    auto res = service->OnCreate(*this);
     if (res.IsErr()) {
       return ResultT::Err(Error::From(res.TakeErr()));
     }
@@ -124,16 +123,16 @@ kero::Agent::CreateComponents() noexcept -> Result<Void> {
 }
 
 auto
-kero::Agent::DestroyComponents() noexcept -> void {
-  for (auto& [_, component] : components_) {
-    component->OnDestroy(*this);
+kero::Agent::DestroyServices() noexcept -> void {
+  for (auto& [_, service] : services_) {
+    service->OnDestroy(*this);
   }
 }
 
 auto
-kero::Agent::UpdateComponents() noexcept -> void {
-  for (auto& [_, component] : components_) {
-    component->OnUpdate(*this);
+kero::Agent::UpdateServices() noexcept -> void {
+  for (auto& [_, service] : services_) {
+    service->OnUpdate(*this);
   }
 }
 

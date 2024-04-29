@@ -17,7 +17,7 @@ kero::MailBox::MailBox(Tx<Mail> &&tx, Rx<Mail> &&rx) noexcept
     : tx{std::move(tx)}, rx{std::move(rx)} {}
 
 kero::Actor::Actor(std::string &&name, MailBox &&mail_box) noexcept
-    : Component{ComponentKind::kActor},
+    : Service{ServiceKind::kActor},
       mail_box_{std::move(mail_box)},
       name_{std::move(name)} {}
 

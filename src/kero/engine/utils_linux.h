@@ -1,8 +1,6 @@
 #ifndef KERO_ENGINE_UTILS_LINUX_H
 #define KERO_ENGINE_UTILS_LINUX_H
 
-#include <source_location>
-
 #include "kero/core/common.h"
 #include "kero/core/result.h"
 

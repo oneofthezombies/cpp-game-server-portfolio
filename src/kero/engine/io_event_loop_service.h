@@ -1,14 +1,14 @@
-#ifndef KERO_ENGINE_IO_EVENT_LOOP_COMPONENT_H
-#define KERO_ENGINE_IO_EVENT_LOOP_COMPONENT_H
+#ifndef KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
+#define KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
 
-#include "kero/engine/component.h"
+#include "kero/engine/service.h"
 #include "kero/engine/utils_linux.h"
 
 struct epoll_event;
 
 namespace kero {
 
-class IoEventLoopComponent final : public Component {
+class IoEventLoopService final : public Service {
  public:
   enum : Error::Code { kInvalidEpollFd = 1 };
 
@@ -18,9 +18,9 @@ class IoEventLoopComponent final : public Component {
     bool edge_trigger{false};
   };
 
-  explicit IoEventLoopComponent() noexcept;
-  virtual ~IoEventLoopComponent() noexcept override = default;
-  CLASS_KIND_MOVABLE(IoEventLoopComponent);
+  explicit IoEventLoopService() noexcept;
+  virtual ~IoEventLoopService() noexcept override = default;
+  CLASS_KIND_MOVABLE(IoEventLoopService);
 
   [[nodiscard]] virtual auto
   OnCreate(Agent& agent) noexcept -> Result<Void> override;
@@ -46,4 +46,4 @@ class IoEventLoopComponent final : public Component {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_IO_EVENT_LOOP_COMPONENT_H
+#endif  // KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H

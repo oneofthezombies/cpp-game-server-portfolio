@@ -1,21 +1,21 @@
-#ifndef KERO_ENGINE_SIGNAL_COMPONENT_H
-#define KERO_ENGINE_SIGNAL_COMPONENT_H
+#ifndef KERO_ENGINE_SIGNAL_SERVICE_H
+#define KERO_ENGINE_SIGNAL_SERVICE_H
 
 #include <atomic>
 
-#include "kero/engine/component.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
-class SignalComponent final : public Component {
+class SignalService final : public Service {
  public:
   enum : Error::Code {
-    kActorComponentNotFound = 1,
+    kActorServiceNotFound = 1,
   };
 
-  explicit SignalComponent() noexcept;
-  virtual ~SignalComponent() noexcept override = default;
-  CLASS_KIND_MOVABLE(SignalComponent);
+  explicit SignalService() noexcept;
+  virtual ~SignalService() noexcept override = default;
+  CLASS_KIND_MOVABLE(SignalService);
 
   virtual auto
   OnCreate(Agent& agent) noexcept -> Result<Void> override;
@@ -38,4 +38,4 @@ class SignalComponent final : public Component {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_SIGNAL_COMPONENT_H
+#endif  // KERO_ENGINE_SIGNAL_SERVICE_H

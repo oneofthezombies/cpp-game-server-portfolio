@@ -1,5 +1,5 @@
-#ifndef KERO_ENGINE_COMPONENT_H
-#define KERO_ENGINE_COMPONENT_H
+#ifndef KERO_ENGINE_SERVICE_H
+#define KERO_ENGINE_SERVICE_H
 
 #include <string>
 
@@ -11,26 +11,26 @@ namespace kero {
 
 class Agent;
 
-class Component {
+class Service {
  public:
   using Kind = int32_t;
 
-  explicit Component(const Kind kind) noexcept;
-  virtual ~Component() noexcept = default;
-  CLASS_KIND_MOVABLE(Component);
+  explicit Service(const Kind kind) noexcept;
+  virtual ~Service() noexcept = default;
+  CLASS_KIND_MOVABLE(Service);
 
   [[nodiscard]] auto
   GetKind() const noexcept -> Kind;
 
   template <typename T>
-    requires std::is_base_of_v<Component, T>
+    requires std::is_base_of_v<Service, T>
   [[nodiscard]] auto
   Is(const Kind kind) const noexcept -> bool {
     return kind == kind_;
   }
 
   template <typename T>
-    requires std::is_base_of_v<Component, T>
+    requires std::is_base_of_v<Service, T>
   [[nodiscard]] auto
   As(const Kind kind) noexcept -> OptionRef<T&> {
     if (!Is<T>(kind)) {
@@ -69,8 +69,8 @@ class Component {
   Kind kind_;
 };
 
-using ComponentPtr = std::unique_ptr<Component>;
+using ServicePtr = std::unique_ptr<Service>;
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_COMPONENT_H
+#endif  // KERO_ENGINE_SERVICE_H

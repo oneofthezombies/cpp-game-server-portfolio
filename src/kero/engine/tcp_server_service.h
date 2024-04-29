@@ -1,16 +1,16 @@
-#ifndef KERO_ENGINE_TCP_SERVER_COMPONENT_H
-#define KERO_ENGINE_TCP_SERVER_COMPONENT_H
+#ifndef KERO_ENGINE_TCP_SERVER_SERVICE_H
+#define KERO_ENGINE_TCP_SERVER_SERVICE_H
 
-#include "kero/engine/component.h"
+#include "kero/engine/service.h"
 #include "kero/engine/utils_linux.h"
 
 namespace kero {
 
-class TcpServerComponent final : public Component {
+class TcpServerService final : public Service {
  public:
-  explicit TcpServerComponent() noexcept;
-  virtual ~TcpServerComponent() noexcept override = default;
-  CLASS_KIND_MOVABLE(TcpServerComponent);
+  explicit TcpServerService() noexcept;
+  virtual ~TcpServerService() noexcept override = default;
+  CLASS_KIND_MOVABLE(TcpServerService);
 
   [[nodiscard]] virtual auto
   OnCreate(Agent& agent) noexcept -> Result<Void> override;
@@ -27,4 +27,4 @@ class TcpServerComponent final : public Component {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_TCP_SERVER_COMPONENT_H
+#endif  // KERO_ENGINE_TCP_SERVER_SERVICE_H

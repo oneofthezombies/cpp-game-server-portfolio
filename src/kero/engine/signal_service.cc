@@ -1,4 +1,4 @@
-#include "signal_component.h"
+#include "signal_service.h"
 
 #include <signal.h>
 
@@ -9,17 +9,16 @@
 
 using namespace kero;
 
-kero::SignalComponent::SignalComponent() noexcept
-    : Component{ComponentKind::kSignal} {}
+kero::SignalService::SignalService() noexcept : Service{ServiceKind::kSignal} {}
 
 auto
-kero::SignalComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   interrupted_ = false;
 
-  if (!agent.HasComponentIs<Actor>(ComponentKind::kActor)) {
-    return ResultT::Err(Error::From(kActorComponentNotFound));
+  if (!agent.HasServiceIs<Actor>(ServiceKind::kActor)) {
+    return ResultT::Err(Error::From(kActorServiceNotFound));
   }
 
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
@@ -30,7 +29,7 @@ kero::SignalComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
 }
 
 auto
-kero::SignalComponent::OnDestroy(Agent& agent) noexcept -> void {
+kero::SignalService::OnDestroy(Agent& agent) noexcept -> void {
   if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
     // TODO: log error using errno
     const auto err = Errno::FromErrno();
@@ -38,9 +37,9 @@ kero::SignalComponent::OnDestroy(Agent& agent) noexcept -> void {
 }
 
 auto
-kero::SignalComponent::OnUpdate(Agent& agent) noexcept -> void {
+kero::SignalService::OnUpdate(Agent& agent) noexcept -> void {
   if (interrupted_) {
-    auto actor = agent.GetComponentAs<Actor>(ComponentKind::kActor);
+    auto actor = agent.GetServiceAs<Actor>(ServiceKind::kActor);
     auto from = actor ? actor.Unwrap().GetName() : "unknown";
 
     agent.Dispatch(EventMailToSend::kEvent,
@@ -54,14 +53,14 @@ kero::SignalComponent::OnUpdate(Agent& agent) noexcept -> void {
 }
 
 auto
-kero::SignalComponent::IsInterrupted() const noexcept -> bool {
+kero::SignalService::IsInterrupted() const noexcept -> bool {
   return interrupted_;
 }
 
-std::atomic<bool> SignalComponent::interrupted_{false};
+std::atomic<bool> SignalService::interrupted_{false};
 
 auto
-kero::SignalComponent::OnSignal(int signal) noexcept -> void {
+kero::SignalService::OnSignal(int signal) noexcept -> void {
   if (signal == SIGINT) {
     interrupted_ = true;
   }

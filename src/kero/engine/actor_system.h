@@ -8,7 +8,7 @@
 #include "kero/core/common.h"
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
-#include "kero/engine/component.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
@@ -39,7 +39,7 @@ struct MailBox final {
   friend class ActorSystem;
 };
 
-class Actor final : public Component {
+class Actor final : public Service {
  public:
   explicit Actor(std::string &&name, MailBox &&mail_box) noexcept;
   virtual ~Actor() noexcept override = default;
