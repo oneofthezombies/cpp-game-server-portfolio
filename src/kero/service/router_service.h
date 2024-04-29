@@ -1,7 +1,7 @@
 #ifndef KERO_SERVICE_ROUTER_SERVICE_H
 #define KERO_SERVICE_ROUTER_SERVICE_H
 
-#include "kero/engine/service.h"
+#include "kero/service/service.h"
 
 namespace kero {
 
