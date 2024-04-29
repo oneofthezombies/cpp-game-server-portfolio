@@ -30,6 +30,9 @@ class Service {
   [[nodiscard]] auto
   GetDependencies() const noexcept -> const Dependencies&;
 
+  [[nodiscard]] auto
+  GetSubscriptions() const noexcept -> const Subscriptions&;
+
   template <typename T>
     requires std::is_base_of_v<Service, T>
   [[nodiscard]] auto
