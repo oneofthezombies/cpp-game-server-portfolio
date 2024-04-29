@@ -43,7 +43,7 @@ class GlobalContext final {
   CLASS_KIND_PINNABLE(GlobalContext);
 
   auto
-  UseSystemErrorStream(std::ostream& stream) noexcept -> void;
+  UseStreamForLoggingSystemError(std::ostream& stream) noexcept -> void;
 
   auto
   LogSystemError(std::string&& message) noexcept -> void;

@@ -163,7 +163,81 @@
 //   return ResultT{std::move(config)};
 // }
 
+#include "kero/core/utils.h"
+#include "kero/engine/actor_system.h"
+#include "kero/engine/agent.h"
+#include "kero/engine/config_service.h"
+#include "kero/engine/signal_service.h"
+#include "kero/log/center.h"
+#include "kero/log/core.h"
+#include "kero/log/log_builder.h"
+#include "kero/log/transport.h"
+
 auto
-main() -> int {
+main(int argc, char** argv) -> int {
+  kero::Center{}.UseStreamForLoggingSystemError();
+  auto transport = std::make_unique<kero::ConsolePlainTextTransport>();
+  transport->SetLevel(kero::Level::kDebug);
+  kero::Center{}.AddTransport(std::move(transport));
+  kero::Defer defer_log_system{[] { kero::Center{}.Shutdown(); }};
+
+  const auto actor_system = kero::ActorSystem::Builder{}.Build();
+  if (auto res = actor_system->Start(); res.IsErr()) {
+    kero::log::Error("Actor system start failed")
+        .Data("error", res.TakeErr())
+        .Log();
+    return 1;
+  }
+
+  kero::Defer defer_actor_system{[actor_system] {
+    if (!actor_system->Stop()) {
+      kero::log::Error("Actor system stop failed").Log();
+    }
+  }};
+
+  auto agent = kero::Agent{};
+
+  {
+    auto actor_res = actor_system->CreateActorService("main");
+    if (actor_res.IsErr()) {
+      kero::log::Error("Actor system failed to create actor service")
+          .Data("error", actor_res.TakeErr())
+          .Log();
+      return 1;
+    }
+
+    if (auto res = agent.AddService(actor_res.TakeOk()); !res) {
+      kero::log::Error("Agent failed to add actor service").Log();
+      return 1;
+    }
+  }
+
+  {
+    auto config_res = kero::ConfigService::FromArgs(argc, argv);
+    if (config_res.IsErr()) {
+      kero::log::Error("Config service failed to parse args")
+          .Data("error", config_res.TakeErr())
+          .Log();
+      return 1;
+    }
+
+    auto config = config_res.TakeOk();
+    if (auto res = agent.AddService(std::move(config)); !res) {
+      kero::log::Error("Agent failed to add config service").Log();
+      return 1;
+    }
+  }
+
+  if (auto res = agent.AddService(std::make_unique<kero::SignalService>());
+      !res) {
+    kero::log::Error("Agent failed to add signal service").Log();
+    return 1;
+  }
+
+  if (auto res = agent.Run(); res.IsErr()) {
+    kero::log::Error("Agent failed to run").Data("error", res.TakeErr()).Log();
+    return 1;
+  }
+
   return 0;
 }

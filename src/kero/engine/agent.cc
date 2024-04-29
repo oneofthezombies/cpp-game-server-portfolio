@@ -46,12 +46,7 @@ auto
 kero::Agent::Invoke(const std::string& event, const Dict& data) noexcept
     -> void {
   auto it = events_.find(event);
-  if (it == events_.end()) {
-    log::Warn("Event not found").Data("event", event).Log();
-    return;
-  }
-
-  if (it->second.empty()) {
+  if (it == events_.end() || it->second.empty()) {
     log::Warn("No services subscribed to event").Data("event", event).Log();
     return;
   }

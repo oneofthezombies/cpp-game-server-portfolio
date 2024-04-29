@@ -31,8 +31,8 @@ kero::GlobalContext::GlobalContext(
       runner_thread_{std::move(runner_thread)} {}
 
 auto
-kero::GlobalContext::UseSystemErrorStream(std::ostream& stream) noexcept
-    -> void {
+kero::GlobalContext::UseStreamForLoggingSystemError(
+    std::ostream& stream) noexcept -> void {
   std::lock_guard<std::mutex> lock(shared_state_mutex_);
   shared_state_.system_error_stream = std::ref(stream);
 }

@@ -15,7 +15,8 @@ class Center final {
   CLASS_KIND_PINNABLE(Center);
 
   auto
-  UseSystemErrorStream(std::ostream& stream = std::cerr) noexcept -> void;
+  UseStreamForLoggingSystemError(std::ostream& stream = std::cerr) noexcept
+      -> void;
 
   auto
   Shutdown(ShutdownConfig&& config = ShutdownConfig{}) noexcept -> void;

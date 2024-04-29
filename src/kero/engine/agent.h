@@ -18,6 +18,7 @@ class Agent final {
     kInterrupted = 1,
   };
 
+  explicit Agent() noexcept = default;
   ~Agent() noexcept = default;
   CLASS_KIND_MOVABLE(Agent);
 

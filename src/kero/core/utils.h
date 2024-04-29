@@ -29,6 +29,19 @@ ParseNumberString(const std::string_view token) noexcept -> Result<T> {
   return ResultT::Ok(std::move(value));
 }
 
+class Defer final {
+ public:
+  explicit Defer(std::function<void()> &&fn) noexcept;
+  ~Defer() noexcept;
+  CLASS_KIND_PINNABLE(Defer);
+
+  auto
+  Cancel() noexcept -> void;
+
+ private:
+  std::function<void()> fn_;
+};
+
 }  // namespace kero
 
 #endif  // KERO_CORE_UTILS_H

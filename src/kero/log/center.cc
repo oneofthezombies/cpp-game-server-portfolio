@@ -5,8 +5,9 @@
 using namespace kero;
 
 auto
-kero::Center::UseSystemErrorStream(std::ostream& stream) noexcept -> void {
-  GetGlobalContext().UseSystemErrorStream(stream);
+kero::Center::UseStreamForLoggingSystemError(std::ostream& stream) noexcept
+    -> void {
+  GetGlobalContext().UseStreamForLoggingSystemError(stream);
 }
 
 auto

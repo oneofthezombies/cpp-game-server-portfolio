@@ -8,7 +8,7 @@ namespace kero {
 class Transport {
  public:
   explicit Transport() noexcept;
-  Transport(const Level level) noexcept;
+  explicit Transport(const Level level) noexcept;
   virtual ~Transport() noexcept = default;
   CLASS_KIND_MOVABLE(Transport);
 

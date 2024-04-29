@@ -25,8 +25,8 @@ kero::ConsolePlainTextTransport::OnLog(const Log& log) noexcept -> void {
   const auto datetime = TimePointToIso8601(std::chrono::system_clock::now());
   std::cout << datetime << " " << LevelToString(log.level) << " "
             << log.location.file_name() << ":" << log.location.line() << ":"
-            << log.location.column() << " " << log.location.function_name()
-            << ": " << log.message;
+            << log.location.column() << " '" << log.location.function_name()
+            << "' " << log.message;
   for (const auto& [key, value] : log.data) {
     std::cout << " " << key << ": " << value;
   }
