@@ -15,8 +15,12 @@ class Service {
  public:
   using Kind = int32_t;
   using Dependencies = std::vector<Kind>;
+  using Event = std::string;
+  using Subscriptions = std::vector<Event>;
 
-  explicit Service(const Kind kind, Dependencies&& dependencies) noexcept;
+  explicit Service(const Kind kind,
+                   Dependencies&& dependencies = {},
+                   Subscriptions&& subscriptions = {}) noexcept;
   virtual ~Service() noexcept = default;
   CLASS_KIND_MOVABLE(Service);
 
@@ -66,11 +70,11 @@ class Service {
    * Default implementation of the `OnEvent` method is empty.
    */
   virtual auto
-  OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
-      -> void;
+  OnEvent(Agent& agent, const Event& event, const Dict& data) noexcept -> void;
 
  private:
-  std::vector<Kind> dependencies_;
+  Subscriptions subscriptions_;
+  Dependencies dependencies_;
   Kind kind_;
 };
 

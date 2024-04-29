@@ -3,8 +3,11 @@
 using namespace kero;
 
 kero::Service::Service(const Kind kind,
-                       std::vector<Kind>&& dependencies) noexcept
-    : kind_{kind}, dependencies_{std::move(dependencies)} {}
+                       Dependencies&& dependencies,
+                       Subscriptions&& subscriptions) noexcept
+    : kind_{kind},
+      dependencies_{std::move(dependencies)},
+      subscriptions_{std::move(subscriptions)} {}
 
 auto
 kero::Service::GetKind() const noexcept -> Kind {
@@ -12,7 +15,7 @@ kero::Service::GetKind() const noexcept -> Kind {
 }
 
 auto
-kero::Service::GetDependencies() const noexcept -> const std::vector<Kind>& {
+kero::Service::GetDependencies() const noexcept -> const Dependencies& {
   return dependencies_;
 }
 
