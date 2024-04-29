@@ -23,10 +23,9 @@ kero::Agent::Run() noexcept -> Result<Void> {
 
   auto signal = GetServiceAs<SignalService>(ServiceKind::kSignal);
   if (!signal) {
-    return ResultT::Err(Error::From(
-        Dict{}
-            .Set("message", std::string{"Failed to get signal service."})
-            .Take()));
+    log::Debug("Signal service not found")
+        .Data("thread", std::this_thread::get_id())
+        .Log();
   }
 
   auto is_interrupted = false;
@@ -44,6 +43,7 @@ kero::Agent::Run() noexcept -> Result<Void> {
     return ResultT::Err(Error::From(kInterrupted));
   }
 
+  log::Debug("Agent stopped").Log();
   return ResultT::Ok(Void{});
 }
 
@@ -329,6 +329,8 @@ kero::ThreadAgent::IsRunning() const noexcept -> bool {
 auto
 kero::ThreadAgent::ThreadMain(Agent&& agent) -> void {
   if (auto res = agent.Run(); res.IsErr()) {
-    log::Error("Agent failed to run").Data("error", res.TakeErr()).Log();
+    log::Error("Thread agent failed to run").Data("error", res.TakeErr()).Log();
   }
+
+  log::Debug("Thread agent stopped").Log();
 }
