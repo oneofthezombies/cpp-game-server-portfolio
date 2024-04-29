@@ -28,6 +28,9 @@ class ConfigService final : public Service {
   [[nodiscard]] auto
   GetConfig() const noexcept -> const Dict&;
 
+  [[nodiscard]] auto
+  GetConfig() noexcept -> Dict&;
+
   [[nodiscard]] static auto
   FromArgs(int argc, char** argv) noexcept -> Result<ServicePtr>;
 

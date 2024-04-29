@@ -58,6 +58,9 @@ class Actor final : public Service {
   [[nodiscard]] auto
   GetName() const noexcept -> const std::string &;
 
+  auto
+  SendMail(std::string &&to, Dict &&body) noexcept -> void;
+
  private:
   MailBox mail_box_;
   std::string name_;

@@ -70,6 +70,11 @@ kero::Actor::GetName() const noexcept -> const std::string & {
   return name_;
 }
 
+auto
+kero::Actor::SendMail(std::string &&to, Dict &&body) noexcept -> void {
+  mail_box_.tx.Send(Mail{std::string{name_}, std::move(to), std::move(body)});
+}
+
 kero::ActorSystem::ActorSystem() noexcept
     : run_channel_{Channel<Dict>::Builder{}.Build()} {}
 

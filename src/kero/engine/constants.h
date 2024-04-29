@@ -49,6 +49,11 @@ struct EventSocketRead {
   static constexpr auto kFd = "fd";
 };
 
+struct EventSocketOpen {
+  static constexpr auto kEvent = "socket_open";
+  static constexpr auto kFd = "fd";
+};
+
 }  // namespace kero
 
 #endif  // KERO_ENGINE_CONSTANTS_H

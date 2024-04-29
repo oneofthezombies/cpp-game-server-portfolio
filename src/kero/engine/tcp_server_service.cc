@@ -32,22 +32,6 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  if (!agent.SubscribeEvent(EventSocketError::kEvent, GetKind())) {
-    return ResultT::Err(Error::From(
-        Dict{}
-            .Set("message",
-                 std::string{"Failed to subscribe to socket error event"})
-            .Take()));
-  }
-
-  if (!agent.SubscribeEvent(EventSocketClose::kEvent, GetKind())) {
-    return ResultT::Err(Error::From(
-        Dict{}
-            .Set("message",
-                 std::string{"Failed to subscribe to socket close event"})
-            .Take()));
-  }
-
   if (!agent.SubscribeEvent(EventSocketRead::kEvent, GetKind())) {
     return ResultT::Err(Error::From(
         Dict{}
@@ -130,21 +114,7 @@ auto
 kero::TcpServerService::OnEvent(Agent& agent,
                                 const std::string& event,
                                 const Dict& data) noexcept -> void {
-  if (event == EventSocketError::kEvent) {
-    const auto fd = data.GetOrDefault(EventSocketError::kFd, -1);
-    if (fd == server_fd_) {
-      const auto error_code =
-          data.GetOrDefault(EventSocketError::kErrorCode, 0);
-      const auto error_description =
-          data.GetOrDefault(EventSocketError::kErrorDescription, std::string{});
-      // TODO: log error
-    }
-  } else if (event == EventSocketClose::kEvent) {
-    const auto fd = data.GetOrDefault(EventSocketClose::kFd, -1);
-    if (fd == server_fd_) {
-      // TODO: log error
-    }
-  } else if (event == EventSocketRead::kEvent) {
+  if (event == EventSocketRead::kEvent) {
     const auto fd = data.GetOrDefault(EventSocketRead::kFd, -1);
     if (fd == server_fd_) {
       auto io_event_loop =
@@ -168,7 +138,11 @@ kero::TcpServerService::OnEvent(Agent& agent,
         return;
       }
 
-      // send mail or invoke event
+      agent.Invoke(
+          EventSocketOpen::kEvent,
+          Dict{}
+              .Set(EventSocketOpen::kFd, static_cast<int64_t>(client_fd))
+              .Take());
     }
   }
 }

@@ -28,6 +28,11 @@ kero::ConfigService::GetConfig() const noexcept -> const Dict& {
 }
 
 auto
+kero::ConfigService::GetConfig() noexcept -> Dict& {
+  return config_;
+}
+
+auto
 kero::ConfigService::FromArgs(int argc, char** argv) noexcept
     -> Result<ServicePtr> {
   using ResultT = Result<ServicePtr>;

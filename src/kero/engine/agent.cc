@@ -43,16 +43,24 @@ kero::Agent::Invoke(const std::string& event, const Dict& data) noexcept
     -> void {
   auto it = events_.find(event);
   if (it == events_.end()) {
+    // TODO: log warning
+    return;
+  }
+
+  if (it->second.empty()) {
+    // TODO: log warning
     return;
   }
 
   for (const auto service_kind : it->second) {
     auto service = GetService(service_kind);
     if (service.IsNone()) {
+      // TODO: log warning
       continue;
     }
 
     service.Unwrap().OnEvent(*this, event, data);
+    // TODO: log service <service> handled event <event> with data <data>
   }
 }
 

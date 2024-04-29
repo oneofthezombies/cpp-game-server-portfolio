@@ -19,8 +19,9 @@ engine::MainEventLoopHandlerLinux::MainEventLoopHandlerLinux(
       primary_event_loop_name_{std::move(primary_event_loop_name)} {}
 
 auto
-engine::MainEventLoopHandlerLinux::OnInit(
-    EventLoop &event_loop, const Config &config) noexcept -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnInit(EventLoop &event_loop,
+                                          const Config &config) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto server_fd_raw = socket(AF_INET, SOCK_STREAM, 0);
@@ -82,8 +83,9 @@ engine::MainEventLoopHandlerLinux::OnInit(
 }
 
 auto
-engine::MainEventLoopHandlerLinux::OnMail(
-    EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnMail(EventLoop &event_loop,
+                                          const Mail &mail) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
   // noop
@@ -92,8 +94,9 @@ engine::MainEventLoopHandlerLinux::OnMail(
 }
 
 auto
-engine::MainEventLoopHandlerLinux::OnSocketIn(
-    EventLoop &event_loop, const SocketId socket_id) noexcept -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnSocketIn(EventLoop &event_loop,
+                                              const SocketId socket_id) noexcept
+    -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
