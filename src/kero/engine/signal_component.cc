@@ -5,6 +5,7 @@
 #include "kero/engine/actor_system.h"
 #include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
+#include "kero/engine/utils_linux.h"
 
 using namespace kero;
 
@@ -22,7 +23,7 @@ kero::SignalComponent::OnCreate(Agent& agent) noexcept -> Result<Void> {
   }
 
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
-    // TODO: log error using errno
+    return ResultT::Err(Error::From(Errno::FromErrno().IntoDict()));
   }
 
   return ResultT::Ok(Void{});
@@ -32,6 +33,7 @@ auto
 kero::SignalComponent::OnDestroy(Agent& agent) noexcept -> void {
   if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
     // TODO: log error using errno
+    const auto err = Errno::FromErrno();
   }
 }
 

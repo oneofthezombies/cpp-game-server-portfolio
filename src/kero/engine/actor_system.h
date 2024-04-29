@@ -45,7 +45,7 @@ class Actor final : public Component {
   virtual ~Actor() noexcept override = default;
   CLASS_KIND_MOVABLE(Actor);
 
-  virtual auto
+  [[nodiscard]] virtual auto
   OnCreate(Agent &agent) noexcept -> Result<Void> override;
 
   virtual auto
@@ -65,7 +65,11 @@ class Actor final : public Component {
 
 using ActorPtr = std::unique_ptr<Actor>;
 
-class ActorSystem final {
+class ActorSystem;
+
+using ActorSystemPtr = std::shared_ptr<ActorSystem>;
+
+class ActorSystem final : public std::enable_shared_from_this<ActorSystem> {
  public:
   enum : Error::Code {
     kEmptyNameNotAllowed = 1,
@@ -84,9 +88,10 @@ class ActorSystem final {
     CLASS_KIND_PINNABLE(Builder);
 
     [[nodiscard]] auto
-    Build() noexcept -> ActorSystem;
+    Build() noexcept -> ActorSystemPtr;
   };
 
+  explicit ActorSystem() noexcept;
   ~ActorSystem() noexcept;
   CLASS_KIND_PINNABLE(ActorSystem);
 
@@ -106,19 +111,15 @@ class ActorSystem final {
   DeleteMailBox(const std::string &name) noexcept -> bool;
 
  private:
-  explicit ActorSystem(Tx<Dict> &&run_tx,
-                       std::unique_ptr<Rx<Dict>> &&run_rx) noexcept;
-
   auto
   ValidateName(const std::string &name) const noexcept -> Result<Void>;
 
   static auto
-  ThreadMain(ActorSystem &self, std::unique_ptr<Rx<Dict>> &&run_rx) -> void;
+  ThreadMain(ActorSystemPtr self) -> void;
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;
-  Tx<Dict> run_tx_;
-  std::unique_ptr<Rx<Dict>> run_rx_;
+  Channel<Dict> run_channel_;
   std::thread run_thread_;
 
   static constexpr auto kMaxNameLength = 64;

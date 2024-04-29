@@ -20,14 +20,19 @@ kero::Agent::Run() noexcept -> Result<Void> {
     // TODO: log warning
   }
 
+  auto is_interrupted = false;
   while (true) {
     if (signal) {
-      if (signal.Unwrap().IsInterrupted()) {
-        return ResultT::Err(Error::From(kInterrupted));
-      }
+      is_interrupted = signal.Unwrap().IsInterrupted();
     }
 
     UpdateComponents();
+  }
+
+  DestroyComponents();
+
+  if (is_interrupted) {
+    return ResultT::Err(Error::From(kInterrupted));
   }
 
   return ResultT::Ok(Void{});
@@ -119,6 +124,13 @@ kero::Agent::CreateComponents() noexcept -> Result<Void> {
 }
 
 auto
+kero::Agent::DestroyComponents() noexcept -> void {
+  for (auto& [_, component] : components_) {
+    component->OnDestroy(*this);
+  }
+}
+
+auto
 kero::Agent::UpdateComponents() noexcept -> void {
   for (auto& [_, component] : components_) {
     component->OnUpdate(*this);
@@ -137,7 +149,7 @@ kero::ThreadAgent::Start(Agent&& agent) noexcept -> bool {
     return false;
   }
 
-  thread_ = std::thread{ThreadMain, std::move(agent)};
+  thread_ = std::thread{ThreadAgent::ThreadMain, std::move(agent)};
   return true;
 }
 
@@ -158,5 +170,7 @@ kero::ThreadAgent::IsRunning() const noexcept -> bool {
 
 auto
 kero::ThreadAgent::ThreadMain(Agent&& agent) -> void {
-  agent.Run();
+  if (auto res = agent.Run(); res.IsErr()) {
+    // TODO: log error
+  }
 }

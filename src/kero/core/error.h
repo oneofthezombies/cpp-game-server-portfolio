@@ -36,14 +36,36 @@ struct Error final {
 
   [[nodiscard]] static auto
   From(const Code code,
-       Dict &&details = Dict{},
-       Cause &&cause = nullptr,
+       Dict &&details,
+       Error &&cause,
+       std::source_location &&location =
+           std::source_location::current()) noexcept -> Error;
+
+  [[nodiscard]] static auto
+  From(const Code code,
+       Dict &&details,
+       std::source_location &&location =
+           std::source_location::current()) noexcept -> Error;
+
+  [[nodiscard]] static auto
+  From(const Code code,
+       Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
   From(Dict &&details,
-       Cause &&cause = nullptr,
+       Error &&cause,
+       std::source_location &&location =
+           std::source_location::current()) noexcept -> Error;
+
+  [[nodiscard]] static auto
+  From(Dict &&details,
+       std::source_location &&location =
+           std::source_location::current()) noexcept -> Error;
+
+  [[nodiscard]] static auto
+  From(const Code code,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 

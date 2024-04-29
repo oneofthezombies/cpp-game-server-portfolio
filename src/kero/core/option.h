@@ -44,6 +44,14 @@ class OptionRef final {
    * Unwraps the option, if it is `None` this will cause a crash.
    */
   [[nodiscard]] auto
+  Unwrap() const noexcept -> const T& {
+    return std::get<Ref>(data_).get();
+  }
+
+  /**
+   * Unwraps the option, if it is `None` this will cause a crash.
+   */
+  [[nodiscard]] auto
   Unwrap() noexcept -> T& {
     return std::get<Ref>(data_).get();
   }
@@ -57,11 +65,9 @@ class OptionRef final {
 template <typename T>
 class Option final {
  public:
-  explicit Option(OptionNone) noexcept : data_{std::monostate{}} {}
+  Option(OptionNone) noexcept : data_{std::monostate{}} {}
 
-  explicit Option(T&& data) noexcept
-    requires std::is_rvalue_reference_v<T>
-      : data_{std::move(data)} {}
+  Option(T&& data) noexcept : data_{std::move(data)} {}
 
   ~Option() noexcept = default;
   CLASS_KIND_PINNABLE(Option);

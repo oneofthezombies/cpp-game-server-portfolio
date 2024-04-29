@@ -19,19 +19,51 @@ kero::Error::Take() noexcept -> Error {
 auto
 kero::Error::From(const Code code,
                   Dict &&details,
-                  Cause &&cause,
+                  Error &&cause,
                   std::source_location &&location) noexcept -> Error {
-  return Error{code, std::move(details), std::move(location), std::move(cause)};
+  return Error{code,
+               std::move(details),
+               std::move(location),
+               std::make_unique<Error>(std::move(cause))};
+}
+
+auto
+kero::Error::From(const Code code,
+                  Dict &&details,
+                  std::source_location &&location) noexcept -> Error {
+  return Error{code, std::move(details), std::move(location), nullptr};
+}
+
+auto
+kero::Error::From(const Code code,
+                  Error &&cause,
+                  std::source_location &&location) noexcept -> Error {
+  return Error{code,
+               Dict{},
+               std::move(location),
+               std::make_unique<Error>(std::move(cause))};
 }
 
 auto
 kero::Error::From(Dict &&details,
-                  Cause &&cause,
+                  Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{kFailed,
                std::move(details),
                std::move(location),
-               std::move(cause)};
+               std::make_unique<Error>(std::move(cause))};
+}
+
+auto
+kero::Error::From(Dict &&details, std::source_location &&location) noexcept
+    -> Error {
+  return Error{kFailed, std::move(details), std::move(location), nullptr};
+}
+
+auto
+kero::Error::From(const Code code, std::source_location &&location) noexcept
+    -> Error {
+  return Error{code, Dict{}, std::move(location), nullptr};
 }
 
 auto

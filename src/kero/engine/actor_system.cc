@@ -70,16 +70,12 @@ kero::Actor::GetName() const noexcept -> const std::string & {
   return name_;
 }
 
-kero::ActorSystem::ActorSystem(Tx<Dict> &&run_tx,
-                               std::unique_ptr<Rx<Dict>> &&run_rx) noexcept
-    : run_tx_{std::move(run_tx)}, run_rx_{std::move(run_rx)} {}
+kero::ActorSystem::ActorSystem() noexcept
+    : run_channel_{Channel<Dict>::Builder{}.Build()} {}
 
 auto
-kero::ActorSystem::Builder::Build() noexcept -> ActorSystem {
-  auto [run_tx, run_rx] = Channel<Dict>::Builder{}.Build();
-  return ActorSystem{
-      std::move(run_tx),
-      std::unique_ptr<Rx<Dict>>{new Rx<Dict>{std::move(run_rx)}}};
+kero::ActorSystem::Builder::Build() noexcept -> ActorSystemPtr {
+  return std::make_shared<ActorSystem>();
 }
 
 kero::ActorSystem::~ActorSystem() noexcept {
@@ -94,11 +90,7 @@ kero::ActorSystem::Start() noexcept -> Result<Void> {
     return Error::From(kAlreadyRunning);
   }
 
-  if (!run_rx_) {
-    return Error::From(kMultipleStartNotAllowed);
-  }
-
-  run_thread_ = std::thread{ThreadMain, std::move(run_rx_)};
+  run_thread_ = std::thread{ThreadMain, shared_from_this()};
   return Void{};
 }
 
@@ -108,7 +100,7 @@ kero::ActorSystem::Stop() noexcept -> bool {
     return false;
   }
 
-  run_tx_.Send(Dict{}.Set(kMessageShutdown, true).Take());
+  run_channel_.tx.Send(Dict{}.Set(kMessageShutdown, true).Take());
   run_thread_.join();
   return true;
 }
@@ -177,18 +169,17 @@ kero::ActorSystem::ValidateName(const std::string &name) const noexcept
 }
 
 auto
-kero::ActorSystem::ThreadMain(ActorSystem &self,
-                              std::unique_ptr<Rx<Dict>> &&run_rx) -> void {
+kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
   while (true) {
-    if (auto message = run_rx->TryReceive(); message.IsSome()) {
+    if (auto message = self->run_channel_.rx.TryReceive(); message.IsSome()) {
       if (message.TakeUnwrap().Has(kMessageShutdown)) {
         break;
       }
     }
 
     {
-      std::lock_guard lock{self.mutex_};
-      for (auto &[name, mail_box] : self.mail_boxes_) {
+      std::lock_guard lock{self->mutex_};
+      for (auto &[name, mail_box] : self->mail_boxes_) {
         auto mail = mail_box.rx.TryReceive();
         if (mail.IsNone()) {
           continue;
@@ -198,7 +189,7 @@ kero::ActorSystem::ThreadMain(ActorSystem &self,
 
         // broadcast
         if (to == "all") {
-          for (auto &[name, other_mail_box] : self.mail_boxes_) {
+          for (auto &[name, other_mail_box] : self->mail_boxes_) {
             if (name == from) {
               continue;
             }
@@ -211,8 +202,8 @@ kero::ActorSystem::ThreadMain(ActorSystem &self,
         }
 
         // unicast
-        auto it = self.mail_boxes_.find(to);
-        if (it == self.mail_boxes_.end()) {
+        auto it = self->mail_boxes_.find(to);
+        if (it == self->mail_boxes_.end()) {
           continue;
         }
 

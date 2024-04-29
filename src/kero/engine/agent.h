@@ -19,8 +19,9 @@ class Agent final {
   };
 
   ~Agent() noexcept = default;
+  CLASS_KIND_MOVABLE(Agent);
 
-  auto
+  [[nodiscard]] auto
   Run() noexcept -> Result<Void>;
 
   auto
@@ -80,9 +81,12 @@ class Agent final {
   CreateComponents() noexcept -> Result<Void>;
 
   auto
+  DestroyComponents() noexcept -> void;
+
+  auto
   UpdateComponents() noexcept -> void;
 
-  std::unordered_map<Component::Kind, std::unique_ptr<Component>> components_;
+  std::unordered_map<Component::Kind, ComponentPtr> components_;
   std::unordered_map<std::string /* event */,
                      std::unordered_set<Component::Kind>>
       events_;

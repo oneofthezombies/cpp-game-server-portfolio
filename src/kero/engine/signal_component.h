@@ -7,7 +7,7 @@
 
 namespace kero {
 
-class SignalComponent final : Component {
+class SignalComponent final : public Component {
  public:
   enum : Error::Code {
     kActorComponentNotFound = 1,

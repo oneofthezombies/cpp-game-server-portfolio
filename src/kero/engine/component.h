@@ -37,18 +37,30 @@ class Component {
       return None;
     }
 
-    return static_cast<T&>(*this);
+    return *static_cast<T*>(this);
   }
 
-  virtual auto
+  /**
+   * Default implementation of the `OnCreate` method is empty.
+   */
+  [[nodiscard]] virtual auto
   OnCreate(Agent& agent) noexcept -> Result<Void>;
 
+  /**
+   * Default implementation of the `OnDestroy` method is empty.
+   */
   virtual auto
   OnDestroy(Agent& agent) noexcept -> void;
 
+  /**
+   * Default implementation of the `OnUpdate` method is empty.
+   */
   virtual auto
   OnUpdate(Agent& agent) noexcept -> void;
 
+  /**
+   * Default implementation of the `OnEvent` method is empty.
+   */
   virtual auto
   OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
       -> void;
@@ -56,6 +68,8 @@ class Component {
  private:
   Kind kind_;
 };
+
+using ComponentPtr = std::unique_ptr<Component>;
 
 }  // namespace kero
 

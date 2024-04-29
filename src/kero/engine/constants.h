@@ -10,6 +10,9 @@ struct ComponentKind {
     kUnspecified = 0,
     kSignal = 1,
     kActor = 2,
+    kIoEventLoop = 3,
+    kTcpServer = 4,
+    kConfig = 5,
   };
 };
 
