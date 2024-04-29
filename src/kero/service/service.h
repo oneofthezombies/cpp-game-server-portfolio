@@ -1,5 +1,5 @@
-#ifndef KERO_ENGINE_SERVICE_H
-#define KERO_ENGINE_SERVICE_H
+#ifndef KERO_SERVICE_SERVICE_H
+#define KERO_SERVICE_SERVICE_H
 
 #include <string>
 
@@ -77,4 +77,4 @@ using ServicePtr = std::unique_ptr<Service>;
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_SERVICE_H
+#endif  // KERO_SERVICE_SERVICE_H

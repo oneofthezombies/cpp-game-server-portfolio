@@ -1,8 +1,8 @@
-#ifndef KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
-#define KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
+#ifndef KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H
+#define KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H
 
 #include "kero/core/utils_linux.h"
-#include "kero/engine/service.h"
+#include "kero/service/service.h"
 
 struct epoll_event;
 
@@ -58,4 +58,4 @@ class IoEventLoopService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_IO_EVENT_LOOP_SERVICE_H
+#endif  // KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H

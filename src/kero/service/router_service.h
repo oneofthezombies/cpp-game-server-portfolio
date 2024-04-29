@@ -1,5 +1,5 @@
-#ifndef KERO_ENGINE_ROUTER_SERVICE_H
-#define KERO_ENGINE_ROUTER_SERVICE_H
+#ifndef KERO_SERVICE_ROUTER_SERVICE_H
+#define KERO_SERVICE_ROUTER_SERVICE_H
 
 #include "kero/engine/service.h"
 
@@ -23,4 +23,4 @@ class RouterService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_ROUTER_SERVICE_H
+#endif  // KERO_SERVICE_ROUTER_SERVICE_H

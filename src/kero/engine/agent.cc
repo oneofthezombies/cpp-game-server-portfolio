@@ -3,9 +3,9 @@
 #include <unordered_map>
 
 #include "kero/engine/constants.h"
-#include "kero/engine/service.h"
-#include "kero/engine/signal_service.h"
 #include "kero/log/log_builder.h"
+#include "kero/service/service.h"
+#include "kero/service/signal_service.h"
 
 using namespace kero;
 

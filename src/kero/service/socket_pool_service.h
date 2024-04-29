@@ -1,10 +1,10 @@
-#ifndef KERO_ENGINE_SOCKET_POLL_SERVICE_H
-#define KERO_ENGINE_SOCKET_POLL_SERVICE_H
+#ifndef KERO_SERVICE_SOCKET_POLL_SERVICE_H
+#define KERO_SERVICE_SOCKET_POLL_SERVICE_H
 
 #include <unordered_set>
 
 #include "kero/core/utils_linux.h"
-#include "kero/engine/service.h"
+#include "kero/service/service.h"
 
 namespace kero {
 
@@ -32,4 +32,4 @@ class SocketPoolService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_SOCKET_POLL_SERVICE_H
+#endif  // KERO_SERVICE_SOCKET_POLL_SERVICE_H

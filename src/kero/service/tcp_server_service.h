@@ -1,8 +1,8 @@
-#ifndef KERO_ENGINE_TCP_SERVER_SERVICE_H
-#define KERO_ENGINE_TCP_SERVER_SERVICE_H
+#ifndef KERO_SERVICE_TCP_SERVER_SERVICE_H
+#define KERO_SERVICE_TCP_SERVER_SERVICE_H
 
 #include "kero/core/utils_linux.h"
-#include "kero/engine/service.h"
+#include "kero/service/service.h"
 
 namespace kero {
 
@@ -28,4 +28,4 @@ class TcpServerService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_TCP_SERVER_SERVICE_H
+#endif  // KERO_SERVICE_TCP_SERVER_SERVICE_H

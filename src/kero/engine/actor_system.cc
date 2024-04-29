@@ -1,71 +1,9 @@
 #include "actor_system.h"
 
-#include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
+#include "kero/service/actor_service.h"
 
 using namespace kero;
-
-kero::Mail::Mail(std::string &&from,
-                 std::string &&to,
-                 std::string &&event,
-                 Dict &&body) noexcept
-    : from{std::move(from)},
-      to{std::move(to)},
-      event{std::move(event)},
-      body{std::move(body)} {}
-
-auto
-kero::Mail::Clone() const noexcept -> Mail {
-  return Mail{std::string{from},
-              std::string{to},
-              std::string{event},
-              body.Clone()};
-}
-
-kero::MailBox::MailBox(spsc::Tx<Mail> &&tx, spsc::Rx<Mail> &&rx) noexcept
-    : tx{std::move(tx)}, rx{std::move(rx)} {}
-
-kero::ActorService::ActorService(std::string &&name,
-                                 MailBox &&mail_box) noexcept
-    : Service{ServiceKind::kActor, {}},
-      mail_box_{std::move(mail_box)},
-      name_{std::move(name)} {}
-
-auto
-kero::ActorService::OnCreate(Agent &agent) noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
-
-  return ResultT::Ok(Void{});
-}
-
-auto
-kero::ActorService::OnUpdate(Agent &agent) noexcept -> void {
-  auto mail = mail_box_.rx.TryReceive();
-  if (mail.IsNone()) {
-    return;
-  }
-
-  auto [from, to, event, body] = mail.TakeUnwrap();
-  agent.Invoke(event,
-               body.Set("__from", std::string{from})
-                   .Set("__to", std::string{to})
-                   .Take());
-}
-
-auto
-kero::ActorService::GetName() const noexcept -> const std::string & {
-  return name_;
-}
-
-auto
-kero::ActorService::SendMail(std::string &&to,
-                             std::string &&event,
-                             Dict &&body) noexcept -> void {
-  mail_box_.tx.Send(Mail{std::string{name_},
-                         std::move(to),
-                         std::move(event),
-                         std::move(body)});
-}
 
 kero::ActorSystem::ActorSystem() noexcept
     : run_channel_{spsc::Channel<Dict>::Builder{}.Build()} {}
@@ -128,9 +66,9 @@ kero::ActorSystem::CreateActorService(std::string &&name) noexcept
                           MailBox{spsc::Tx<Mail>{std::move(from_system_tx)},
                                   spsc::Rx<Mail>{std::move(to_system_rx)}});
 
-  return Result<ActorServicePtr>{std::make_unique<ActorService>(
+  return Result<ActorServicePtr>{std::unique_ptr<ActorService>{new ActorService{
       std::move(name),
-      MailBox{std::move(from_actor_tx), std::move(to_actor_rx)})};
+      MailBox{std::move(from_actor_tx), std::move(to_actor_rx)}}}};
 }
 
 auto

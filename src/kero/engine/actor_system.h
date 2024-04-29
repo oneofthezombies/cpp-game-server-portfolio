@@ -8,65 +8,9 @@
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
-#include "kero/engine/service.h"
+#include "kero/service/actor_service.h"
 
 namespace kero {
-
-struct Mail final {
-  std::string from;
-  std::string to;
-  std::string event;
-  Dict body;
-
-  explicit Mail() noexcept = default;
-  explicit Mail(std::string &&from,
-                std::string &&to,
-                std::string &&event,
-                Dict &&body) noexcept;
-  ~Mail() noexcept = default;
-  CLASS_KIND_MOVABLE(Mail);
-
-  [[nodiscard]] auto
-  Clone() const noexcept -> Mail;
-};
-
-struct MailBox final {
-  spsc::Tx<Mail> tx;
-  spsc::Rx<Mail> rx;
-
-  ~MailBox() noexcept = default;
-  CLASS_KIND_MOVABLE(MailBox);
-
- private:
-  explicit MailBox(spsc::Tx<Mail> &&tx, spsc::Rx<Mail> &&rx) noexcept;
-
-  friend class ActorSystem;
-};
-
-class ActorService final : public Service {
- public:
-  explicit ActorService(std::string &&name, MailBox &&mail_box) noexcept;
-  virtual ~ActorService() noexcept override = default;
-  CLASS_KIND_MOVABLE(ActorService);
-
-  [[nodiscard]] virtual auto
-  OnCreate(Agent &agent) noexcept -> Result<Void> override;
-
-  virtual auto
-  OnUpdate(Agent &agent) noexcept -> void override;
-
-  [[nodiscard]] auto
-  GetName() const noexcept -> const std::string &;
-
-  auto
-  SendMail(std::string &&to, std::string &&event, Dict &&body) noexcept -> void;
-
- private:
-  MailBox mail_box_;
-  std::string name_;
-};
-
-using ActorServicePtr = std::unique_ptr<ActorService>;
 
 class ActorSystem;
 

@@ -1,7 +1,7 @@
-#ifndef KERO_ENGINE_CONFIG_SERVICE_H
-#define KERO_ENGINE_CONFIG_SERVICE_H
+#ifndef KERO_SERVICE_CONFIG_SERVICE_H
+#define KERO_SERVICE_CONFIG_SERVICE_H
 
-#include "kero/engine/service.h"
+#include "kero/service/service.h"
 
 namespace kero {
 
@@ -42,4 +42,4 @@ class ConfigService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_CONFIG_SERVICE_H
+#endif  // KERO_SERVICE_CONFIG_SERVICE_H
