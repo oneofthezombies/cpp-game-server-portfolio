@@ -9,7 +9,7 @@
 using namespace kero;
 
 kero::SocketRouterService::SocketRouterService() noexcept
-    : Service{ServiceKind::kRouter,
+    : Service{ServiceKind::kSocketRouter,
               {ServiceKind::kActor, ServiceKind::kConfig}} {}
 
 auto

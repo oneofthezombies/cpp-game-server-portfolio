@@ -13,8 +13,8 @@ struct ServiceKind {
     kIoEventLoop = 3,
     kTcpServer = 4,
     kConfig = 5,
-    kSocket = 6,
-    kRouter = 7,
+    kSocketPool = 6,
+    kSocketRouter = 7,
   };
 };
 
@@ -41,6 +41,16 @@ struct EventSocketRead {
 
 struct EventSocketOpen {
   static constexpr auto kEvent = "socket_open";
+  static constexpr auto kFd = "fd";
+};
+
+struct EventSocketRegister {
+  static constexpr auto kEvent = "socket_register";
+  static constexpr auto kFd = "fd";
+};
+
+struct EventSocketUnregister {
+  static constexpr auto kEvent = "socket_unregister";
   static constexpr auto kFd = "fd";
 };
 

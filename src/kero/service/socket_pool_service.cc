@@ -8,7 +8,7 @@
 using namespace kero;
 
 kero::SocketPoolService::SocketPoolService() noexcept
-    : Service{ServiceKind::kSocket, {ServiceKind::kIoEventLoop}} {}
+    : Service{ServiceKind::kSocketPool, {ServiceKind::kIoEventLoop}} {}
 
 auto
 kero::SocketPoolService::OnCreate(Agent& agent) noexcept -> Result<Void> {
@@ -70,6 +70,9 @@ kero::SocketPoolService::OnSocketOpen(Agent& agent, const Dict& data) noexcept
   }
 
   sockets_.insert(fd);
+
+  agent.Invoke(EventSocketRegister::kEvent,
+               Dict{}.Set(EventSocketRegister::kFd, fd).Take());
 }
 
 auto
@@ -87,11 +90,12 @@ kero::SocketPoolService::OnSocketClose(Agent& agent, const Dict& data) noexcept
       agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
   if (!io_event_loop) {
     log::Error("Failed to get IoEventLoopService").Log();
-    return;
+  } else {
+    if (auto res = io_event_loop.Unwrap().RemoveFd(fd); res.IsErr()) {
+      log::Error("Failed to remove fd from epoll").Data("fd", fd).Log();
+    }
   }
 
-  if (auto res = io_event_loop.Unwrap().RemoveFd(fd); res.IsErr()) {
-    log::Error("Failed to remove fd from epoll").Data("fd", fd).Log();
-    return;
-  }
+  agent.Invoke(EventSocketUnregister::kEvent,
+               Dict{}.Set(EventSocketUnregister::kFd, fd).Take());
 }
