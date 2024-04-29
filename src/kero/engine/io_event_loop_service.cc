@@ -120,12 +120,19 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     }
 
     const auto description = std::string_view{strerror(code)};
-    agent.Dispatch("socket_error",
-                   Dict{}.Set("fd", static_cast<int64_t>(event.data.fd)));
+    agent.Invoke(
+        EventSocketError::kEvent,
+        Dict{}
+            .Set(EventSocketError::kFd, static_cast<int64_t>(event.data.fd))
+            .Set(EventSocketError::kErrorCode, static_cast<int64_t>(code))
+            .Set(EventSocketError::kErrorDescription,
+                 std::string{description}));
   }
 
   if (event.events & EPOLLHUP) {
-    // TODO: propagate socket close event
+    agent.Invoke(
+        EventSocketClose::kEvent,
+        Dict{}.Set(EventSocketClose::kFd, static_cast<int64_t>(event.data.fd)));
 
     if (auto res = Fd::Close(event.data.fd); res.IsErr()) {
       return ResultT::Err(Error::From(res.TakeErr()));
@@ -133,7 +140,9 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLIN) {
-    // TODO: propagate socket read event
+    agent.Invoke(
+        EventSocketRead::kEvent,
+        Dict{}.Set(EventSocketRead::kFd, static_cast<int64_t>(event.data.fd)));
   }
 
   return ResultT::Ok(Void{});
@@ -141,7 +150,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
 
 auto
 kero::IoEventLoopService::AddFd(const Fd::Value fd,
-                                const AddOptions options) noexcept
+                                const AddOptions options) const noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
@@ -162,4 +171,94 @@ kero::IoEventLoopService::AddFd(const Fd::Value fd,
   }
 
   return ResultT::Ok(Void{});
+}
+
+auto
+kero::IoEventLoopService::RemoveFd(const Fd::Value fd) const noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  if (!Fd::IsValid(epoll_fd_)) {
+    return ResultT::Err(Error::From(kInvalidEpollFd));
+  }
+
+  if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, nullptr) == -1) {
+    return ResultT::Err(Error::From(
+        Errno::FromErrno()
+            .IntoDict()
+            .Set("message", std::string{"Failed to remove fd from epoll"})
+            .Set("fd", static_cast<int64_t>(fd))
+            .Take()));
+  }
+
+  return ResultT::Ok(Void{});
+}
+
+auto
+kero::IoEventLoopService::WriteToFd(const Fd::Value fd,
+                                    const std::string_view data) const noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  const auto data_size = data.size();
+  const auto data_ptr = data.data();
+  auto data_sent = 0;
+  while (data_sent < data_size) {
+    const auto sent = send(fd, data_ptr + data_sent, data_size - data_sent, 0);
+    if (sent == -1) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        continue;
+      }
+
+      return ResultT::Err(Error::From(
+          Errno::FromErrno()
+              .IntoDict()
+              .Set("message", std::string{"Failed to send data to fd"})
+              .Set("fd", static_cast<int64_t>(fd))
+              .Set("data", std::string{data_ptr, data_size})
+              .Take()));
+    }
+
+    data_sent += sent;
+  }
+
+  return ResultT::Ok(Void{});
+}
+
+auto
+kero::IoEventLoopService::ReadFromFd(Agent& agent,
+                                     const Fd::Value fd) const noexcept
+    -> Result<std::string> {
+  using ResultT = Result<std::string>;
+
+  std::string buffer(4096, '\0');
+  size_t total_read{0};
+  while (true) {
+    const auto read = recv(fd, buffer.data(), buffer.size(), 0);
+    if (read == -1) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        // TODO: log error
+        continue;
+      }
+
+      return ResultT::Err(Error::From(
+          Errno::FromErrno()
+              .IntoDict()
+              .Set("message", std::string{"Failed to read data from fd"})
+              .Set("fd", static_cast<int64_t>(fd))
+              .Take()));
+    }
+
+    if (read == 0) {
+      agent.Invoke(EventSocketClose::kEvent,
+                   Dict{}.Set(EventSocketClose::kFd, static_cast<int64_t>(fd)));
+      return ResultT::Err(
+          Error::From(kSocketClosed,
+                      Dict{}.Set("fd", static_cast<int64_t>(fd)).Take()));
+    }
+
+    total_read += read;
+  }
+
+  return ResultT::Ok(std::string{buffer.data(), total_read});
 }

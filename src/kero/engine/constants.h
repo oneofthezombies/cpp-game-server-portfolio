@@ -32,6 +32,23 @@ struct EventMailReceived {
   static constexpr auto kBody = "body";
 };
 
+struct EventSocketError {
+  static constexpr auto kEvent = "socket_error";
+  static constexpr auto kFd = "fd";
+  static constexpr auto kErrorCode = "error_code";
+  static constexpr auto kErrorDescription = "error_description";
+};
+
+struct EventSocketClose {
+  static constexpr auto kEvent = "socket_close";
+  static constexpr auto kFd = "fd";
+};
+
+struct EventSocketRead {
+  static constexpr auto kEvent = "socket_read";
+  static constexpr auto kFd = "fd";
+};
+
 }  // namespace kero
 
 #endif  // KERO_ENGINE_CONSTANTS_H

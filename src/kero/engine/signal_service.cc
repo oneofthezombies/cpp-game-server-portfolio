@@ -42,11 +42,11 @@ kero::SignalService::OnUpdate(Agent& agent) noexcept -> void {
     auto actor = agent.GetServiceAs<Actor>(ServiceKind::kActor);
     auto from = actor ? actor.Unwrap().GetName() : "unknown";
 
-    agent.Dispatch(EventMailToSend::kEvent,
-                   Dict{}
-                       .Set(EventMailToSend::kFrom, std::move(from))
-                       .Set(EventMailToSend::kTo, std::string{"all"})
-                       .Take());
+    agent.Invoke(EventMailToSend::kEvent,
+                 Dict{}
+                     .Set(EventMailToSend::kFrom, std::move(from))
+                     .Set(EventMailToSend::kTo, std::string{"all"})
+                     .Take());
 
     interrupted_ = false;
   }

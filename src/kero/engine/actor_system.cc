@@ -40,10 +40,10 @@ kero::Actor::OnUpdate(Agent &agent) noexcept -> void {
   }
 
   auto [from, to, body] = mail.TakeUnwrap();
-  agent.Dispatch(EventMailReceived::kEvent,
-                 body.Set(EventMailToSend::kFrom, std::string{from})
-                     .Set(EventMailReceived::kTo, std::string{to})
-                     .Take());
+  agent.Invoke(EventMailReceived::kEvent,
+               body.Set(EventMailToSend::kFrom, std::string{from})
+                   .Set(EventMailReceived::kTo, std::string{to})
+                   .Take());
 }
 
 auto

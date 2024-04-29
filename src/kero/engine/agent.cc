@@ -39,7 +39,7 @@ kero::Agent::Run() noexcept -> Result<Void> {
 }
 
 auto
-kero::Agent::Dispatch(const std::string& event, const Dict& data) noexcept
+kero::Agent::Invoke(const std::string& event, const Dict& data) noexcept
     -> void {
   auto it = events_.find(event);
   if (it == events_.end()) {

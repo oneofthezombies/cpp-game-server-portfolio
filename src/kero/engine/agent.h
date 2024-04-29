@@ -25,7 +25,7 @@ class Agent final {
   Run() noexcept -> Result<Void>;
 
   auto
-  Dispatch(const std::string& event, const Dict& data) noexcept -> void;
+  Invoke(const std::string& event, const Dict& data) noexcept -> void;
 
   template <typename T>
     requires std::is_base_of_v<Service, T>

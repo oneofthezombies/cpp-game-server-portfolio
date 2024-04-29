@@ -32,6 +32,30 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
+  if (!agent.SubscribeEvent(EventSocketError::kEvent, GetKind())) {
+    return ResultT::Err(Error::From(
+        Dict{}
+            .Set("message",
+                 std::string{"Failed to subscribe to socket error event"})
+            .Take()));
+  }
+
+  if (!agent.SubscribeEvent(EventSocketClose::kEvent, GetKind())) {
+    return ResultT::Err(Error::From(
+        Dict{}
+            .Set("message",
+                 std::string{"Failed to subscribe to socket close event"})
+            .Take()));
+  }
+
+  if (!agent.SubscribeEvent(EventSocketRead::kEvent, GetKind())) {
+    return ResultT::Err(Error::From(
+        Dict{}
+            .Set("message",
+                 std::string{"Failed to subscribe to socket read event"})
+            .Take()));
+  }
+
   const auto port = config.Unwrap().GetConfig().GetOrDefault("port", 0);
   if (port == 0) {
     return ResultT::Err(Error::From(
@@ -99,5 +123,52 @@ kero::TcpServerService::OnDestroy(Agent& agent) noexcept -> void {
 
   if (auto res = Fd::Close(server_fd_); res.IsErr()) {
     // TODO: log error
+  }
+}
+
+auto
+kero::TcpServerService::OnEvent(Agent& agent,
+                                const std::string& event,
+                                const Dict& data) noexcept -> void {
+  if (event == EventSocketError::kEvent) {
+    const auto fd = data.GetOrDefault(EventSocketError::kFd, -1);
+    if (fd == server_fd_) {
+      const auto error_code =
+          data.GetOrDefault(EventSocketError::kErrorCode, 0);
+      const auto error_description =
+          data.GetOrDefault(EventSocketError::kErrorDescription, std::string{});
+      // TODO: log error
+    }
+  } else if (event == EventSocketClose::kEvent) {
+    const auto fd = data.GetOrDefault(EventSocketClose::kFd, -1);
+    if (fd == server_fd_) {
+      // TODO: log error
+    }
+  } else if (event == EventSocketRead::kEvent) {
+    const auto fd = data.GetOrDefault(EventSocketRead::kFd, -1);
+    if (fd == server_fd_) {
+      auto io_event_loop =
+          agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
+      if (!io_event_loop) {
+        // TODO: log error
+        return;
+      }
+
+      struct sockaddr_in client_addr {};
+      socklen_t addrlen = sizeof(struct sockaddr_in);
+      auto client_fd =
+          accept(server_fd_, (struct sockaddr*)&client_addr, &addrlen);
+      if (!Fd::IsValid(client_fd)) {
+        // TODO: log error
+        return;
+      }
+
+      if (auto res = Fd::UpdateNonBlocking(client_fd); res.IsErr()) {
+        // TODO: log error
+        return;
+      }
+
+      // send mail or invoke event
+    }
   }
 }

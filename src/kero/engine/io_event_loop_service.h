@@ -10,7 +10,7 @@ namespace kero {
 
 class IoEventLoopService final : public Service {
  public:
-  enum : Error::Code { kInvalidEpollFd = 1 };
+  enum : Error::Code { kInvalidEpollFd = 1, kSocketClosed };
 
   struct AddOptions {
     bool in{false};
@@ -32,7 +32,19 @@ class IoEventLoopService final : public Service {
   OnUpdate(Agent& agent) noexcept -> void override;
 
   [[nodiscard]] auto
-  AddFd(const Fd::Value fd, const AddOptions options) noexcept -> Result<Void>;
+  AddFd(const Fd::Value fd, const AddOptions options) const noexcept
+      -> Result<Void>;
+
+  [[nodiscard]] auto
+  RemoveFd(const Fd::Value fd) const noexcept -> Result<Void>;
+
+  [[nodiscard]] auto
+  WriteToFd(const Fd::Value fd, const std::string_view data) const noexcept
+      -> Result<Void>;
+
+  [[nodiscard]] auto
+  ReadFromFd(Agent& agent, const Fd::Value fd) const noexcept
+      -> Result<std::string>;
 
  private:
   auto

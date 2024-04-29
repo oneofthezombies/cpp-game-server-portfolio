@@ -19,7 +19,8 @@ class TcpServerService final : public Service {
   OnDestroy(Agent& agent) noexcept -> void override;
 
   virtual auto
-  OnUpdate(Agent& agent) noexcept -> void override;
+  OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
+      -> void override;
 
  private:
   Fd::Value server_fd_{Fd::kUnspecifiedInitialValue};
