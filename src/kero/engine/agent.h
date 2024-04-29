@@ -79,6 +79,9 @@ class Agent final {
 
  private:
   auto
+  ResolveDependencies() noexcept -> Result<Void>;
+
+  auto
   CreateServices() noexcept -> Result<Void>;
 
   auto

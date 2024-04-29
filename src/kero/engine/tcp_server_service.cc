@@ -12,7 +12,8 @@
 using namespace kero;
 
 kero::TcpServerService::TcpServerService() noexcept
-    : Service{ServiceKind::kTcpServer} {}
+    : Service{ServiceKind::kTcpServer,
+              {ServiceKind::kConfig, ServiceKind::kIoEventLoop}} {}
 
 auto
 kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
@@ -41,10 +42,11 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  const auto port = config.Unwrap().GetConfig().GetOrDefault("port", 0);
+  const auto port =
+      config.Unwrap().GetConfig().GetOrDefault<uint16_t>("port", 0);
   if (port == 0) {
     return ResultT::Err(Error::From(
-        Dict{}.Set("message", std::string{"Port not found in config"}).Take()));
+        Dict{}.Set("message", std::string{"port not found in config"}).Take()));
   }
 
   auto server_fd = socket(AF_INET, SOCK_STREAM, 0);

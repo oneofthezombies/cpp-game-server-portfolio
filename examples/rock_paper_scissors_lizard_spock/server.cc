@@ -163,11 +163,15 @@
 //   return ResultT{std::move(config)};
 // }
 
+#include <memory>
+
 #include "kero/core/utils.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/agent.h"
 #include "kero/engine/config_service.h"
+#include "kero/engine/io_event_loop_service.h"
 #include "kero/engine/signal_service.h"
+#include "kero/engine/tcp_server_service.h"
 #include "kero/log/center.h"
 #include "kero/log/core.h"
 #include "kero/log/log_builder.h"
@@ -234,7 +238,22 @@ main(int argc, char** argv) -> int {
     return 1;
   }
 
+  if (!agent.AddService(std::make_unique<kero::IoEventLoopService>())) {
+    kero::log::Error("Agent failed to add io event loop service").Log();
+    return 1;
+  }
+
+  if (!agent.AddService(std::make_unique<kero::TcpServerService>())) {
+    kero::log::Error("Agent failed to add tcp server service").Log();
+    return 1;
+  }
+
   if (auto res = agent.Run(); res.IsErr()) {
+    if (res.Err().code == kero::Agent::kInterrupted) {
+      kero::log::Info("Agent interrupted").Log();
+      return 0;
+    }
+
     kero::log::Error("Agent failed to run").Data("error", res.TakeErr()).Log();
     return 1;
   }

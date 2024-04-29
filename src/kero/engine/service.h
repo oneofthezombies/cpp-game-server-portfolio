@@ -15,12 +15,15 @@ class Service {
  public:
   using Kind = int32_t;
 
-  explicit Service(const Kind kind) noexcept;
+  explicit Service(const Kind kind, std::vector<Kind>&& dependencies) noexcept;
   virtual ~Service() noexcept = default;
   CLASS_KIND_MOVABLE(Service);
 
   [[nodiscard]] auto
   GetKind() const noexcept -> Kind;
+
+  [[nodiscard]] auto
+  GetDependencies() const noexcept -> const std::vector<Kind>&;
 
   template <typename T>
     requires std::is_base_of_v<Service, T>
@@ -66,6 +69,7 @@ class Service {
       -> void;
 
  private:
+  std::vector<Kind> dependencies_;
   Kind kind_;
 };
 

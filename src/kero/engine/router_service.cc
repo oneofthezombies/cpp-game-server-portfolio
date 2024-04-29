@@ -8,7 +8,9 @@
 
 using namespace kero;
 
-kero::RouterService::RouterService() noexcept : Service{ServiceKind::kRouter} {}
+kero::RouterService::RouterService() noexcept
+    : Service{ServiceKind::kRouter,
+              {ServiceKind::kActor, ServiceKind::kConfig}} {}
 
 auto
 kero::RouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {

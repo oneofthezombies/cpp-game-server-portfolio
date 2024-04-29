@@ -27,7 +27,7 @@ kero::MailBox::MailBox(spsc::Tx<Mail> &&tx, spsc::Rx<Mail> &&rx) noexcept
 
 kero::ActorService::ActorService(std::string &&name,
                                  MailBox &&mail_box) noexcept
-    : Service{ServiceKind::kActor},
+    : Service{ServiceKind::kActor, {}},
       mail_box_{std::move(mail_box)},
       name_{std::move(name)} {}
 
@@ -187,10 +187,6 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
         // broadcast
         if (to == "all") {
           for (auto &[name, other_mail_box] : self->mail_boxes_) {
-            if (name == from) {
-              continue;
-            }
-
             other_mail_box.tx.Send(Mail{std::string{from},
                                         std::string{name},
                                         std::string{event},

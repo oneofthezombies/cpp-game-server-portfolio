@@ -10,7 +10,8 @@
 
 using namespace kero;
 
-kero::SignalService::SignalService() noexcept : Service{ServiceKind::kSignal} {}
+kero::SignalService::SignalService() noexcept
+    : Service{ServiceKind::kSignal, {ServiceKind::kActor}} {}
 
 auto
 kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
@@ -68,4 +69,5 @@ kero::SignalService::OnSignal(int signal) noexcept -> void {
   if (signal == SIGINT) {
     interrupted_ = true;
   }
+  log::Debug("Signal received").Data("signal", signal).Log();
 }

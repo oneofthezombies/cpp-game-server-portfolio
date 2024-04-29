@@ -8,7 +8,7 @@
       "type": "lldb",
       "request": "launch",
       "name": "Debug Server",
-      "program": "${workspaceFolder}/build/src/server/server",
+      "program": "${workspaceFolder}/build/examples/rock_paper_scissors_lizard_spock/server",
       "args": ["--port", "8000"],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "Build"

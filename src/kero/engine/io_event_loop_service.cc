@@ -37,7 +37,7 @@ AddOptionsToEpollEvents(
 }  // namespace
 
 kero::IoEventLoopService::IoEventLoopService() noexcept
-    : Service{ServiceKind::kIoEventLoop} {}
+    : Service{ServiceKind::kIoEventLoop, {}} {}
 
 auto
 kero::IoEventLoopService::OnCreate(Agent& agent) noexcept -> Result<Void> {

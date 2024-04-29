@@ -35,10 +35,13 @@ kero::Dict::Warn(std::string&& message,
 auto
 kero::operator<<(std::ostream& os, const Dict& dict) -> std::ostream& {
   os << "{";
-  for (const auto& [key, value] : dict.data_) {
-    os << key << ": ";
-    std::visit([&os](const auto& value) { os << value; }, value);
-    os << ", ";
+  for (auto it = dict.data_.begin(); it != dict.data_.end(); ++it) {
+    os << it->first << ": ";
+    std::visit([&os](const auto& value) { os << value; }, it->second);
+
+    if (std::next(it) != dict.data_.end()) {
+      os << ", ";
+    }
   }
   os << "}";
   return os;

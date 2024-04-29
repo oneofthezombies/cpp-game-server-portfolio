@@ -1,5 +1,7 @@
 #include "agent.h"
 
+#include <unordered_map>
+
 #include "kero/engine/constants.h"
 #include "kero/engine/service.h"
 #include "kero/engine/signal_service.h"
@@ -11,8 +13,11 @@ auto
 kero::Agent::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  auto res = CreateServices();
-  if (res.IsErr()) {
+  if (auto res = ResolveDependencies(); res.IsErr()) {
+    return ResultT::Err(Error::From(res.TakeErr()));
+  }
+
+  if (auto res = CreateServices(); res.IsErr()) {
     return ResultT::Err(Error::From(res.TakeErr()));
   }
 
@@ -25,7 +30,7 @@ kero::Agent::Run() noexcept -> Result<Void> {
   }
 
   auto is_interrupted = false;
-  while (true) {
+  while (!is_interrupted) {
     if (signal) {
       is_interrupted = signal.Unwrap().IsInterrupted();
     }
@@ -120,16 +125,159 @@ kero::Agent::HasService(const Service::Kind service_kind) const noexcept
 }
 
 auto
+kero::Agent::ResolveDependencies() noexcept -> Result<Void> {
+  using ResultT = Result<Void>;
+
+  // Log dependencies.
+  for (auto& [_, service] : services_) {
+    log::Debug("Resolving dependencies")
+        .Data("service", service->GetKind())
+        .Data("dependencies", service->GetDependencies())
+        .Log();
+  }
+
+  // Check dependencies are exist.
+  {
+    std::vector<
+        std::pair<Service::Kind /* service */, Service::Kind /* dependency */>>
+        not_founds;
+    for (auto& [_, service] : services_) {
+      for (const auto dependency : service->GetDependencies()) {
+        if (!HasService(dependency)) {
+          not_founds.emplace_back(service->GetKind(), dependency);
+        }
+      }
+    }
+
+    if (!not_founds.empty()) {
+      std::string not_founds_str;
+      for (auto it = not_founds.begin(); it != not_founds.end(); ++it) {
+        not_founds_str +=
+            std::to_string(it->first) + " -> " + std::to_string(it->second);
+        if (std::next(it) != not_founds.end()) {
+          not_founds_str += ", ";
+        }
+      }
+
+      return ResultT::Err(Error::From(
+          Dict{}
+              .Set("message", std::string{"Failed to resolve dependencies."})
+              .Set("not_founds", std::move(not_founds_str))
+              .Take()));
+    }
+  }
+
+  // Check circular dependencies.
+  {
+    std::unordered_map<Service::Kind, bool> visited;
+    for (auto& [_, service] : services_) {
+      visited[service->GetKind()] = false;
+    }
+
+    std::vector<Service::Kind> stack;
+
+    std::function<Result<Void>(Service::Kind,
+                               std::unordered_map<Service::Kind, bool>&,
+                               std::vector<Service::Kind>&)>
+        dfs = [&](Service::Kind service_kind,
+                  std::unordered_map<Service::Kind, bool>& visited,
+                  std::vector<Service::Kind>& stack) -> Result<Void> {
+      if (visited[service_kind]) {
+        return ResultT::Ok(Void{});
+      }
+
+      visited[service_kind] = true;
+      stack.push_back(service_kind);
+
+      const auto dependencies =
+          GetService(service_kind).Unwrap().GetDependencies();
+      for (const auto dependency : dependencies) {
+        if (!visited[dependency]) {
+          if (auto res = dfs(dependency, visited, stack); res.IsErr()) {
+            return ResultT::Err(Error::From(res.TakeErr()));
+          }
+        } else {
+          if (auto found = std::find(stack.begin(), stack.end(), dependency);
+              found != stack.end()) {
+            std::string circular_dependencies;
+            for (auto it = std::next(found); it != stack.end(); ++it) {
+              circular_dependencies += std::to_string(*it);
+              if (std::next(it) != stack.end()) {
+                circular_dependencies += " -> ";
+              }
+            }
+
+            return ResultT::Err(Error::From(
+                Dict{}
+                    .Set("message", std::string{"Circular dependencies found."})
+                    .Set("circular_dependencies",
+                         std::move(circular_dependencies))
+                    .Take()));
+          }
+        }
+      }
+
+      stack.pop_back();
+      return ResultT::Ok(Void{});
+    };
+
+    for (auto& [_, service] : services_) {
+      if (!visited[service->GetKind()]) {
+        if (auto res = dfs(service->GetKind(), visited, stack); res.IsErr()) {
+          return ResultT::Err(Error::From(res.TakeErr()));
+        }
+      }
+    }
+  }
+
+  return ResultT::Ok(Void{});
+}
+
+auto
 kero::Agent::CreateServices() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
+  std::unordered_map<Service::Kind, bool> created;
   for (auto& [_, service] : services_) {
-    auto res = service->OnCreate(*this);
-    if (res.IsErr()) {
+    created[service->GetKind()] = false;
+  }
+
+  std::function<Result<Void>(Service::Kind,
+                             std::unordered_map<Service::Kind, bool>&)>
+      dfs = [&](Service::Kind service_kind,
+                std::unordered_map<Service::Kind, bool>& created)
+      -> Result<Void> {
+    if (created[service_kind]) {
+      return ResultT::Ok(Void{});
+    }
+
+    const auto dependencies =
+        GetService(service_kind).Unwrap().GetDependencies();
+    for (const auto dependency : dependencies) {
+      if (!created[dependency]) {
+        if (auto res = dfs(dependency, created); res.IsErr()) {
+          return ResultT::Err(Error::From(res.TakeErr()));
+        }
+      }
+    }
+
+    log::Debug("Creating service").Data("service", service_kind).Log();
+    if (auto res = GetService(service_kind).Unwrap().OnCreate(*this);
+        res.IsErr()) {
+      return ResultT::Err(Error::From(res.TakeErr()));
+    }
+
+    created[service_kind] = true;
+    return ResultT::Ok(Void{});
+  };
+
+  for (auto& [_, service] : services_) {
+    if (auto res = dfs(service->GetKind(), created); res.IsErr()) {
       return ResultT::Err(Error::From(res.TakeErr()));
     }
   }
 
+  log::Debug("All services created").Log();
   return ResultT::Ok(Void{});
 }
 

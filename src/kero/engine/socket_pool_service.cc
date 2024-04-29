@@ -8,7 +8,7 @@
 using namespace kero;
 
 kero::SocketPoolService::SocketPoolService() noexcept
-    : Service{ServiceKind::kSocket} {}
+    : Service{ServiceKind::kSocket, {ServiceKind::kIoEventLoop}} {}
 
 auto
 kero::SocketPoolService::OnCreate(Agent& agent) noexcept -> Result<Void> {

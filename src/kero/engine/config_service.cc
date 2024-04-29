@@ -3,15 +3,18 @@
 #include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
 #include "kero/engine/constants.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
 
 kero::ConfigService::ConfigService(Dict&& config) noexcept
-    : Service{ServiceKind::kConfig}, config_{std::move(config)} {}
+    : Service{ServiceKind::kConfig, {}}, config_{std::move(config)} {}
 
 auto
 kero::ConfigService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
+
+  log::Debug("ConfigService created").Data("config", config_).Log();
 
   return ResultT::Ok(Void{});
 }
@@ -71,6 +74,8 @@ kero::ConfigService::FromArgs(int argc, char** argv) noexcept
           Error::From(kUnknownArgument,
                       Dict{}.Set("token", std::string{token}).Take()));
     }
+
+    scanner.Eat();
   }
 
   return ServicePtr{new ConfigService{std::move(config)}};
