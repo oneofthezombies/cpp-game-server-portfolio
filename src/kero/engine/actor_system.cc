@@ -1,6 +1,7 @@
 #include "actor_system.h"
 
 #include "kero/engine/constants.h"
+#include "kero/log/log_builder.h"
 #include "kero/service/actor_service.h"
 
 using namespace kero;
@@ -137,6 +138,11 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
         // unicast
         auto it = self->mail_boxes_.find(to);
         if (it == self->mail_boxes_.end()) {
+          log::Warn("Failed to find mail box")
+              .Data("from", from)
+              .Data("to", to)
+              .Data("event", event)
+              .Log();
           continue;
         }
 

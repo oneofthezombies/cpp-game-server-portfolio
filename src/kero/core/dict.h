@@ -60,11 +60,6 @@ class Dict final {
                const std::string& default_value) const noexcept
       -> const std::string&;
 
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const std::string_view default_value) const noexcept
-      -> const std::string&;
-
   template <typename T>
     requires IsDictValueType<T>
   [[nodiscard]] auto
@@ -174,6 +169,9 @@ class Dict final {
   Set(std::string&& key, const double value) noexcept -> Self&;
 
   [[nodiscard]] auto
+  Set(std::string&& key, const char* value) noexcept -> Self&;
+
+  [[nodiscard]] auto
   Set(std::string&& key, const std::string_view value) noexcept -> Self&;
 
   [[nodiscard]] auto
@@ -193,6 +191,9 @@ class Dict final {
 
   [[nodiscard]] auto
   TrySet(std::string&& key, double value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  TrySet(std::string&& key, const char* value) noexcept -> bool;
 
   [[nodiscard]] auto
   TrySet(std::string&& key, const std::string_view value) noexcept -> bool;

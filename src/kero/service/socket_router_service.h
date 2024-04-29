@@ -6,6 +6,7 @@
 namespace kero {
 
 class SocketRouterService final : public Service {
+ public:
   explicit SocketRouterService() noexcept;
   virtual ~SocketRouterService() noexcept override = default;
   CLASS_KIND_MOVABLE(SocketRouterService);

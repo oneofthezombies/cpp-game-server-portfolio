@@ -10,6 +10,7 @@
 #include "kero/service/io_event_loop_service.h"
 #include "kero/service/signal_service.h"
 #include "kero/service/socket_pool_service.h"
+#include "kero/service/socket_router_service.h"
 #include "kero/service/tcp_server_service.h"
 #include "lobby_service.cc"
 
@@ -61,7 +62,11 @@ main(int argc, char** argv) -> int {
       return 1;
     }
 
-    if (auto res = main_agent.AddService(config_res.TakeOk()); !res) {
+    auto config = config_res.TakeOk();
+    (void)static_cast<kero::ConfigService*>(config.get())
+        ->GetConfig()
+        .Set("target_actor", "lobby");
+    if (auto res = main_agent.AddService(std::move(config)); !res) {
       kero::log::Error("Agent failed to add config service").Log();
       return 1;
     }
@@ -80,6 +85,11 @@ main(int argc, char** argv) -> int {
 
   if (!main_agent.AddService(std::make_unique<kero::IoEventLoopService>())) {
     kero::log::Error("Agent failed to add io event loop service").Log();
+    return 1;
+  }
+
+  if (!main_agent.AddService(std::make_unique<kero::SocketRouterService>())) {
+    kero::log::Error("Agent failed to add socket router service").Log();
     return 1;
   }
 

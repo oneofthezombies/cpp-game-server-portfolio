@@ -28,13 +28,6 @@ kero::Dict::GetOrDefault(const std::string& key,
 }
 
 auto
-kero::Dict::GetOrDefault(const std::string& key,
-                         const std::string_view default_value) const noexcept
-    -> const std::string& {
-  return GetOrDefault<std::string>(key, std::string{default_value});
-}
-
-auto
 kero::Dict::TryGetAsBool(const std::string& key) const noexcept
     -> OptionRef<const bool&> {
   return TryGet<bool>(key);
@@ -104,6 +97,11 @@ kero::Dict::Set(std::string&& key, double value) noexcept -> Self& {
 }
 
 auto
+kero::Dict::Set(std::string&& key, const char* value) noexcept -> Self& {
+  return Set<std::string>(std::move(key), std::string{value});
+}
+
+auto
 kero::Dict::Set(std::string&& key, const std::string_view value) noexcept
     -> Self& {
   return Set<std::string>(std::move(key), std::string{value});
@@ -122,6 +120,11 @@ kero::Dict::TrySet(std::string&& key, bool value) noexcept -> bool {
 auto
 kero::Dict::TrySet(std::string&& key, double value) noexcept -> bool {
   return TrySet<double>(std::move(key), std::move(value));
+}
+
+auto
+kero::Dict::TrySet(std::string&& key, const char* value) noexcept -> bool {
+  return TrySet<std::string>(std::move(key), std::string{value});
 }
 
 auto

@@ -18,7 +18,7 @@
       "request": "launch",
       "name": "Debug Client Without Build",
       "program": "${workspaceFolder}/build/examples/rock_paper_scissors_lizard_spock/client",
-      "args": [],
+      "args": ["--ip", "127.0.0.1", "--port", "8000"],
       "cwd": "${workspaceFolder}"
     },
     {

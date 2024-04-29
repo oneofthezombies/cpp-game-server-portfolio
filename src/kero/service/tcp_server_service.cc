@@ -98,6 +98,7 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
     return ResultT::Err(Error::From(res.TakeErr()));
   }
 
+  server_fd_ = server_fd;
   return ResultT::Ok(Void{});
 }
 

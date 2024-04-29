@@ -76,6 +76,7 @@ ParseArgs(int argc, char **argv) noexcept -> Result<Config> {
 
       config.ip = next.Unwrap();
       scanner.Eat();
+      scanner.Eat();
       continue;
     }
 
@@ -94,6 +95,7 @@ ParseArgs(int argc, char **argv) noexcept -> Result<Config> {
       }
 
       config.port = result.Ok();
+      scanner.Eat();
       scanner.Eat();
       continue;
     }
@@ -120,8 +122,8 @@ main(int argc, char **argv) noexcept -> int {
   if (options_res.IsErr()) {
     const auto &error = options_res.Err();
     if (error.code == kHelpRequested) {
-      std::cout << "Usage: client [--ip <ip>] [--port <port>] [--room-id "
-                   "<room_id>]";
+      std::cout
+          << "Usage: client [--ip <ip>] [--port <port>] [--room-id <room_id>]";
     } else if (error.code == kIpArgNotFound) {
       std::cout << "Error: --ip argument not found";
     } else if (error.code == kIpValueNotFound) {
