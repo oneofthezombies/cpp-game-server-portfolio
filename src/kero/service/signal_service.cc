@@ -19,11 +19,6 @@ kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
 
   interrupted_ = false;
 
-  if (!agent.HasServiceIs<ActorService>(ServiceKind::kActor)) {
-    return ResultT::Err(Error::From(
-        Dict{}.Set("message", std::string{"ActorService not found"}).Take()));
-  }
-
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
     return ResultT::Err(Error::From(Errno::FromErrno().IntoDict()));
   }

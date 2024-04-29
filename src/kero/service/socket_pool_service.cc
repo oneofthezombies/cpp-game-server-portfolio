@@ -30,13 +30,6 @@ kero::SocketPoolService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  if (!agent.HasServiceIs<IoEventLoopService>(ServiceKind::kIoEventLoop)) {
-    return ResultT::Err(Error::From(
-        Dict{}
-            .Set("message", std::string{"IoEventLoopService not found"})
-            .Take()));
-  }
-
   return ResultT::Ok(Void{});
 }
 

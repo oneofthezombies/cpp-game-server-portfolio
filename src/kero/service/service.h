@@ -14,8 +14,9 @@ class Agent;
 class Service {
  public:
   using Kind = int32_t;
+  using Dependencies = std::vector<Kind>;
 
-  explicit Service(const Kind kind, std::vector<Kind>&& dependencies) noexcept;
+  explicit Service(const Kind kind, Dependencies&& dependencies) noexcept;
   virtual ~Service() noexcept = default;
   CLASS_KIND_MOVABLE(Service);
 
@@ -23,7 +24,7 @@ class Service {
   GetKind() const noexcept -> Kind;
 
   [[nodiscard]] auto
-  GetDependencies() const noexcept -> const std::vector<Kind>&;
+  GetDependencies() const noexcept -> const Dependencies&;
 
   template <typename T>
     requires std::is_base_of_v<Service, T>

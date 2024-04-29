@@ -23,11 +23,6 @@ kero::SocketRouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  if (!agent.HasServiceIs<ActorService>(ServiceKind::kActor)) {
-    return ResultT::Err(Error::From(
-        Dict{}.Set("message", std::string{"ActorService not found"}).Take()));
-  }
-
   auto config = agent.GetServiceAs<ConfigService>(ServiceKind::kConfig);
   if (!config) {
     return ResultT::Err(Error::From(
