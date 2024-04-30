@@ -1,20 +1,18 @@
 #include "service.h"
 
+#include "kero/engine/runner.h"
+
 using namespace kero;
 
-kero::Service::Service(const Kind kind,
-                       Dependencies&& dependencies,
-                       Subscriptions&& subscriptions) noexcept
-    : kind_{kind},
-      dependencies_{std::move(dependencies)},
-      subscriptions_{std::move(subscriptions)} {}
-
-kero::Service::~Service() noexcept {
-  // unregister all subscriptions
-}
+kero::Service::Service(const Pin<RunnerContext> runner_context,
+                       Kind&& kind,
+                       Dependencies&& dependencies) noexcept
+    : runner_context_(runner_context),
+      kind_(std::move(kind)),
+      dependencies_(std::move(dependencies)) {}
 
 auto
-kero::Service::GetKind() const noexcept -> Kind {
+kero::Service::GetKind() const noexcept -> const Kind& {
   return kind_;
 }
 
@@ -24,24 +22,48 @@ kero::Service::GetDependencies() const noexcept -> const Dependencies& {
 }
 
 auto
-kero::Service::OnCreate(Agent& agent) noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
-  return ResultT::Ok(Void{});
+kero::Service::Is(const Kind::Id kind_id) const noexcept -> bool {
+  return kind_.id == kind_id;
 }
 
 auto
-kero::Service::OnDestroy(Agent& agent) noexcept -> void {
+kero::Service::Is(const Kind::Name& kind_name) const noexcept -> bool {
+  return kind_.name == kind_name;
+}
+
+auto
+kero::Service::SubscribeEvent(const std::string& event) -> Result<Void> {
+  return runner_context_->SubscribeEvent(event, kind_);
+}
+
+auto
+kero::Service::UnsubscribeEvent(const std::string& event) -> Result<Void> {
+  return runner_context_->UnsubscribeEvent(event, kind_);
+}
+
+auto
+kero::Service::InvokeEvent(const std::string& event, const Dict& data) noexcept
+    -> void {
+  runner_context_->InvokeEvent(event, data);
+}
+
+auto
+kero::Service::OnCreate() noexcept -> Result<Void> {
+  return Result<Void>::Ok(Void{});
+}
+
+auto
+kero::Service::OnDestroy() noexcept -> void {
   // noop
 }
 
 auto
-kero::Service::OnUpdate(Agent& agent) noexcept -> void {
+kero::Service::OnUpdate() noexcept -> void {
   // noop
 }
 
 auto
-kero::Service::OnEvent(Agent& agent,
-                       const std::string& event,
-                       const Dict& data) noexcept -> void {
+kero::Service::OnEvent(const std::string& event, const Dict& data) noexcept
+    -> void {
   // noop
 }

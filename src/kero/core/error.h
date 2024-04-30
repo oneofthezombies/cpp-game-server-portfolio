@@ -60,12 +60,12 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(Dict &&details,
+  From(const Code code,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(const Code code,
+  From(Dict &&details,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 

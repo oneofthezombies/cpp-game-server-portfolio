@@ -75,6 +75,67 @@ class Result {
     return Result<T>::From(std::forward<Error>(error));
   }
 
+  static auto
+  Err(const Error::Code code,
+      Dict&& details,
+      Error&& cause,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(Error::From(code,
+                                       std::move(details),
+                                       std::move(cause),
+                                       std::move(location)));
+  }
+
+  static auto
+  Err(const Error::Code code,
+      Dict&& details,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(
+        Error::From(code, std::move(details), std::move(location)));
+  }
+
+  static auto
+  Err(const Error::Code code,
+      Error&& cause,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(
+        Error::From(code, std::move(cause), std::move(location)));
+  }
+
+  static auto
+  Err(Dict&& details,
+      Error&& cause,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(
+        Error::From(std::move(details), std::move(cause), std::move(location)));
+  }
+
+  static auto
+  Err(const Error::Code code,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(Error::From(code, std::move(location)));
+  }
+
+  static auto
+  Err(Dict&& details,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(
+        Error::From(std::move(details), std::move(location)));
+  }
+
+  static auto
+  Err(Error&& cause,
+      std::source_location&& location =
+          std::source_location::current()) noexcept -> Result<T> {
+    return Result<T>::From(Error::From(std::move(cause), std::move(location)));
+  }
+
  private:
   std::variant<std::monostate, T, Error> data_;
 };

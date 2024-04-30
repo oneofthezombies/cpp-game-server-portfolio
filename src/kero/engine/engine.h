@@ -14,9 +14,6 @@ class Context {
   ~Context() noexcept;
   CLASS_KIND_PINNABLE(Context);
 
-  auto
-  InvokeEvent(const std::string& event, const Dict& data) noexcept -> void;
-
  private:
 };
 

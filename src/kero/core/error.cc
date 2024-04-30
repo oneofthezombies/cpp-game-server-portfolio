@@ -55,15 +55,15 @@ kero::Error::From(Dict &&details,
 }
 
 auto
-kero::Error::From(Dict &&details, std::source_location &&location) noexcept
-    -> Error {
-  return Error{kFailed, std::move(details), std::move(location), nullptr};
-}
-
-auto
 kero::Error::From(const Code code, std::source_location &&location) noexcept
     -> Error {
   return Error{code, Dict{}, std::move(location), nullptr};
+}
+
+auto
+kero::Error::From(Dict &&details, std::source_location &&location) noexcept
+    -> Error {
+  return Error{kFailed, std::move(details), std::move(location), nullptr};
 }
 
 auto
