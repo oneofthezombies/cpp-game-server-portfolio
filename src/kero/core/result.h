@@ -15,6 +15,11 @@ class Result {
   ~Result() noexcept = default;
   CLASS_KIND_MOVABLE(Result);
 
+  explicit
+  operator bool() const noexcept {
+    return IsOk();
+  }
+
   [[nodiscard]] auto
   IsOk() const noexcept -> bool {
     return std::holds_alternative<T>(data_);
