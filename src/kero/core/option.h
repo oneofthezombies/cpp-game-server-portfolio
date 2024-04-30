@@ -20,7 +20,7 @@ class OptionRef final {
 
   OptionRef(T& data) noexcept
     requires std::is_lvalue_reference_v<T>
-      : data_{Ref(data)} {}
+      : data_{Wrapper(data)} {}
 
   ~OptionRef() noexcept = default;
   CLASS_KIND_PINNABLE(OptionRef);
@@ -32,7 +32,7 @@ class OptionRef final {
 
   [[nodiscard]] auto
   IsSome() const noexcept -> bool {
-    return std::holds_alternative<Ref>(data_);
+    return std::holds_alternative<Wrapper>(data_);
   }
 
   [[nodiscard]] auto
@@ -45,7 +45,7 @@ class OptionRef final {
    */
   [[nodiscard]] auto
   Unwrap() const noexcept -> const T& {
-    return std::get<Ref>(data_).get();
+    return std::get<Wrapper>(data_).get();
   }
 
   /**
@@ -53,13 +53,13 @@ class OptionRef final {
    */
   [[nodiscard]] auto
   Unwrap() noexcept -> T& {
-    return std::get<Ref>(data_).get();
+    return std::get<Wrapper>(data_).get();
   }
 
  private:
-  using Ref = std::reference_wrapper<std::remove_reference_t<T>>;
+  using Wrapper = std::reference_wrapper<std::remove_reference_t<T>>;
 
-  std::variant<std::monostate, Ref> data_;
+  std::variant<std::monostate, Wrapper> data_;
 };
 
 template <typename T>
