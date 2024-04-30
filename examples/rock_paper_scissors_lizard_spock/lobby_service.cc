@@ -78,13 +78,20 @@ class LobbyService final : public kero::Service {
                                         kero::ServiceKind::kIoEventLoop)
                                     .Unwrap();
 
-    const auto data_to_send = kero::TinyJson::Stringify(
+    auto stringified = kero::TinyJson::Stringify(
         kero::Dict{}
             .Set("kind", "connect")
             .Set("socket_id", std::to_string(fd.Unwrap()))
             .Take());
+    if (stringified.IsErr()) {
+      kero::log::Error("Failed to stringify connect message")
+          .Data("error", stringified.TakeErr())
+          .Log();
+      return;
+    }
+
     if (auto res = io_event_loop.WriteToFd(static_cast<int>(fd.Unwrap()),
-                                           data_to_send);
+                                           stringified.TakeOk());
         res.IsErr()) {
       kero::log::Error("Failed to send connect message to socket")
           .Data("fd", fd.Unwrap())

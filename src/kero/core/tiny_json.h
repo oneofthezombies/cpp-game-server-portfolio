@@ -28,7 +28,7 @@ class TinyJson final {
       -> Result<Dict>;
 
   [[nodiscard]] static auto
-  Stringify(const Dict &dict) noexcept -> std::string;
+  Stringify(const Dict &dict) noexcept -> Result<std::string>;
 
  private:
   [[nodiscard]] auto

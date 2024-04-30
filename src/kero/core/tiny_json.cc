@@ -1,63 +1,75 @@
 #include "tiny_json.h"
 
+#include <variant>
+
+#include "kero/log/log_builder.h"
+
 using namespace kero;
 
 auto
-kero::TinyJson::Stringify(const Dict &dict) noexcept -> std::string {
+kero::TinyJson::Stringify(const Dict &dict) noexcept -> Result<std::string> {
+  using ResultT = Result<std::string>;
+
   std::string str;
   str += "{";
 
   for (auto it = dict.AsRaw().begin(); it != dict.AsRaw().end(); ++it) {
-    str += "\"";
-    str += it->first;
-    str += "\": ";
+    const auto &key = it->first;
+    const auto &value = it->second;
 
-    std::visit(
-        [&str](const auto &value) {
-          if constexpr (std::is_same_v<decltype(value), bool>) {
-            str += value ? "true" : "false";
-          } else if constexpr (std::is_same_v<decltype(value), double>) {
-            str += std::to_string(value);
-          } else if constexpr (std::is_same_v<decltype(value), std::string>) {
-            str += "\"";
-            for (const auto c : value) {
-              switch (c) {
-                case '"':
-                  str += "\\\"";
-                  break;
-                case '\\':
-                  str += "\\\\";
-                  break;
-                case '/':
-                  str += "\\/";
-                  break;
-                case '\b':
-                  str += "\\b";
-                  break;
-                case '\f':
-                  str += "\\f";
-                  break;
-                case '\n':
-                  str += "\\n";
-                  break;
-                case '\r':
-                  str += "\\r";
-                  break;
-                case '\t':
-                  str += "\\t";
-                  break;
-                default:
-                  str += c;
-                  break;
-              }
-            }
-            str += "\"";
-          }
-        },
-        it->second);
+    str += "\"";
+    str += key;
+    str += "\":";
+
+    if (std::holds_alternative<bool>(value)) {
+      str += std::get<bool>(value) ? "true" : "false";
+    } else if (std::holds_alternative<double>(value)) {
+      str += std::to_string(std::get<double>(value));
+    } else if (std::holds_alternative<std::string>(value)) {
+      const auto data = std::get<std::string>(value);
+      str += "\"";
+      for (const auto c : data) {
+        switch (c) {
+          case '"':
+            str += "\\\"";
+            break;
+          case '\\':
+            str += "\\\\";
+            break;
+          case '/':
+            str += "\\/";
+            break;
+          case '\b':
+            str += "\\b";
+            break;
+          case '\f':
+            str += "\\f";
+            break;
+          case '\n':
+            str += "\\n";
+            break;
+          case '\r':
+            str += "\\r";
+            break;
+          case '\t':
+            str += "\\t";
+            break;
+          default:
+            str += c;
+            break;
+        }
+      }
+      str += "\"";
+    } else {
+      return ResultT::Err(Error::From(Dict{}
+                                          .Set("kind", "stringify")
+                                          .Set("message", "unsupported value")
+                                          .Set("key", key)
+                                          .Take()));
+    }
 
     if (std::next(it) != dict.AsRaw().end()) {
-      str += ", ";
+      str += ",";
     }
   }
 

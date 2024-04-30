@@ -57,13 +57,13 @@ kero::ActorSystem::CreateActorService(std::string &&name) noexcept
   if (mail_boxes_.find(name) != mail_boxes_.end()) {
     return Result<ActorServicePtr>{
         Error::From(kMailBoxNameAlreadyExists,
-                    Dict{}.Set("name", std::string{name}).Take())};
+                    Dict{}.Set("name", name).Take())};
   }
 
   auto [from_actor_tx, to_system_rx] = spsc::Channel<Mail>::Builder{}.Build();
   auto [from_system_tx, to_actor_rx] = spsc::Channel<Mail>::Builder{}.Build();
 
-  mail_boxes_.try_emplace(std::move(name),
+  mail_boxes_.try_emplace(name,
                           MailBox{spsc::Tx<Mail>{std::move(from_system_tx)},
                                   spsc::Rx<Mail>{std::move(to_system_rx)}});
 

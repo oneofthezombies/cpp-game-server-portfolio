@@ -103,6 +103,11 @@ main(int argc, char** argv) -> int {
       return 1;
     }
 
+    if (!lobby_agent.AddService(lobby_res.TakeOk())) {
+      kero::log::Error("Agent failed to add lobby actor service").Log();
+      return 1;
+    }
+
     if (!lobby_agent.AddService(std::make_unique<kero::IoEventLoopService>())) {
       kero::log::Error("Agent failed to add io event loop service").Log();
       return 1;
@@ -126,6 +131,11 @@ main(int argc, char** argv) -> int {
       kero::log::Error("Actor system failed to create battle actor service")
           .Data("error", battle_res.TakeErr())
           .Log();
+      return 1;
+    }
+
+    if (!battle_agent.AddService(battle_res.TakeOk())) {
+      kero::log::Error("Agent failed to add battle actor service").Log();
       return 1;
     }
 

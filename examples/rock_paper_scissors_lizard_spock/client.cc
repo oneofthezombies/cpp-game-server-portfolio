@@ -191,7 +191,7 @@ main(int argc, char **argv) noexcept -> int {
     }
 
     if (kind.Unwrap() == "connect") {
-      const auto socket_id = message.Ok().TryGet<double>("socket_id");
+      const auto socket_id = message.Ok().TryGetAsString("socket_id");
       if (!socket_id) {
         std::cout << "Failed to get the socket id." << std::endl;
         return 1;
@@ -200,14 +200,14 @@ main(int argc, char **argv) noexcept -> int {
       std::cout << "Connected to the server with socket id: "
                 << socket_id.Unwrap() << std::endl;
     } else if (kind.Unwrap() == "battle_start") {
-      const auto battle_id = message.Ok().TryGet<double>("battle_id");
+      const auto battle_id = message.Ok().TryGetAsString("battle_id");
       if (!battle_id) {
         std::cout << "Failed to get the battle id." << std::endl;
         return 1;
       }
 
       const auto opponent_socket_id =
-          message.Ok().TryGet<double>("opponent_socket_id");
+          message.Ok().TryGetAsString("opponent_socket_id");
       if (!opponent_socket_id) {
         std::cout << "Failed to get the opponent socket id." << std::endl;
         return 1;
@@ -233,11 +233,17 @@ main(int argc, char **argv) noexcept -> int {
         valid_move = true;
       }
 
-      const auto data =
+      auto stringified =
           kero::TinyJson::Stringify(kero::Dict{}
                                         .Set("kind", std::string{"battle_move"})
                                         .Set("move", std::move(move))
                                         .Take());
+      if (stringified.IsErr()) {
+        std::cout << "Failed to stringify the move." << std::endl;
+        return 1;
+      }
+
+      const auto data = stringified.TakeOk();
       auto count = write(sock, data.data(), data.size());
       if (count == -1) {
         std::cerr << "Failed to send the move to the server." << std::endl;
@@ -247,7 +253,7 @@ main(int argc, char **argv) noexcept -> int {
       std::cout << "Move sent to the server. Waiting for the opponent's move."
                 << std::endl;
     } else if ("battle_result") {
-      const auto result = message.Ok().TryGet<std::string>("result");
+      const auto result = message.Ok().TryGetAsString("result");
       if (!result) {
         std::cout << "Failed to get the result." << std::endl;
         return 1;
