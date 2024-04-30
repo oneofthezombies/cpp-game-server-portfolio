@@ -9,6 +9,10 @@ kero::Service::Service(const Kind kind,
       dependencies_{std::move(dependencies)},
       subscriptions_{std::move(subscriptions)} {}
 
+kero::Service::~Service() noexcept {
+  // unregister all subscriptions
+}
+
 auto
 kero::Service::GetKind() const noexcept -> Kind {
   return kind_;

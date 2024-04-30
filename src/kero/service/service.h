@@ -21,7 +21,7 @@ class Service {
   explicit Service(const Kind kind,
                    Dependencies&& dependencies = {},
                    Subscriptions&& subscriptions = {}) noexcept;
-  virtual ~Service() noexcept = default;
+  virtual ~Service() noexcept;
   CLASS_KIND_MOVABLE(Service);
 
   [[nodiscard]] auto
