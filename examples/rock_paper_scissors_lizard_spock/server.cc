@@ -2,6 +2,7 @@
 #include "kero/core/utils.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/agent.h"
+#include "kero/engine/pin_system.h"
 #include "kero/log/center.h"
 #include "kero/log/core.h"
 #include "kero/log/log_builder.h"
@@ -21,6 +22,11 @@ main(int argc, char** argv) -> int {
   transport->SetLevel(kero::Level::kDebug);
   kero::Center{}.AddTransport(std::move(transport));
   kero::Defer defer_log_system{[] { kero::Center{}.Shutdown(); }};
+
+  auto pin_res = kero::PinSystem::Global().Register<int>(
+      []() -> kero::PinSystem::FactoryResult<int> {
+        return kero::PinSystem::FactoryResult<int>{new int{42}};
+      });
 
   const auto actor_system = kero::ActorSystem::Builder{}.Build();
   if (auto res = actor_system->Start(); res.IsErr()) {

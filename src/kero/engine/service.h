@@ -6,21 +6,25 @@
 #include "kero/core/common.h"
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
+#include "kero/engine/pin_object_system.h"
 
 namespace kero {
 
-class Agent;
+class Context;
+class Service;
+
+template <typename T>
+concept IsServiceKind = std::is_base_of_v<Service, T>;
 
 class Service {
  public:
-  using Kind = int32_t;
+  using Kind = int64_t;
   using Dependencies = std::vector<Kind>;
-  using Event = std::string;
-  using Subscriptions = std::vector<Event>;
 
-  explicit Service(const Kind kind,
-                   Dependencies&& dependencies = {},
-                   Subscriptions&& subscriptions = {}) noexcept;
+  explicit Service(const Pin<Context> context,
+                   const Kind kind,
+                   const std::string&& kind_string,
+                   Dependencies&& dependencies) noexcept;
   virtual ~Service() noexcept;
   CLASS_KIND_MOVABLE(Service);
 
@@ -28,34 +32,51 @@ class Service {
   GetKind() const noexcept -> Kind;
 
   [[nodiscard]] auto
+  GetKindString() const noexcept -> const std::string&;
+
+  [[nodiscard]] auto
   GetDependencies() const noexcept -> const Dependencies&;
 
   [[nodiscard]] auto
-  GetSubscriptions() const noexcept -> const Subscriptions&;
+  Is(const Kind kind) const noexcept -> bool;
 
-  template <typename T>
-    requires std::is_base_of_v<Service, T>
   [[nodiscard]] auto
-  Is(const Kind kind) const noexcept -> bool {
-    return kind == kind_;
-  }
+  Is(const std::string& kind_string) const noexcept -> bool;
 
-  template <typename T>
-    requires std::is_base_of_v<Service, T>
+  template <IsServiceKind T>
   [[nodiscard]] auto
   As(const Kind kind) noexcept -> OptionRef<T&> {
-    if (!Is<T>(kind)) {
+    if (!Is(kind)) {
       return None;
     }
 
     return *static_cast<T*>(this);
   }
 
+  template <IsServiceKind T>
+  [[nodiscard]] auto
+  As(const std::string& kind_string) noexcept -> OptionRef<T&> {
+    if (!Is(kind_string)) {
+      return None;
+    }
+
+    return *static_cast<T*>(this);
+  }
+
+  auto
+  InvokeEvent(const std::string& event, const Dict& data) noexcept -> void;
+
+  [[nodiscard]] auto
+  SubscribeEvent(const std::string& event) -> Result<Void>;
+
+  [[nodiscard]] auto
+  UnsubscribeEvent(const std::string& event) -> Result<Void>;
+
   /**
    * Default implementation of the `OnCreate` method is empty.
    */
   [[nodiscard]] virtual auto
-  OnCreate(Agent& agent) noexcept -> Result<Void>;
+  OnCreate() noexcept -> Result<Void>;
 
   /**
    * Default implementation of the `OnDestroy` method is empty.
@@ -76,22 +97,13 @@ class Service {
   OnEvent(Agent& agent, const Event& event, const Dict& data) noexcept -> void;
 
  private:
-  Subscriptions subscriptions_;
   Dependencies dependencies_;
+  std::string kind_string_;
   Kind kind_;
 };
 
 using ServicePtr = std::unique_ptr<Service>;
-
-class ServiceFactory {
- public:
-  explicit ServiceFactory() noexcept = default;
-  virtual ~ServiceFactory() noexcept = default;
-  CLASS_KIND_MOVABLE(ServiceFactory);
-
-  [[nodiscard]] virtual auto
-  Create() noexcept -> Result<ServicePtr> = 0;
-};
+using ServiceFactory = std::function<Result<Service>(Pin<Context>)>;
 
 }  // namespace kero
 
