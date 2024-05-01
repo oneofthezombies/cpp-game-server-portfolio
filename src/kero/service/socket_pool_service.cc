@@ -1,22 +1,22 @@
 #include "socket_pool_service.h"
 
 #include "constants.h"
-#include "io_event_loop_service.h"
-#include "kero/engine/constants.h"
 #include "kero/engine/runner.h"
 #include "kero/log/log_builder.h"
+#include "kero/service/io_event_loop_service.h"
 
 using namespace kero;
 
 kero::SocketPoolService::SocketPoolService(
     const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, kServiceKindSocketPool, {}} {}
+    : Service{
+          runner_context, kServiceKindSocketPool, {kServiceKindIoEventLoop}} {}
 
 auto
 kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (!agent.SubscribeEvent(EventSocketOpen::kEvent, GetKind())) {
+  if (!SubscribeEvent(EventSocketOpen::kEvent)) {
     return ResultT::Err(Error::From(
         Dict{}
             .Set("message",
@@ -24,7 +24,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
             .Take()));
   }
 
-  if (!agent.SubscribeEvent(EventSocketClose::kEvent, GetKind())) {
+  if (!SubscribeEvent(EventSocketClose::kEvent)) {
     return ResultT::Err(Error::From(
         Dict{}
             .Set("message",
@@ -39,9 +39,9 @@ auto
 kero::SocketPoolService::OnEvent(const std::string& event,
                                  const Dict& data) noexcept -> void {
   if (event == EventSocketOpen::kEvent) {
-    OnSocketOpen(agent, data);
+    OnSocketOpen(data);
   } else if (event == EventSocketClose::kEvent) {
-    OnSocketClose(agent, data);
+    OnSocketClose(data);
   } else {
     log::Error("Unknown event").Data("event", event).Log();
   }
@@ -55,8 +55,8 @@ kero::SocketPoolService::OnSocketOpen(const Dict& data) noexcept -> void {
     return;
   }
 
-  auto io_event_loop =
-      agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
+  auto io_event_loop = GetRunnerContext().GetServiceAs<IoEventLoopService>(
+      kServiceKindIoEventLoop.id);
   if (!io_event_loop) {
     log::Error("Failed to get IoEventLoopService").Log();
     return;
@@ -71,8 +71,8 @@ kero::SocketPoolService::OnSocketOpen(const Dict& data) noexcept -> void {
 
   sockets_.insert(fd);
 
-  agent.Invoke(EventSocketRegister::kEvent,
-               Dict{}.Set(EventSocketRegister::kFd, fd).Take());
+  InvokeEvent(EventSocketRegister::kEvent,
+              Dict{}.Set(EventSocketRegister::kFd, fd).Take());
 }
 
 auto
@@ -85,8 +85,8 @@ kero::SocketPoolService::OnSocketClose(const Dict& data) noexcept -> void {
 
   sockets_.erase(fd);
 
-  auto io_event_loop =
-      agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
+  auto io_event_loop = GetRunnerContext().GetServiceAs<IoEventLoopService>(
+      kServiceKindIoEventLoop.id);
   if (!io_event_loop) {
     log::Error("Failed to get IoEventLoopService").Log();
   } else {
@@ -95,6 +95,6 @@ kero::SocketPoolService::OnSocketClose(const Dict& data) noexcept -> void {
     }
   }
 
-  agent.Invoke(EventSocketUnregister::kEvent,
-               Dict{}.Set(EventSocketUnregister::kFd, fd).Take());
+  InvokeEvent(EventSocketUnregister::kEvent,
+              Dict{}.Set(EventSocketUnregister::kFd, fd).Take());
 }
