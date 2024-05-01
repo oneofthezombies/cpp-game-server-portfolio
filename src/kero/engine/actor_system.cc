@@ -5,7 +5,7 @@
 
 using namespace kero;
 
-static constexpr std::string kShutdown = "shutdown";
+static const std::string kShutdown = "shutdown";
 
 kero::Mail::Mail(std::string &&from,
                  std::string &&to,
