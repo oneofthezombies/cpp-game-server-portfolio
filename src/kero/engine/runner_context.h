@@ -1,7 +1,7 @@
 #ifndef KERO_ENGINE_RUNNER_CONTEXT_H
 #define KERO_ENGINE_RUNNER_CONTEXT_H
 
-#include "kero/engine/pin_object_system.h"
+#include "kero/engine/pinning_system.h"
 #include "kero/engine/service_kind.h"
 
 namespace kero {
@@ -50,8 +50,6 @@ class RunnerContext {
  private:
   Pinned<Runner> runner_;
 };
-
-using RunnerContextPtr = Owned<RunnerContext>;
 
 }  // namespace kero
 

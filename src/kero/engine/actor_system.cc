@@ -39,7 +39,7 @@ kero::ActorSystem::CreateMailBox(const std::string &name) noexcept
   }
 
   std::lock_guard lock{mutex_};
-  if (mail_boxes_.find(name) != mail_boxes_.end()) {
+  if (mail_box_map_.find(name) != mail_box_map_.end()) {
     return ResultT::Err(Dict{}
                             .Set("message", "mailbox name already exists")
                             .Set("name", name)
@@ -49,10 +49,10 @@ kero::ActorSystem::CreateMailBox(const std::string &name) noexcept
   auto [from_actor_tx, to_system_rx] = spsc::Channel<Mail>::Builder{}.Build();
   auto [from_system_tx, to_actor_rx] = spsc::Channel<Mail>::Builder{}.Build();
 
-  mail_boxes_.try_emplace(name,
-                          MailBox{std::string{name},
-                                  spsc::Tx<Mail>{std::move(from_system_tx)},
-                                  spsc::Rx<Mail>{std::move(to_system_rx)}});
+  mail_box_map_.try_emplace(name,
+                            MailBox{std::string{name},
+                                    spsc::Tx<Mail>{std::move(from_system_tx)},
+                                    spsc::Rx<Mail>{std::move(to_system_rx)}});
 
   return ResultT::Ok(MailBox{std::string{name},
                              spsc::Tx<Mail>{std::move(from_actor_tx)},
@@ -65,14 +65,14 @@ kero::ActorSystem::DestroyMailBox(const std::string &name) noexcept
   using ResultT = Result<Void>;
 
   std::lock_guard lock{mutex_};
-  if (mail_boxes_.find(name) == mail_boxes_.end()) {
+  if (mail_box_map_.find(name) == mail_box_map_.end()) {
     return ResultT::Err(Dict{}
                             .Set("message", "mailbox name not found")
                             .Set("name", name)
                             .Take());
   }
 
-  mail_boxes_.erase(name);
+  mail_box_map_.erase(name);
   return OkVoid();
 }
 
@@ -104,7 +104,7 @@ kero::ActorSystem::ValidateName(const std::string &name) const noexcept
 auto
 kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
   while (true) {
-    if (auto message = rx.TryReceive(); message.IsSome()) {
+    if (auto message = rx.TryReceive()) {
       if (message.TakeUnwrap().Has(kShutdown)) {
         break;
       }
@@ -112,7 +112,7 @@ kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
 
     {
       std::lock_guard lock{mutex_};
-      for (auto &[name, mail_box] : mail_boxes_) {
+      for (auto &[name, mail_box] : mail_box_map_) {
         auto mail = mail_box.rx.TryReceive();
         if (mail.IsNone()) {
           continue;
@@ -122,7 +122,7 @@ kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
 
         // broadcast
         if (to == "all") {
-          for (auto &[name, other_mail_box] : mail_boxes_) {
+          for (auto &[name, other_mail_box] : mail_box_map_) {
             other_mail_box.tx.Send(Mail{std::string{from},
                                         std::string{name},
                                         std::string{event},
@@ -133,8 +133,8 @@ kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
         }
 
         // unicast
-        auto it = mail_boxes_.find(to);
-        if (it == mail_boxes_.end()) {
+        auto it = mail_box_map_.find(to);
+        if (it == mail_box_map_.end()) {
           log::Warn("Failed to find mail box")
               .Data("from", from)
               .Data("to", to)
@@ -193,7 +193,7 @@ kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
 auto
 kero::ThreadActorSystem::ThreadMain(Pinned<ActorSystem> actor_system,
                                     spsc::Rx<Dict> &&rx) -> void {
-  if (auto res = actor_system.Unwrap().Run(std::move(rx))) {
+  if (auto res = actor_system->Run(std::move(rx))) {
     log::Info("Actor system finished").Log();
   } else {
     log::Error("Actor system failed").Data("error", res.TakeErr()).Log();

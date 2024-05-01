@@ -258,7 +258,7 @@ auto
 kero::RunnerBuilder::BuildRunner() const noexcept -> Result<Pinned<Runner>> {
   using ResultT = Result<Pinned<Runner>>;
 
-  auto runner_res = engine_context_->pin_object_system.CreatePinObject<Runner>(
+  auto runner_res = engine_context_->pin_object_system.CreatePinning<Runner>(
       [name = name_]() {
         auto name_ = name;
         return new Runner{std::move(name_)};
@@ -295,7 +295,7 @@ kero::RunnerBuilder::BuildThreadRunner() const noexcept
 
   auto runner = runner_res.TakeOk();
   auto thread_runner_res =
-      engine_context_->pin_object_system.CreatePinObject<ThreadRunner>(
+      engine_context_->pin_object_system.CreatePinning<ThreadRunner>(
           [runner = runner]() {
             auto runner_ = runner;
             return new ThreadRunner{runner_};

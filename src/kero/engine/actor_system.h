@@ -8,7 +8,7 @@
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
-#include "kero/engine/pin_object_system.h"
+#include "kero/engine/pinning_system.h"
 
 namespace kero {
 
@@ -65,8 +65,8 @@ class ActorSystem final {
   [[nodiscard]] auto
   ValidateName(const std::string &name) const noexcept -> Result<Void>;
 
-  std::unordered_map<std::string, MailBox> mail_boxes_;
-  std::mutex mutex_;
+  std::unordered_map<std::string, MailBox> mail_box_map_{};
+  std::mutex mutex_{};
 
   static constexpr auto kMaxNameLength = 64;
 };
