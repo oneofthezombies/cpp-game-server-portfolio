@@ -16,7 +16,7 @@ kero::ConfigService::OnCreate(Agent& agent) noexcept -> Result<Void> {
 
   log::Debug("ConfigService created").Data("config", config_).Log();
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

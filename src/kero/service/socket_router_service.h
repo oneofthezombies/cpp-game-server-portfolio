@@ -1,7 +1,7 @@
 #ifndef KERO_SERVICE_SOCKET_ROUTER_SERVICE_H
 #define KERO_SERVICE_SOCKET_ROUTER_SERVICE_H
 
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
@@ -12,11 +12,10 @@ class SocketRouterService final : public Service {
   CLASS_KIND_MOVABLE(SocketRouterService);
 
   [[nodiscard]] virtual auto
-  OnCreate(Agent& agent) noexcept -> Result<Void> override;
+  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
-      -> void override;
+  OnEvent(const std::string& event, const Dict& data) noexcept -> void override;
 
  private:
   std::string target_actor_;

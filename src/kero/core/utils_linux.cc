@@ -26,7 +26,7 @@ kero::Fd::Close(const Value fd) noexcept -> Result<Void> {
     return ResultT::Err(Error::From(Errno::FromErrno().IntoDict()));
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -44,7 +44,7 @@ kero::Fd::UpdateNonBlocking(const Value fd) noexcept -> Result<Void> {
         Error::From(kSetStatusFailed, Errno::FromErrno().IntoDict())};
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 kero::Errno::Errno(const Value code,

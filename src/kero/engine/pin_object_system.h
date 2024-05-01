@@ -22,25 +22,25 @@ class Pin final {
   ~Pin() noexcept = default;
   CLASS_KIND_COPYABLE(Pin);
 
-  [[nodiscard]] auto
-  operator->() noexcept -> T* {
-    return data_;
-  }
+  // [[nodiscard]] auto
+  // operator->() noexcept -> T* {
+  //   return data_;
+  // }
 
-  [[nodiscard]] auto
-  operator->() const noexcept -> const T* {
-    return data_;
-  }
+  // [[nodiscard]] auto
+  // operator->() const noexcept -> const T* {
+  //   return data_;
+  // }
 
-  [[nodiscard]] auto
-  operator*() noexcept -> T& {
-    return Unwrap();
-  }
+  // [[nodiscard]] auto
+  // operator*() noexcept -> T& {
+  //   return Unwrap();
+  // }
 
-  [[nodiscard]] auto
-  operator*() const noexcept -> const T& {
-    return Unwrap();
-  }
+  // [[nodiscard]] auto
+  // operator*() const noexcept -> const T& {
+  //   return Unwrap();
+  // }
 
   [[nodiscard]] auto
   Unwrap() noexcept -> T& {
@@ -62,14 +62,14 @@ using PinObjectFactory = std::function<Result<T*>()>;
 class PinObjectSystem final {
  public:
   using Raw = void*;
-  using RawDeleter = std::function<void(Raw)>;
+  using RawDestroyer = std::function<void(Raw)>;
 
   explicit PinObjectSystem() noexcept = default;
   ~PinObjectSystem() noexcept = default;
   CLASS_KIND_PINNABLE(PinObjectSystem);
 
   auto
-  DeleteAll() noexcept -> void;
+  DestroyAll() noexcept -> void;
 
   template <typename T>
   [[nodiscard]] auto
@@ -108,7 +108,7 @@ class PinObjectSystem final {
   }
 
  private:
-  std::unordered_map<Raw, RawDeleter> pin_objects_{};
+  std::unordered_map<Raw, RawDestroyer> pin_objects_{};
   std::mutex mutex_{};
 };
 

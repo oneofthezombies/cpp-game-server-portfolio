@@ -1,10 +1,11 @@
 #include "actor_system.h"
 
-#include "kero/engine/constants.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/actor_service.h"
 
 using namespace kero;
+
+static constexpr std::string_view kShutdown = "shutdown";
 
 kero::ActorSystem::ActorSystem() noexcept
     : run_channel_{spsc::Channel<Dict>::Builder{}.Build()} {}
@@ -36,7 +37,7 @@ kero::ActorSystem::Stop() noexcept -> bool {
     return false;
   }
 
-  run_channel_.tx.Send(Dict{}.Set(EventShutdown::kEvent, true).Take());
+  run_channel_.tx.Send(Dict{}.Set(std::string{kShutdown}, true).Take());
   run_thread_.join();
   return true;
 }
@@ -73,7 +74,7 @@ kero::ActorSystem::CreateActorService(std::string &&name) noexcept
 }
 
 auto
-kero::ActorSystem::DeleteMailBox(const std::string &name) noexcept -> bool {
+kero::ActorSystem::DestroyMailBox(const std::string &name) noexcept -> bool {
   std::lock_guard lock{mutex_};
   if (mail_boxes_.find(name) == mail_boxes_.end()) {
     return false;
@@ -108,7 +109,7 @@ auto
 kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
   while (true) {
     if (auto message = self->run_channel_.rx.TryReceive(); message.IsSome()) {
-      if (message.TakeUnwrap().Has(EventShutdown::kEvent)) {
+      if (message.TakeUnwrap().Has(std::string{kShutdown})) {
         break;
       }
     }

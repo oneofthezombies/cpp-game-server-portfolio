@@ -3,24 +3,24 @@
 
 #include <atomic>
 
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
 class SignalService final : public Service {
  public:
-  explicit SignalService() noexcept;
+  explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~SignalService() noexcept override = default;
   CLASS_KIND_MOVABLE(SignalService);
 
   virtual auto
-  OnCreate(Agent& agent) noexcept -> Result<Void> override;
+  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnDestroy(Agent& agent) noexcept -> void override;
+  OnDestroy() noexcept -> void override;
 
   virtual auto
-  OnUpdate(Agent& agent) noexcept -> void override;
+  OnUpdate() noexcept -> void override;
 
   [[nodiscard]] auto
   IsInterrupted() const noexcept -> bool;

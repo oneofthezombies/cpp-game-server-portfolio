@@ -5,7 +5,7 @@
 
 #include "kero/core/common.h"
 #include "kero/engine/mail_box.h"
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
@@ -15,10 +15,10 @@ class ActorService final : public Service {
   CLASS_KIND_MOVABLE(ActorService);
 
   [[nodiscard]] virtual auto
-  OnCreate(Agent &agent) noexcept -> Result<Void> override;
+  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnUpdate(Agent &agent) noexcept -> void override;
+  OnUpdate() noexcept -> void override;
 
   [[nodiscard]] auto
   GetName() const noexcept -> const std::string &;

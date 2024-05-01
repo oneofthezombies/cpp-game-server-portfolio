@@ -24,7 +24,7 @@ kero::log::LogBuilder::Log() noexcept -> Result<Void> {
 
   if (auto& local_context = GetLocalContext()) {
     local_context->SendLog(std::move(log_));
-    return ResultT::Ok(Void{});
+    return OkVoid;
   } else {
     return ResultT::Err(Error::From(
         Dict{}

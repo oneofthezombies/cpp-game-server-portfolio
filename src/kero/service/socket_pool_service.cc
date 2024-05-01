@@ -30,7 +30,7 @@ kero::SocketPoolService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

@@ -1,22 +1,17 @@
 #ifndef KERO_ENGINE_CONSTANTS_H
 #define KERO_ENGINE_CONSTANTS_H
 
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
-struct ServiceKind {
-  enum : Service::Kind {
-    kUnspecified = 0,
-    kSignal = 1,
-    kActor = 2,
-    kIoEventLoop = 3,
-    kTcpServer = 4,
-    kConfig = 5,
-    kSocketPool = 6,
-    kSocketRouter = 7,
-  };
-};
+static const Service::Kind kServiceKindSignal = {1, "signal"};
+static const Service::Kind kServiceKindActor = {2, "actor"};
+static const Service::Kind kServiceKindIoEventLoop = {3, "io_event_loop"};
+static const Service::Kind kServiceKindTcpServer = {4, "tcp_server"};
+static const Service::Kind kServiceKindConfig = {5, "config"};
+static const Service::Kind kServiceKindSocketPool = {6, "socket_pool"};
+static const Service::Kind kServiceKindSocketRouter = {7, "socket_router"};
 
 struct EventShutdown {
   static constexpr auto kEvent = "shutdown";

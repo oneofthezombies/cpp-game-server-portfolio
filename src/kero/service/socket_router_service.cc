@@ -40,7 +40,7 @@ kero::SocketRouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
 
   target_actor_ = std::move(target_actor);
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

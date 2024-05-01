@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 
+#include "kero/core/result.h"
 #include "kero/engine/constants.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/service.h"
@@ -44,7 +45,7 @@ kero::Agent::Run() noexcept -> Result<Void> {
   }
 
   log::Debug("Agent stopped").Log();
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -183,7 +184,7 @@ kero::Agent::ResolveDependencies() noexcept -> Result<Void> {
                   std::unordered_map<Service::Kind, bool>& visited,
                   std::vector<Service::Kind>& stack) -> Result<Void> {
       if (visited[service_kind]) {
-        return ResultT::Ok(Void{});
+        return OkVoid;
       }
 
       visited[service_kind] = true;
@@ -218,7 +219,7 @@ kero::Agent::ResolveDependencies() noexcept -> Result<Void> {
       }
 
       stack.pop_back();
-      return ResultT::Ok(Void{});
+      return OkVoid;
     };
 
     for (auto& [_, service] : services_) {
@@ -230,7 +231,7 @@ kero::Agent::ResolveDependencies() noexcept -> Result<Void> {
     }
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -248,7 +249,7 @@ kero::Agent::CreateServices() noexcept -> Result<Void> {
                 std::unordered_map<Service::Kind, bool>& created)
       -> Result<Void> {
     if (created[service_kind]) {
-      return ResultT::Ok(Void{});
+      return OkVoid;
     }
 
     const auto dependencies =
@@ -268,7 +269,7 @@ kero::Agent::CreateServices() noexcept -> Result<Void> {
     }
 
     created[service_kind] = true;
-    return ResultT::Ok(Void{});
+    return OkVoid;
   };
 
   for (auto& [_, service] : services_) {
@@ -278,7 +279,7 @@ kero::Agent::CreateServices() noexcept -> Result<Void> {
   }
 
   log::Debug("All services created").Log();
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

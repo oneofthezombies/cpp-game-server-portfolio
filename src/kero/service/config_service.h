@@ -3,7 +3,7 @@
 
 #include "kero/core/args_scanner.h"
 #include "kero/core/common.h"
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
@@ -13,13 +13,13 @@ class ConfigService final : public Service {
   CLASS_KIND_MOVABLE(ConfigService);
 
   [[nodiscard]] virtual auto
-  OnCreate(Agent& agent) noexcept -> Result<Void> override;
+  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnDestroy(Agent& agent) noexcept -> void override;
+  OnDestroy() noexcept -> void override;
 
   virtual auto
-  OnUpdate(Agent& agent) noexcept -> void override;
+  OnUpdate() noexcept -> void override;
 
   [[nodiscard]] auto
   GetConfig() const noexcept -> const Dict&;
@@ -35,7 +35,7 @@ class ConfigService final : public Service {
   friend class ConfigServiceFactory;
 };
 
-class ConfigServiceFactory final : public ServiceFactory {
+class ConfigServiceFactoryProvider final {
  public:
   enum : Error::Code {
     kPortNotFound = 1,
@@ -43,12 +43,12 @@ class ConfigServiceFactory final : public ServiceFactory {
     kUnknownArgument
   };
 
-  explicit ConfigServiceFactory(int argc, char** argv) noexcept;
-  virtual ~ConfigServiceFactory() noexcept override = default;
-  CLASS_KIND_PINNABLE(ConfigServiceFactory);
+  explicit ConfigServiceFactoryProvider(int argc, char** argv) noexcept;
+  ~ConfigServiceFactoryProvider() noexcept = default;
+  CLASS_KIND_PINNABLE(ConfigServiceFactoryProvider);
 
-  [[nodiscard]] virtual auto
-  Create() noexcept -> Result<ServicePtr> override;
+  [[nodiscard]] auto
+  Create() noexcept -> ServiceFactory;
 
  private:
   Args args_;

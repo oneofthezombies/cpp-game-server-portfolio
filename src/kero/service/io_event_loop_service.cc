@@ -7,8 +7,8 @@
 
 #include "kero/core/utils_linux.h"
 #include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
 #include "kero/log/log_builder.h"
+#include "kero/service/constants.h"
 
 using namespace kero;
 
@@ -36,8 +36,9 @@ AddOptionsToEpollEvents(
 
 }  // namespace
 
-kero::IoEventLoopService::IoEventLoopService() noexcept
-    : Service{ServiceKind::kIoEventLoop, {}} {}
+kero::IoEventLoopService::IoEventLoopService(
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{runner_context, kServiceKindIoEventLoop, {}} {}
 
 auto
 kero::IoEventLoopService::OnCreate(Agent& agent) noexcept -> Result<Void> {
@@ -53,7 +54,7 @@ kero::IoEventLoopService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   }
 
   epoll_fd_ = epoll_fd;
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -152,7 +153,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
         Dict{}.Set(EventSocketRead::kFd, static_cast<double>(event.data.fd)));
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -177,7 +178,7 @@ kero::IoEventLoopService::AddFd(const Fd::Value fd,
             .Take()));
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -198,7 +199,7 @@ kero::IoEventLoopService::RemoveFd(const Fd::Value fd) const noexcept
             .Take()));
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
@@ -229,7 +230,7 @@ kero::IoEventLoopService::WriteToFd(const Fd::Value fd,
     data_sent += sent;
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

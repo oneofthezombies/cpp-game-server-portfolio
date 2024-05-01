@@ -99,7 +99,7 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   }
 
   server_fd_ = server_fd;
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

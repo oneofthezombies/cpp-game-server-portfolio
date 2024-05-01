@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #include "kero/core/utils_linux.h"
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 namespace kero {
 
@@ -15,17 +15,16 @@ class SocketPoolService final : public Service {
   CLASS_KIND_MOVABLE(SocketPoolService);
 
   [[nodiscard]] virtual auto
-  OnCreate(Agent& agent) noexcept -> Result<Void> override;
+  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnEvent(Agent& agent, const std::string& event, const Dict& data) noexcept
-      -> void override;
+  OnEvent(const std::string& event, const Dict& data) noexcept -> void override;
 
  private:
   auto
-  OnSocketOpen(Agent& agent, const Dict& data) noexcept -> void;
+  OnSocketOpen(const Dict& data) noexcept -> void;
   auto
-  OnSocketClose(Agent& agent, const Dict& data) noexcept -> void;
+  OnSocketClose(const Dict& data) noexcept -> void;
 
   std::unordered_set<Fd::Value> sockets_;
 };

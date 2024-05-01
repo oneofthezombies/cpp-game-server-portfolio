@@ -3,6 +3,7 @@
 
 #include <variant>
 
+#include "kero/core/common.h"
 #include "kero/core/error.h"
 
 namespace kero {
@@ -71,11 +72,6 @@ class Result {
   }
 
   static auto
-  Err(Error&& error) noexcept -> Result<T> {
-    return Result<T>::From(std::forward<Error>(error));
-  }
-
-  static auto
   Err(const Error::Code code,
       Dict&& details,
       Error&& cause,
@@ -139,6 +135,8 @@ class Result {
  private:
   std::variant<std::monostate, T, Error> data_;
 };
+
+static const auto OkVoid = Result<Void>::Ok(Void{});
 
 template <typename T>
 [[nodiscard]] auto

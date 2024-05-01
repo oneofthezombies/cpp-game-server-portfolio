@@ -2,7 +2,7 @@
 #define KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H
 
 #include "kero/core/utils_linux.h"
-#include "kero/service/service.h"
+#include "kero/engine/service.h"
 
 struct epoll_event;
 
@@ -18,18 +18,18 @@ class IoEventLoopService final : public Service {
     bool edge_trigger{false};
   };
 
-  explicit IoEventLoopService() noexcept;
+  explicit IoEventLoopService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~IoEventLoopService() noexcept override = default;
   CLASS_KIND_MOVABLE(IoEventLoopService);
 
   [[nodiscard]] virtual auto
-  OnCreate(Agent& agent) noexcept -> Result<Void> override;
+  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnDestroy(Agent& agent) noexcept -> void override;
+  OnDestroy() noexcept -> void override;
 
   virtual auto
-  OnUpdate(Agent& agent) noexcept -> void override;
+  OnUpdate() noexcept -> void override;
 
   [[nodiscard]] auto
   AddFd(const Fd::Value fd, const AddOptions options) const noexcept
@@ -43,12 +43,11 @@ class IoEventLoopService final : public Service {
       -> Result<Void>;
 
   [[nodiscard]] auto
-  ReadFromFd(Agent& agent, const Fd::Value fd) const noexcept
-      -> Result<std::string>;
+  ReadFromFd(const Fd::Value fd) const noexcept -> Result<std::string>;
 
  private:
   auto
-  OnUpdateEpollEvent(Agent& agent, const struct ::epoll_event& event) noexcept
+  OnUpdateEpollEvent(const struct ::epoll_event& event) noexcept
       -> Result<Void>;
 
   Fd::Value epoll_fd_{Fd::kUnspecifiedInitialValue};

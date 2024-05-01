@@ -55,7 +55,7 @@ class ActorSystem final : public std::enable_shared_from_this<ActorSystem> {
   CreateActorService(std::string &&name) noexcept -> Result<ActorServicePtr>;
 
   [[nodiscard]] auto
-  DeleteMailBox(const std::string &name) noexcept -> bool;
+  DestroyMailBox(const std::string &name) noexcept -> bool;
 
  private:
   auto

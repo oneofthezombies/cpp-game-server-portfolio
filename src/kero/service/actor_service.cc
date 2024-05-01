@@ -1,13 +1,14 @@
 #include "actor_service.h"
 
 #include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
+#include "kero/service/constants.h"
 
 using namespace kero;
 
-kero::ActorService::ActorService(std::string &&name,
+kero::ActorService::ActorService(const Pin<RunnerContext> runner_context,
+                                 std::string &&name,
                                  MailBox &&mail_box) noexcept
-    : Service{ServiceKind::kActor, {}},
+    : Service{runner_context, {ServiceKindId::kActor, "actor"}, {}},
       mail_box_{std::move(mail_box)},
       name_{std::move(name)} {}
 
@@ -15,7 +16,7 @@ auto
 kero::ActorService::OnCreate(Agent &agent) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto

@@ -27,7 +27,8 @@ class RunnerContext {
       -> Result<Void>;
 
   auto
-  InvokeEvent(const std::string& event, const Dict& data) noexcept -> void;
+  InvokeEvent(const std::string& event, const Dict& data) noexcept
+      -> Result<Void>;
 
  private:
   Pin<Runner> runner_;
@@ -35,8 +36,75 @@ class RunnerContext {
 
 class Runner {
  public:
+  using EventHandlerMapT =
+      std::unordered_map<std::string /* event */,
+                         std::unordered_set<Service::Kind>>;
+
   explicit Runner(std::string&& name) noexcept;
   ~Runner() noexcept = default;
+
+  [[nodiscard]] auto
+  Run() noexcept -> Result<Void>;
+
+  [[nodiscard]] auto
+  GetService(const Service::Kind::Id service_kind_id) const noexcept
+      -> OptionRef<Service&>;
+
+  [[nodiscard]] auto
+  GetService(const Service::Kind::Name service_kind_name) const noexcept
+      -> OptionRef<Service&>;
+
+  template <IsServiceKind T>
+  [[nodiscard]] auto
+  GetServiceAs(const Service::Kind::Id service_kind_id) const noexcept
+      -> OptionRef<T&> {
+    auto service = GetService(service_kind_id);
+    if (service.IsNone()) {
+      return None;
+    }
+
+    return service.Unwrap().As<T>(service_kind_id);
+  }
+
+  template <IsServiceKind T>
+  [[nodiscard]] auto
+  GetServiceAs(const Service::Kind::Name service_kind_name) const noexcept
+      -> OptionRef<T&> {
+    auto service = GetService(service_kind_name);
+    if (service.IsNone()) {
+      return None;
+    }
+
+    return service.Unwrap().As<T>(service_kind_name);
+  }
+
+  [[nodiscard]] auto
+  HasService(const Service::Kind::Id service_kind_id) const noexcept -> bool;
+
+  [[nodiscard]] auto
+  HasService(const Service::Kind::Name service_kind_name) const noexcept
+      -> bool;
+
+  [[nodiscard]] auto
+  HasServiceIs(const Service::Kind::Id service_kind_id) const noexcept -> bool {
+    auto service = GetService(service_kind_id);
+    if (service.IsNone()) {
+      return false;
+    }
+
+    return service.Unwrap().Is(service_kind_id);
+  }
+
+  [[nodiscard]] auto
+  HasServiceIs(const Service::Kind::Name service_kind_name) const noexcept
+      -> bool {
+    auto service = GetService(service_kind_name);
+    if (service.IsNone()) {
+      return false;
+    }
+
+    return service.Unwrap().Is(service_kind_name);
+  }
 
   [[nodiscard]] auto
   SubscribeEvent(const std::string& event, const Service::Kind& kind)
@@ -46,14 +114,25 @@ class Runner {
   UnsubscribeEvent(const std::string& event, const Service::Kind& kind)
       -> Result<Void>;
 
-  auto
+  [[nodiscard]] auto
   InvokeEvent(const std::string& event, const Dict& data) noexcept
       -> Result<Void>;
 
  private:
-  std::unordered_map<Service::Kind::Id, ServicePtr> services_;
-  std::unordered_map<std::string /* event */, std::unordered_set<Service::Kind>>
-      events_;
+  [[nodiscard]] auto
+  ResolveDependencies() noexcept -> Result<Void>;
+
+  [[nodiscard]] auto
+  CreateServices() noexcept -> Result<Void>;
+
+  auto
+  DestroyServices() noexcept -> void;
+
+  auto
+  UpdateServices() noexcept -> void;
+
+  ServiceMap service_map_;
+  EventHandlerMapT event_handler_map_;
 };
 
 class ThreadRunner {

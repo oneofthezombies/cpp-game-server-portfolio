@@ -4,14 +4,15 @@
 
 #include "kero/core/utils_linux.h"
 #include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/actor_service.h"
+#include "kero/service/constants.h"
 
 using namespace kero;
 
-kero::SignalService::SignalService() noexcept
-    : Service{ServiceKind::kSignal, {ServiceKind::kActor}} {}
+kero::SignalService::SignalService(
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{runner_context, kServiceKindSignal, {}} {}
 
 auto
 kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
@@ -23,7 +24,7 @@ kero::SignalService::OnCreate(Agent& agent) noexcept -> Result<Void> {
     return ResultT::Err(Error::From(Errno::FromErrno().IntoDict()));
   }
 
-  return ResultT::Ok(Void{});
+  return OkVoid;
 }
 
 auto
