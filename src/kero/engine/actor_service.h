@@ -9,13 +9,12 @@
 
 namespace kero {
 
+static const Service::Kind kServiceKindActor = {2, "actor"};
+
 class ActorService final : public Service {
  public:
   virtual ~ActorService() noexcept override = default;
   CLASS_KIND_MOVABLE(ActorService);
-
-  [[nodiscard]] virtual auto
-  OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
   OnUpdate() noexcept -> void override;
@@ -27,7 +26,9 @@ class ActorService final : public Service {
   SendMail(std::string &&to, std::string &&event, Dict &&body) noexcept -> void;
 
  private:
-  explicit ActorService(std::string &&name, MailBox &&mail_box) noexcept;
+  explicit ActorService(Pin<RunnerContext> runner_context,
+                        std::string &&name,
+                        MailBox &&mail_box) noexcept;
 
   MailBox mail_box_;
   std::string name_;

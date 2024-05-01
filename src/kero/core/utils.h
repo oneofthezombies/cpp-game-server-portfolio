@@ -8,6 +8,10 @@
 
 namespace kero {
 
+[[nodiscard]]
+auto
+OkVoid() -> Result<Void>;
+
 template <typename T>
   requires std::integral<T> || std::floating_point<T>
 [[nodiscard]] auto

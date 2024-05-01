@@ -5,8 +5,6 @@
 
 namespace kero {
 
-static const Service::Kind kServiceKindSignal = {1, "signal"};
-static const Service::Kind kServiceKindActor = {2, "actor"};
 static const Service::Kind kServiceKindIoEventLoop = {3, "io_event_loop"};
 static const Service::Kind kServiceKindTcpServer = {4, "tcp_server"};
 static const Service::Kind kServiceKindConfig = {5, "config"};

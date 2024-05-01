@@ -1,6 +1,7 @@
 #ifndef KERO_ENGINE_ENGINE_H
 #define KERO_ENGINE_ENGINE_H
 
+#include "actor_system.h"
 #include "kero/core/common.h"
 #include "kero/core/result.h"
 #include "kero/engine/pin_object_system.h"
@@ -10,8 +11,8 @@ namespace kero {
 
 class Engine {
  public:
-  explicit Engine() noexcept;
-  ~Engine() noexcept;
+  explicit Engine() noexcept = default;
+  ~Engine() noexcept = default;
   CLASS_KIND_PINNABLE(Engine);
 
   [[nodiscard]] auto
@@ -25,6 +26,7 @@ class Engine {
 
  private:
   PinObjectSystem pin_object_system_;
+  ActorSystem actor_system_;
 };
 
 }  // namespace kero

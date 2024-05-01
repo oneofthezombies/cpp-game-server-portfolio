@@ -8,15 +8,11 @@
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
-#include "kero/service/actor_service.h"
+#include "kero/engine/actor_service.h"
 
 namespace kero {
 
-class ActorSystem;
-
-using ActorSystemPtr = std::shared_ptr<ActorSystem>;
-
-class ActorSystem final : public std::enable_shared_from_this<ActorSystem> {
+class ActorSystem final {
  public:
   enum : Error::Code {
     kEmptyNameNotAllowed = 1,
@@ -26,16 +22,6 @@ class ActorSystem final : public std::enable_shared_from_this<ActorSystem> {
     kReservedNameNotAllowed = 5,
     kAlreadyRunning = 6,
     kMultipleStartNotAllowed,
-  };
-
-  class Builder final {
-   public:
-    explicit Builder() noexcept = default;
-    ~Builder() noexcept = default;
-    CLASS_KIND_PINNABLE(Builder);
-
-    [[nodiscard]] auto
-    Build() noexcept -> ActorSystemPtr;
   };
 
   explicit ActorSystem() noexcept;

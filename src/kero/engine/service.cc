@@ -22,6 +22,11 @@ kero::Service::GetDependencies() const noexcept -> const Dependencies& {
 }
 
 auto
+kero::Service::GetRunnerContext() noexcept -> RunnerContext& {
+  return runner_context_.Unwrap();
+}
+
+auto
 kero::Service::Is(const Kind::Id kind_id) const noexcept -> bool {
   return kind_.id == kind_id;
 }
@@ -42,8 +47,8 @@ kero::Service::UnsubscribeEvent(const std::string& event) -> Result<Void> {
 }
 
 auto
-kero::Service::InvokeEvent(const std::string& event, const Dict& data) noexcept
-    -> void {
+kero::Service::InvokeEvent(const std::string& event,
+                           const Dict& data) noexcept -> void {
   runner_context_.Unwrap().InvokeEvent(event, data);
 }
 
@@ -63,8 +68,8 @@ kero::Service::OnUpdate() noexcept -> void {
 }
 
 auto
-kero::Service::OnEvent(const std::string& event, const Dict& data) noexcept
-    -> void {
+kero::Service::OnEvent(const std::string& event,
+                       const Dict& data) noexcept -> void {
   // noop
 }
 
@@ -168,7 +173,7 @@ kero::ServiceTraverser::Traverse(const OnVisit& on_visit) noexcept
     }
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -178,7 +183,7 @@ kero::ServiceTraverser::TraverseRecursive(const Service::Kind& service_kind,
   using ResultT = Result<Void>;
 
   if (visit_map_.contains(service_kind.id)) {
-    return OkVoid;
+    return OkVoid();
   }
 
   visit_map_.emplace(service_kind.id, service_kind.name);
@@ -239,5 +244,5 @@ kero::ServiceTraverser::TraverseRecursive(const Service::Kind& service_kind,
     return ResultT::Err(res.TakeErr());
   }
 
-  return OkVoid;
+  return OkVoid();
 }

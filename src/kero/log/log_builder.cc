@@ -1,5 +1,6 @@
 #include "log_builder.h"
 
+#include "kero/core/utils.h"
 #include "kero/log/core.h"
 #include "kero/log/local_context.h"
 
@@ -24,7 +25,7 @@ kero::log::LogBuilder::Log() noexcept -> Result<Void> {
 
   if (auto& local_context = GetLocalContext()) {
     local_context->SendLog(std::move(log_));
-    return OkVoid;
+    return OkVoid();
   } else {
     return ResultT::Err(Error::From(
         Dict{}
@@ -35,25 +36,25 @@ kero::log::LogBuilder::Log() noexcept -> Result<Void> {
 }
 
 auto
-kero::log::Debug(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Debug(std::string&& message,
+                 std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kDebug};
 }
 
 auto
-kero::log::Info(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Info(std::string&& message,
+                std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kInfo};
 }
 
 auto
-kero::log::Warn(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Warn(std::string&& message,
+                std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kWarn};
 }
 
 auto
-kero::log::Error(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Error(std::string&& message,
+                 std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kError};
 }

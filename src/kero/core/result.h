@@ -136,8 +136,6 @@ class Result {
   std::variant<std::monostate, T, Error> data_;
 };
 
-static const auto OkVoid = Result<Void>::Ok(Void{});
-
 template <typename T>
 [[nodiscard]] auto
 operator<<(std::ostream& os, const Result<T>& result) -> std::ostream& {

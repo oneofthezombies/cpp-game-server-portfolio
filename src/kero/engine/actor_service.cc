@@ -1,36 +1,28 @@
 #include "actor_service.h"
 
-#include "kero/engine/agent.h"
-#include "kero/service/constants.h"
+#include "kero/engine/runner.h"
 
 using namespace kero;
 
-kero::ActorService::ActorService(const Pin<RunnerContext> runner_context,
+kero::ActorService::ActorService(Pin<RunnerContext> runner_context,
                                  std::string &&name,
                                  MailBox &&mail_box) noexcept
-    : Service{runner_context, {ServiceKindId::kActor, "actor"}, {}},
+    : Service{runner_context, kServiceKindActor, {}},
       mail_box_{std::move(mail_box)},
       name_{std::move(name)} {}
 
 auto
-kero::ActorService::OnCreate(Agent &agent) noexcept -> Result<Void> {
-  using ResultT = Result<Void>;
-
-  return OkVoid;
-}
-
-auto
-kero::ActorService::OnUpdate(Agent &agent) noexcept -> void {
+kero::ActorService::OnUpdate() noexcept -> void {
   auto mail = mail_box_.rx.TryReceive();
   if (mail.IsNone()) {
     return;
   }
 
   auto [from, to, event, body] = mail.TakeUnwrap();
-  agent.Invoke(event,
-               body.Set("__from", std::string{from})
-                   .Set("__to", std::string{to})
-                   .Take());
+  GetRunnerContext().InvokeEvent(event,
+                                 body.Set("__from", std::string{from})
+                                     .Set("__to", std::string{to})
+                                     .Take());
 }
 
 auto

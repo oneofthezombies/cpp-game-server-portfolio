@@ -1,8 +1,46 @@
 #include "runner.h"
 
-#include "service.h"
+#include "kero/engine/service.h"
+#include "kero/engine/signal_service.h"
+#include "kero/log/log_builder.h"
 
 using namespace kero;
+
+auto
+kero::RunnerContext::GetService(const Service::Kind::Id service_kind_id)
+    const noexcept -> OptionRef<Service&> {
+  return runner_.Unwrap().GetService(service_kind_id);
+}
+
+auto
+kero::RunnerContext::GetService(const Service::Kind::Name service_kind_name)
+    const noexcept -> OptionRef<Service&> {
+  return runner_.Unwrap().GetService(service_kind_name);
+}
+
+auto
+kero::RunnerContext::HasService(
+    const Service::Kind::Id service_kind_id) const noexcept -> bool {
+  return runner_.Unwrap().HasService(service_kind_id);
+}
+
+auto
+kero::RunnerContext::HasService(
+    const Service::Kind::Name service_kind_name) const noexcept -> bool {
+  return runner_.Unwrap().HasService(service_kind_name);
+}
+
+auto
+kero::RunnerContext::HasServiceIs(
+    const Service::Kind::Id service_kind_id) const noexcept -> bool {
+  return runner_.Unwrap().HasServiceIs(service_kind_id);
+}
+
+auto
+kero::RunnerContext::HasServiceIs(
+    const Service::Kind::Name service_kind_name) const noexcept -> bool {
+  return runner_.Unwrap().HasServiceIs(service_kind_name);
+}
 
 auto
 kero::RunnerContext::SubscribeEvent(const std::string& event,
@@ -11,9 +49,8 @@ kero::RunnerContext::SubscribeEvent(const std::string& event,
 }
 
 auto
-kero::RunnerContext::UnsubscribeEvent(const std::string& event,
-                                      const Service::Kind& kind)
-    -> Result<Void> {
+kero::RunnerContext::UnsubscribeEvent(
+    const std::string& event, const Service::Kind& kind) -> Result<Void> {
   return runner_.Unwrap().UnsubscribeEvent(event, kind);
 }
 
@@ -27,38 +64,27 @@ auto
 kero::Runner::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  // if (auto res = ResolveDependencies(); res.IsErr()) {
-  //   return ResultT::Err(Error::From(res.TakeErr()));
-  // }
+  if (auto res = CreateServices(); res.IsErr()) {
+    return ResultT::Err(res.TakeErr());
+  }
 
-  // if (auto res = CreateServices(); res.IsErr()) {
-  //   return ResultT::Err(Error::From(res.TakeErr()));
-  // }
+  auto signal = GetServiceAs<SignalService>(kServiceKindSignal.id);
+  auto is_interrupted = false;
+  while (!is_interrupted) {
+    if (signal) {
+      is_interrupted = signal.Unwrap().IsInterrupted();
+    }
 
-  // auto signal = GetServiceAs<SignalService>(ServiceKind::kSignal);
-  // if (!signal) {
-  //   log::Debug("Signal service not found")
-  //       .Data("thread", std::this_thread::get_id())
-  //       .Log();
-  // }
+    UpdateServices();
+  }
 
-  // auto is_interrupted = false;
-  // while (!is_interrupted) {
-  //   if (signal) {
-  //     is_interrupted = signal.Unwrap().IsInterrupted();
-  //   }
+  DestroyServices();
 
-  //   UpdateServices();
-  // }
+  if (is_interrupted) {
+    return ResultT::Err(Error::From(kInterrupted));
+  }
 
-  // DestroyServices();
-
-  // if (is_interrupted) {
-  //   return ResultT::Err(Error::From(kInterrupted));
-  // }
-
-  // log::Debug("Agent stopped").Log();
-  // return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -133,8 +159,8 @@ kero::Runner::UnsubscribeEvent(const std::string& event,
 }
 
 auto
-kero::Runner::InvokeEvent(const std::string& event, const Dict& data) noexcept
-    -> Result<Void> {
+kero::Runner::InvokeEvent(const std::string& event,
+                          const Dict& data) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto it = event_handler_map_.find(event);
@@ -171,7 +197,7 @@ kero::Runner::InvokeEvent(const std::string& event, const Dict& data) noexcept
     return ResultT::Err(std::move(error));
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -186,14 +212,14 @@ kero::Runner::CreateServices() noexcept -> Result<Void> {
       return ResultT::Err(res.TakeErr());
     }
 
-    return OkVoid;
+    return OkVoid();
   });
 
   if (res.IsErr()) {
     return ResultT::Err(res.TakeErr());
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -210,5 +236,39 @@ auto
 kero::Runner::UpdateServices() noexcept -> void {
   for (auto& [_, service] : service_map_.GetServiceMapRaw()) {
     service->OnUpdate();
+  }
+}
+
+kero::ThreadRunner::ThreadRunner(Pin<Runner> runner) noexcept
+    : runner_{runner} {}
+
+auto
+kero::ThreadRunner::Start() -> Result<Void> {
+  if (thread_.joinable()) {
+    return Result<Void>::Err(
+        Dict{}.Set("message", "thread already started").Take());
+  }
+
+  thread_ = std::thread{ThreadMain, runner_};
+  return OkVoid();
+}
+
+auto
+kero::ThreadRunner::Stop() -> Result<Void> {
+  if (!thread_.joinable()) {
+    return Result<Void>::Err(
+        Dict{}.Set("message", "thread not started").Take());
+  }
+
+  thread_.join();
+  return OkVoid();
+}
+
+auto
+kero::ThreadRunner::ThreadMain(Pin<Runner> runner) noexcept -> void {
+  if (auto res = runner.Unwrap().Run()) {
+    log::Info("Runner finished").Log();
+  } else {
+    log::Error("Runner failed").Data("error", res.TakeErr()).Log();
   }
 }

@@ -43,6 +43,9 @@ class Service {
   GetDependencies() const noexcept -> const Dependencies&;
 
   [[nodiscard]] auto
+  GetRunnerContext() noexcept -> RunnerContext&;
+
+  [[nodiscard]] auto
   Is(const Kind::Id kind_id) const noexcept -> bool;
 
   [[nodiscard]] auto

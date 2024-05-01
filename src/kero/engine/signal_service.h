@@ -7,6 +7,8 @@
 
 namespace kero {
 
+static const Service::Kind kServiceKindSignal = {1, "signal"};
+
 class SignalService final : public Service {
  public:
   explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;

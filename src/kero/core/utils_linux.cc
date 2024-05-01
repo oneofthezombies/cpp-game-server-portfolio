@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "kero/core/dict.h"
+#include "kero/core/utils.h"
 
 using namespace kero;
 
@@ -26,7 +27,7 @@ kero::Fd::Close(const Value fd) noexcept -> Result<Void> {
     return ResultT::Err(Error::From(Errno::FromErrno().IntoDict()));
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -44,7 +45,7 @@ kero::Fd::UpdateNonBlocking(const Value fd) noexcept -> Result<Void> {
         Error::From(kSetStatusFailed, Errno::FromErrno().IntoDict())};
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 kero::Errno::Errno(const Value code,
