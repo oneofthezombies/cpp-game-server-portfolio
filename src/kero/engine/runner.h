@@ -6,72 +6,20 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "kero/core/common.h"
 #include "kero/core/result.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_map.h"
 
 namespace kero {
 
-class Runner;
-
-class RunnerContext {
- public:
-  explicit RunnerContext(const Pin<Runner> runner) noexcept;
-  ~RunnerContext() noexcept = default;
-  CLASS_KIND_PINNABLE(RunnerContext);
-
-  [[nodiscard]] auto
-  GetService(const Service::Kind::Id service_kind_id) const noexcept
-      -> OptionRef<Service&>;
-
-  [[nodiscard]] auto
-  GetService(const Service::Kind::Name service_kind_name) const noexcept
-      -> OptionRef<Service&>;
-
-  template <IsServiceKind T>
-  [[nodiscard]] auto
-  GetServiceAs(const Service::Kind::Id service_kind_id) const noexcept
-      -> OptionRef<T&>;
-
-  template <IsServiceKind T>
-  [[nodiscard]] auto
-  GetServiceAs(const Service::Kind::Name service_kind_name) const noexcept
-      -> OptionRef<T&>;
-
-  [[nodiscard]] auto
-  HasService(const Service::Kind::Id service_kind_id) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  HasService(const Service::Kind::Name service_kind_name) const noexcept
-      -> bool;
-
-  [[nodiscard]] auto
-  HasServiceIs(const Service::Kind::Id service_kind_id) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  HasServiceIs(const Service::Kind::Name service_kind_name) const noexcept
-      -> bool;
-
-  [[nodiscard]] auto
-  SubscribeEvent(const std::string& event,
-                 const Service::Kind& kind) -> Result<Void>;
-
-  [[nodiscard]] auto
-  UnsubscribeEvent(const std::string& event,
-                   const Service::Kind& kind) -> Result<Void>;
-
-  auto
-  InvokeEvent(const std::string& event,
-              const Dict& data) noexcept -> Result<Void>;
-
- private:
-  Pin<Runner> runner_;
-};
+class ThreadRunner;
+struct EngineContext;
 
 class Runner {
  public:
-  using EventHandlerMapT =
-      std::unordered_map<std::string /* event */,
-                         std::unordered_set<Service::Kind>>;
+  using EventHandlerMapT = std::unordered_map<std::string /* event */,
+                                              std::unordered_set<ServiceKind>>;
 
   enum : Error::Code {
     kInterrupted = 3,
@@ -79,77 +27,39 @@ class Runner {
 
   explicit Runner(std::string&& name) noexcept;
   ~Runner() noexcept = default;
+  CLASS_KIND_PINNABLE(Runner);
 
   [[nodiscard]] auto
   Run() noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  GetService(const Service::Kind::Id service_kind_id) const noexcept
+  GetService(const ServiceKind::Id service_kind_id) const noexcept
       -> OptionRef<Service&>;
 
   [[nodiscard]] auto
-  GetService(const Service::Kind::Name service_kind_name) const noexcept
+  GetService(const ServiceKind::Name service_kind_name) const noexcept
       -> OptionRef<Service&>;
 
-  template <IsServiceKind T>
   [[nodiscard]] auto
-  GetServiceAs(const Service::Kind::Id service_kind_id) const noexcept
-      -> OptionRef<T&> {
-    auto service = GetService(service_kind_id);
-    if (service.IsNone()) {
-      return None;
-    }
-
-    return service.Unwrap().As<T>(service_kind_id);
-  }
-
-  template <IsServiceKind T>
-  [[nodiscard]] auto
-  GetServiceAs(const Service::Kind::Name service_kind_name) const noexcept
-      -> OptionRef<T&> {
-    auto service = GetService(service_kind_name);
-    if (service.IsNone()) {
-      return None;
-    }
-
-    return service.Unwrap().As<T>(service_kind_name);
-  }
+  HasService(const ServiceKind::Id service_kind_id) const noexcept -> bool;
 
   [[nodiscard]] auto
-  HasService(const Service::Kind::Id service_kind_id) const noexcept -> bool;
+  HasService(const ServiceKind::Name service_kind_name) const noexcept -> bool;
 
   [[nodiscard]] auto
-  HasService(const Service::Kind::Name service_kind_name) const noexcept
+  HasServiceIs(const ServiceKind::Id service_kind_id) const noexcept -> bool;
+
+  [[nodiscard]] auto
+  HasServiceIs(const ServiceKind::Name service_kind_name) const noexcept
       -> bool;
 
   [[nodiscard]] auto
-  HasServiceIs(const Service::Kind::Id service_kind_id) const noexcept -> bool {
-    auto service = GetService(service_kind_id);
-    if (service.IsNone()) {
-      return false;
-    }
-
-    return service.Unwrap().Is(service_kind_id);
-  }
-
-  [[nodiscard]] auto
-  HasServiceIs(const Service::Kind::Name service_kind_name) const noexcept
-      -> bool {
-    auto service = GetService(service_kind_name);
-    if (service.IsNone()) {
-      return false;
-    }
-
-    return service.Unwrap().Is(service_kind_name);
-  }
-
-  [[nodiscard]] auto
   SubscribeEvent(const std::string& event,
-                 const Service::Kind& kind) -> Result<Void>;
+                 const ServiceKind& kind) -> Result<Void>;
 
   [[nodiscard]] auto
   UnsubscribeEvent(const std::string& event,
-                   const Service::Kind& kind) -> Result<Void>;
+                   const ServiceKind& kind) -> Result<Void>;
 
   [[nodiscard]] auto
   InvokeEvent(const std::string& event,
@@ -170,12 +80,16 @@ class Runner {
 
   ServiceMap service_map_;
   EventHandlerMapT event_handler_map_;
+  std::string name_;
+
+  friend class RunnerBuilder;
 };
 
 class ThreadRunner {
  public:
   explicit ThreadRunner(Pin<Runner> runner) noexcept;
   ~ThreadRunner() noexcept = default;
+  CLASS_KIND_MOVABLE(ThreadRunner);
 
   [[nodiscard]] auto
   Start() -> Result<Void>;
@@ -190,40 +104,6 @@ class ThreadRunner {
   std::thread thread_;
   Pin<Runner> runner_;
 };
-
-template <typename T>
-concept IsRunnerKind =
-    std::is_base_of_v<Runner, T> || std::is_base_of_v<ThreadRunner, T>;
-
-template <IsRunnerKind T>
-class RunnerBuilder {
- public:
-  explicit RunnerBuilder() noexcept = default;
-  ~RunnerBuilder() noexcept = default;
-
-  [[nodiscard]] auto
-  AddService(ServiceFactory&& service_factory) noexcept -> RunnerBuilder&;
-
-  [[nodiscard]] auto
-  Build() const noexcept -> Result<Pin<T>>;
-
- private:
-  std::vector<ServiceFactory> service_factories_;
-};
-
-template <IsServiceKind T>
-[[nodiscard]] auto
-RunnerContext::GetServiceAs(
-    const Service::Kind::Id service_kind_id) const noexcept -> OptionRef<T&> {
-  return runner_.Unwrap().GetServiceAs<T>(service_kind_id);
-}
-
-template <IsServiceKind T>
-[[nodiscard]] auto
-RunnerContext::GetServiceAs(const Service::Kind::Name service_kind_name)
-    const noexcept -> OptionRef<T&> {
-  return runner_.Unwrap().GetServiceAs<T>(service_kind_name);
-}
 
 }  // namespace kero
 

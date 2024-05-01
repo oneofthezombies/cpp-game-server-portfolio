@@ -3,7 +3,7 @@
 using namespace kero;
 
 auto
-OkVoid() -> Result<Void> {
+kero::OkVoid() -> Result<Void> {
   return Result<Void>::Ok(Void{});
 }
 

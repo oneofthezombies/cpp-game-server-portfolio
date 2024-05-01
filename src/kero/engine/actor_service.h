@@ -9,7 +9,7 @@
 
 namespace kero {
 
-static const Service::Kind kServiceKindActor = {2, "actor"};
+static const ServiceKind kServiceKindActor = {2, "actor"};
 
 class ActorService final : public Service {
  public:
@@ -26,7 +26,7 @@ class ActorService final : public Service {
   SendMail(std::string &&to, std::string &&event, Dict &&body) noexcept -> void;
 
  private:
-  explicit ActorService(Pin<RunnerContext> runner_context,
+  explicit ActorService(RunnerContextPtr &&runner_context,
                         std::string &&name,
                         MailBox &&mail_box) noexcept;
 

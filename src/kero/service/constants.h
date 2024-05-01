@@ -5,11 +5,11 @@
 
 namespace kero {
 
-static const Service::Kind kServiceKindIoEventLoop = {3, "io_event_loop"};
-static const Service::Kind kServiceKindTcpServer = {4, "tcp_server"};
-static const Service::Kind kServiceKindConfig = {5, "config"};
-static const Service::Kind kServiceKindSocketPool = {6, "socket_pool"};
-static const Service::Kind kServiceKindSocketRouter = {7, "socket_router"};
+static const ServiceKind kServiceKindIoEventLoop = {3, "io_event_loop"};
+static const ServiceKind kServiceKindTcpServer = {4, "tcp_server"};
+static const ServiceKind kServiceKindConfig = {5, "config"};
+static const ServiceKind kServiceKindSocketPool = {6, "socket_pool"};
+static const ServiceKind kServiceKindSocketRouter = {7, "socket_router"};
 
 struct EventSocketError {
   static constexpr auto kEvent = "socket_error";

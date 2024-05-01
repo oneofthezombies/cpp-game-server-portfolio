@@ -9,6 +9,8 @@ namespace kero {
 
 class ConfigService final : public Service {
  public:
+  explicit ConfigService(RunnerContextPtr&& runner_context,
+                         Dict&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
   CLASS_KIND_MOVABLE(ConfigService);
 
@@ -28,12 +30,7 @@ class ConfigService final : public Service {
   GetConfig() noexcept -> Dict&;
 
  private:
-  explicit ConfigService(const Pin<RunnerContext> runner_context,
-                         Dict&& config) noexcept;
-
   Dict config_;
-
-  friend class ConfigServiceFactory;
 };
 
 class ConfigServiceFactoryProvider final {

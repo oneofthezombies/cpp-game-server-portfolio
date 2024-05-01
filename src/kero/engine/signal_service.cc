@@ -5,14 +5,14 @@
 #include "kero/core/utils_linux.h"
 #include "kero/engine/actor_service.h"
 #include "kero/engine/constants.h"
-#include "kero/engine/runner.h"
+#include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 
 using namespace kero;
 
-kero::SignalService::SignalService(
-    const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, kServiceKindSignal, {kServiceKindActor}} {}
+kero::SignalService::SignalService(RunnerContextPtr&& runner_context) noexcept
+    : Service{
+          std::move(runner_context), kServiceKindSignal, {kServiceKindActor}} {}
 
 auto
 kero::SignalService::OnCreate() noexcept -> Result<Void> {
@@ -42,8 +42,10 @@ kero::SignalService::OnUpdate() noexcept -> void {
     return;
   }
 
-  auto actor =
-      GetRunnerContext().GetServiceAs<ActorService>(kServiceKindActor.id);
+  auto actor = GetRunnerContext()
+                   .GetService(kServiceKindActor.id)
+                   .Unwrap()
+                   .As<ActorService>(kServiceKindActor.id);
   if (!actor) {
     log::Error("Failed to get ActorService").Log();
     return;

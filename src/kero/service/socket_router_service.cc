@@ -1,21 +1,23 @@
 #include "socket_router_service.h"
 
-#include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
+#include "kero/engine/actor_service.h"
+#include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/actor_service.h"
 #include "kero/service/config_service.h"
+#include "kero/service/constants.h"
 
 using namespace kero;
 
-kero::SocketRouterService::SocketRouterService() noexcept
-    : Service{ServiceKind::kSocketRouter,
-              {ServiceKind::kActor, ServiceKind::kConfig}} {}
+kero::SocketRouterService::SocketRouterService(
+    RunnerContextPtr&& runner_context) noexcept
+    : Service{std::move(runner_context),
+              kServiceKindSocketRouter,
+              {kServiceKindActor, kServiceKindConfig}} {}
 
 auto
-kero::SocketRouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
-  if (!agent.SubscribeEvent(EventSocketOpen::kEvent, GetKind())) {
+  if (!SubscribeEvent(EventSocketOpen::kEvent)) {
     return ResultT::Err(Error::From(
         Dict{}
             .Set("message",
@@ -23,7 +25,10 @@ kero::SocketRouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  auto config = agent.GetServiceAs<ConfigService>(ServiceKind::kConfig);
+  auto config = GetRunnerContext()
+                    .GetService(kServiceKindConfig.id)
+                    .Unwrap()
+                    .As<ConfigService>(kServiceKindConfig.id);
   if (!config) {
     return ResultT::Err(Error::From(
         Dict{}.Set("message", std::string{"ConfigService not found"}).Take()));
@@ -40,12 +45,11 @@ kero::SocketRouterService::OnCreate(Agent& agent) noexcept -> Result<Void> {
 
   target_actor_ = std::move(target_actor);
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
-kero::SocketRouterService::OnEvent(Agent& agent,
-                                   const std::string& event,
+kero::SocketRouterService::OnEvent(const std::string& event,
                                    const Dict& data) noexcept -> void {
   if (event != EventSocketOpen::kEvent) {
     return;
@@ -56,7 +60,10 @@ kero::SocketRouterService::OnEvent(Agent& agent,
     return;
   }
 
-  agent.GetServiceAs<ActorService>(ServiceKind::kActor)
+  GetRunnerContext()
+      .GetService(kServiceKindActor.id)
+      .Unwrap()
+      .As<ActorService>(kServiceKindActor.id)
       .Unwrap()
       .SendMail(std::string{target_actor_}, std::string{event}, data.Clone());
 }

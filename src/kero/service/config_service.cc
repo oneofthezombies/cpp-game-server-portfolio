@@ -2,15 +2,14 @@
 
 #include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
-#include "kero/engine/runner.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/constants.h"
 
 using namespace kero;
 
-kero::ConfigService::ConfigService(const Pin<RunnerContext> runner_context,
+kero::ConfigService::ConfigService(RunnerContextPtr&& runner_context,
                                    Dict&& config) noexcept
-    : Service{runner_context, kServiceKindConfig, {}},
+    : Service{std::move(runner_context), kServiceKindConfig, {}},
       config_{std::move(config)} {}
 
 auto
@@ -44,49 +43,49 @@ kero::ConfigServiceFactoryProvider::ConfigServiceFactoryProvider(
 
 auto
 kero::ConfigServiceFactoryProvider::Create() noexcept -> ServiceFactory {
-  return [args = args_](
-             const Pin<RunnerContext> runner_context) -> Result<ServicePtr> {
-    using ResultT = Result<ServicePtr>;
+  return
+      [args = args_](RunnerContextPtr&& runner_context) -> Result<ServicePtr> {
+        using ResultT = Result<ServicePtr>;
 
-    Dict config{};
-    ArgsScanner scanner{std::move(args)};
+        Dict config{};
+        ArgsScanner scanner{args};
 
-    // // Skip the first argument which is the program name
-    // scanner.Eat();
-    // while (true) {
-    //   const auto current = scanner.Current();
-    //   if (!current) {
-    //     break;
-    //   }
+        // Skip the first argument which is the program name
+        scanner.Eat();
+        while (true) {
+          const auto current = scanner.Current();
+          if (!current) {
+            break;
+          }
 
-    //   const auto& token = current.Unwrap();
-    //   if (token == "--port") {
-    //     const auto next = scanner.Next();
-    //     if (!next) {
-    //       return ResultT::Err(Error::From(kPortNotFound));
-    //     }
+          const auto& token = current.Unwrap();
+          if (token == "--port") {
+            const auto next = scanner.Next();
+            if (!next) {
+              return ResultT::Err(Error::From(kPortNotFound));
+            }
 
-    //     auto port_str = next.Unwrap();
-    //     auto res = ParseNumberString<uint16_t>(port_str);
-    //     if (res.IsErr()) {
-    //       return ResultT::Err(
-    //           Error::From(kPortParsingFailed,
-    //                       Dict{}.Set("port", std::move(port_str)).Take(),
-    //                       res.TakeErr()));
-    //     };
+            auto port_str = next.Unwrap();
+            auto res = ParseNumberString<uint16_t>(port_str);
+            if (res.IsErr()) {
+              return ResultT::Err(
+                  Error::From(kPortParsingFailed,
+                              Dict{}.Set("port", std::move(port_str)).Take(),
+                              res.TakeErr()));
+            };
 
-    //     (void)config.Set("port", static_cast<double>(res.TakeOk()));
-    //     scanner.Eat();
-    //   } else {
-    //     return ResultT::Err(
-    //         Error::From(kUnknownArgument,
-    //                     Dict{}.Set("token", std::string{token}).Take()));
-    //   }
+            (void)config.Set("port", static_cast<double>(res.TakeOk()));
+            scanner.Eat();
+          } else {
+            return ResultT::Err(
+                Error::From(kUnknownArgument,
+                            Dict{}.Set("token", std::string{token}).Take()));
+          }
 
-    //   scanner.Eat();
-    // }
+          scanner.Eat();
+        }
 
-    // return ResultT::Ok(
-    //     ServicePtr{new ConfigService{runner_context, std::move(config)}});
-  };
+        return ResultT::Ok(ServicePtr{
+            new ConfigService{std::move(runner_context), std::move(config)}});
+      };
 }

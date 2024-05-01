@@ -1,90 +1,87 @@
 #include "kero/core/tiny_json.h"
-#include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
+#include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
+#include "kero/service/constants.h"
 #include "kero/service/io_event_loop_service.h"
-#include "kero/service/service.h"
-#include "kero/service/socket_pool_service.h"
 
-class LobbyService final : public kero::Service {
+using namespace kero;
+
+class LobbyService final : public Service {
  public:
-  explicit LobbyService() noexcept
-      : Service{100,
-                {kero::ServiceKind::kSocketPool,
-                 kero::ServiceKind::kIoEventLoop}} {}
+  explicit LobbyService(RunnerContextPtr &&runner_context) noexcept
+      : Service{std::move(runner_context),
+                {100, "lobby"},
+                {kServiceKindSocketPool, kServiceKindIoEventLoop}} {}
 
   auto
-  OnCreate(kero::Agent &agent) noexcept -> kero::Result<kero::Void> override {
-    using ResultT = kero::Result<kero::Void>;
+  OnCreate() noexcept -> Result<Void> override {
+    using ResultT = Result<Void>;
 
-    if (!agent.SubscribeEvent(kero::EventSocketRegister::kEvent, GetKind())) {
-      return ResultT::Err(kero::Error::From(
-          kero::Dict{}
+    if (!SubscribeEvent(EventSocketRegister::kEvent)) {
+      return ResultT::Err(Error::From(
+          Dict{}
               .Set("message", "Failed to subscribe to socket register event")
               .Take()));
     }
 
-    if (!agent.SubscribeEvent(kero::EventSocketUnregister::kEvent, GetKind())) {
-      return ResultT::Err(kero::Error::From(
-          kero::Dict{}
+    if (!SubscribeEvent(EventSocketUnregister::kEvent)) {
+      return ResultT::Err(Error::From(
+          Dict{}
               .Set("message", "Failed to subscribe to socket unregister event")
               .Take()));
     }
 
-    return ResultT::Ok(kero::Void{});
+    return ResultT::Ok(Void{});
   }
 
   auto
-  OnDestroy(kero::Agent &agent) noexcept -> void override {
-    if (!agent.UnsubscribeEvent(kero::EventSocketRegister::kEvent, GetKind())) {
-      kero::log::Error("Failed to unsubscribe from socket register event")
-          .Log();
+  OnDestroy() noexcept -> void override {
+    if (!UnsubscribeEvent(EventSocketRegister::kEvent)) {
+      log::Error("Failed to unsubscribe from socket register event").Log();
     }
 
-    if (!agent.UnsubscribeEvent(kero::EventSocketUnregister::kEvent,
-                                GetKind())) {
-      kero::log::Error("Failed to unsubscribe from socket unregister event")
-          .Log();
+    if (!UnsubscribeEvent(EventSocketUnregister::kEvent)) {
+      log::Error("Failed to unsubscribe from socket unregister event").Log();
     }
   }
 
   auto
-  OnEvent(kero::Agent &agent,
-          const std::string &event,
-          const kero::Dict &data) noexcept -> void override {
-    if (event == kero::EventSocketRegister::kEvent) {
-      OnSocketRegister(agent, data);
-    } else if (event == kero::EventSocketUnregister::kEvent) {
-      OnSocketUnregister(agent, data);
+  OnEvent(const std::string &event,
+          const Dict &data) noexcept -> void override {
+    if (event == EventSocketRegister::kEvent) {
+      OnSocketRegister(data);
+    } else if (event == EventSocketUnregister::kEvent) {
+      OnSocketUnregister(data);
     } else {
-      kero::log::Error("Unknown event").Data("event", event).Log();
+      log::Error("Unknown event").Data("event", event).Log();
     }
   }
 
  private:
   auto
-  OnSocketRegister(kero::Agent &agent, const kero::Dict &data) noexcept
-      -> void {
-    const auto fd = data.TryGetAsDouble(kero::EventSocketRegister::kFd);
+  OnSocketRegister(const Dict &data) noexcept -> void {
+    const auto fd = data.TryGetAsDouble(EventSocketRegister::kFd);
     if (!fd) {
-      kero::log::Error("Failed to get fd from socket register event")
+      log::Error("Failed to get fd from socket register event")
           .Data("data", data)
           .Log();
       return;
     }
 
-    const auto &io_event_loop = agent
-                                    .GetServiceAs<kero::IoEventLoopService>(
-                                        kero::ServiceKind::kIoEventLoop)
-                                    .Unwrap();
+    const auto &io_event_loop =
+        GetRunnerContext()
+            .GetService(kServiceKindIoEventLoop.id)
+            .Unwrap()
+            .As<IoEventLoopService>(kServiceKindIoEventLoop.id)
+            .Unwrap();
 
-    auto stringified = kero::TinyJson::Stringify(
-        kero::Dict{}
-            .Set("kind", "connect")
-            .Set("socket_id", std::to_string(fd.Unwrap()))
-            .Take());
+    auto stringified =
+        TinyJson::Stringify(Dict{}
+                                .Set("kind", "connect")
+                                .Set("socket_id", std::to_string(fd.Unwrap()))
+                                .Take());
     if (stringified.IsErr()) {
-      kero::log::Error("Failed to stringify connect message")
+      log::Error("Failed to stringify connect message")
           .Data("error", stringified.TakeErr())
           .Log();
       return;
@@ -93,7 +90,7 @@ class LobbyService final : public kero::Service {
     if (auto res = io_event_loop.WriteToFd(static_cast<int>(fd.Unwrap()),
                                            stringified.TakeOk());
         res.IsErr()) {
-      kero::log::Error("Failed to send connect message to socket")
+      log::Error("Failed to send connect message to socket")
           .Data("fd", fd.Unwrap())
           .Data("error", res.TakeErr())
           .Log();
@@ -101,11 +98,10 @@ class LobbyService final : public kero::Service {
   }
 
   auto
-  OnSocketUnregister(kero::Agent &agent, const kero::Dict &data) noexcept
-      -> void {
-    const auto fd = data.TryGetAsDouble(kero::EventSocketUnregister::kFd);
+  OnSocketUnregister(const Dict &data) noexcept -> void {
+    const auto fd = data.TryGetAsDouble(EventSocketUnregister::kFd);
     if (!fd) {
-      kero::log::Error("Failed to get fd from socket unregister event")
+      log::Error("Failed to get fd from socket unregister event")
           .Data("data", data)
           .Log();
       return;

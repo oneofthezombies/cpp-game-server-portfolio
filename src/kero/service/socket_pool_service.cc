@@ -1,16 +1,17 @@
 #include "socket_pool_service.h"
 
 #include "constants.h"
-#include "kero/engine/runner.h"
+#include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/io_event_loop_service.h"
 
 using namespace kero;
 
 kero::SocketPoolService::SocketPoolService(
-    const Pin<RunnerContext> runner_context) noexcept
-    : Service{
-          runner_context, kServiceKindSocketPool, {kServiceKindIoEventLoop}} {}
+    RunnerContextPtr&& runner_context) noexcept
+    : Service{std::move(runner_context),
+              kServiceKindSocketPool,
+              {kServiceKindIoEventLoop}} {}
 
 auto
 kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
@@ -55,8 +56,10 @@ kero::SocketPoolService::OnSocketOpen(const Dict& data) noexcept -> void {
     return;
   }
 
-  auto io_event_loop = GetRunnerContext().GetServiceAs<IoEventLoopService>(
-      kServiceKindIoEventLoop.id);
+  auto io_event_loop = GetRunnerContext()
+                           .GetService(kServiceKindIoEventLoop.id)
+                           .Unwrap()
+                           .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
   if (!io_event_loop) {
     log::Error("Failed to get IoEventLoopService").Log();
     return;
@@ -85,8 +88,10 @@ kero::SocketPoolService::OnSocketClose(const Dict& data) noexcept -> void {
 
   sockets_.erase(fd);
 
-  auto io_event_loop = GetRunnerContext().GetServiceAs<IoEventLoopService>(
-      kServiceKindIoEventLoop.id);
+  auto io_event_loop = GetRunnerContext()
+                           .GetService(kServiceKindIoEventLoop.id)
+                           .Unwrap()
+                           .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
   if (!io_event_loop) {
     log::Error("Failed to get IoEventLoopService").Log();
   } else {

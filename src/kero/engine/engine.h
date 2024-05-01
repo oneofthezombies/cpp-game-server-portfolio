@@ -1,13 +1,13 @@
 #ifndef KERO_ENGINE_ENGINE_H
 #define KERO_ENGINE_ENGINE_H
 
-#include "actor_system.h"
 #include "kero/core/common.h"
 #include "kero/core/result.h"
-#include "kero/engine/pin_object_system.h"
-#include "kero/engine/runner.h"
+#include "kero/engine/engine_context.h"
 
 namespace kero {
+
+class RunnerBuilder;
 
 class Engine {
  public:
@@ -16,17 +16,13 @@ class Engine {
   CLASS_KIND_PINNABLE(Engine);
 
   [[nodiscard]] auto
-  CreateThreadRunner(std::string&& name) -> Result<Pin<ThreadRunner>>;
-
-  [[nodiscard]] auto
-  CreateRunner(std::string&& name) -> Result<Pin<Runner>>;
+  CreateRunnerBuilder(std::string&& name) -> Result<RunnerBuilder>;
 
   [[nodiscard]] static auto
   Global() -> Engine&;
 
  private:
-  PinObjectSystem pin_object_system_;
-  ActorSystem actor_system_;
+  EngineContext engine_context_{};
 };
 
 }  // namespace kero

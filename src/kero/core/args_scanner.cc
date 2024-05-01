@@ -2,6 +2,8 @@
 
 using namespace kero;
 
+kero::ArgsScanner::ArgsScanner(const Args &args) noexcept : args_(args) {}
+
 kero::ArgsScanner::ArgsScanner(Args &&args) noexcept : args_(std::move(args)) {}
 
 auto

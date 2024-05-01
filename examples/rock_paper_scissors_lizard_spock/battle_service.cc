@@ -1,72 +1,69 @@
-#include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
+#include "kero/engine/runner_context.h"
+#include "kero/engine/service.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/service.h"
-#include "kero/service/socket_pool_service.h"
+#include "kero/service/constants.h"
 
-class BattleService final : public kero::Service {
+using namespace kero;
+
+class BattleService final : public Service {
  public:
-  explicit BattleService() noexcept
-      : Service{101, {kero::ServiceKind::kSocketPool}} {}
+  explicit BattleService(RunnerContextPtr &&runner_context) noexcept
+      : Service{std::move(runner_context),
+                {101, "battle"},
+                {kServiceKindSocketPool}} {}
 
   auto
-  OnCreate(kero::Agent &agent) noexcept -> kero::Result<kero::Void> override {
-    using ResultT = kero::Result<kero::Void>;
+  OnCreate() noexcept -> Result<Void> override {
+    using ResultT = Result<Void>;
 
-    if (!agent.SubscribeEvent(kero::EventSocketRegister::kEvent, GetKind())) {
-      return ResultT::Err(kero::Error::From(
-          kero::Dict{}
+    if (!SubscribeEvent(EventSocketRegister::kEvent)) {
+      return ResultT::Err(Error::From(
+          Dict{}
               .Set("message", "Failed to subscribe to socket register event")
               .Take()));
     }
 
-    if (!agent.SubscribeEvent(kero::EventSocketUnregister::kEvent, GetKind())) {
-      return ResultT::Err(kero::Error::From(
-          kero::Dict{}
+    if (!SubscribeEvent(EventSocketUnregister::kEvent)) {
+      return ResultT::Err(Error::From(
+          Dict{}
               .Set("message", "Failed to subscribe to socket unregister event")
               .Take()));
     }
 
-    return ResultT::Ok(kero::Void{});
+    return ResultT::Ok(Void{});
   }
 
   auto
-  OnDestroy(kero::Agent &agent) noexcept -> void override {
-    if (!agent.UnsubscribeEvent(kero::EventSocketRegister::kEvent, GetKind())) {
-      kero::log::Error("Failed to unsubscribe from socket register event")
-          .Log();
+  OnDestroy() noexcept -> void override {
+    if (!UnsubscribeEvent(EventSocketRegister::kEvent)) {
+      log::Error("Failed to unsubscribe from socket register event").Log();
     }
 
-    if (!agent.UnsubscribeEvent(kero::EventSocketUnregister::kEvent,
-                                GetKind())) {
-      kero::log::Error("Failed to unsubscribe from socket unregister event")
-          .Log();
+    if (!UnsubscribeEvent(EventSocketUnregister::kEvent)) {
+      log::Error("Failed to unsubscribe from socket unregister event").Log();
     }
   }
 
   auto
-  OnEvent(kero::Agent &agent,
-          const std::string &event,
-          const kero::Dict &data) noexcept -> void override {
-    if (event == kero::EventSocketRegister::kEvent) {
-      OnSocketRegister(agent, data);
-    } else if (event == kero::EventSocketUnregister::kEvent) {
-      OnSocketUnregister(agent, data);
+  OnEvent(const std::string &event,
+          const Dict &data) noexcept -> void override {
+    if (event == EventSocketRegister::kEvent) {
+      OnSocketRegister(data);
+    } else if (event == EventSocketUnregister::kEvent) {
+      OnSocketUnregister(data);
     } else {
-      kero::log::Error("Unknown event").Data("event", event).Log();
+      log::Error("Unknown event").Data("event", event).Log();
     }
   }
 
  private:
   auto
-  OnSocketRegister(kero::Agent &agent, const kero::Dict &data) noexcept
-      -> void {
+  OnSocketRegister(const Dict &data) noexcept -> void {
     // TODO: Implement this method
   }
 
   auto
-  OnSocketUnregister(kero::Agent &agent, const kero::Dict &data) noexcept
-      -> void {
+  OnSocketUnregister(const Dict &data) noexcept -> void {
     // TODO: Implement this method
   }
 };

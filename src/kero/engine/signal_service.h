@@ -7,11 +7,11 @@
 
 namespace kero {
 
-static const Service::Kind kServiceKindSignal = {1, "signal"};
+static const ServiceKind kServiceKindSignal = {1, "signal"};
 
 class SignalService final : public Service {
  public:
-  explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;
+  explicit SignalService(RunnerContextPtr&& runner_context) noexcept;
   virtual ~SignalService() noexcept override = default;
   CLASS_KIND_MOVABLE(SignalService);
 

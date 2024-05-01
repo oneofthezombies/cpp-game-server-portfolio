@@ -8,7 +8,7 @@ namespace kero {
 
 class TcpServerService final : public Service {
  public:
-  explicit TcpServerService() noexcept;
+  explicit TcpServerService(RunnerContextPtr&& runner_context) noexcept;
   virtual ~TcpServerService() noexcept override = default;
   CLASS_KIND_MOVABLE(TcpServerService);
 

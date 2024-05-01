@@ -6,7 +6,7 @@
 #include <cstring>
 
 #include "kero/core/utils_linux.h"
-#include "kero/engine/runner.h"
+#include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/constants.h"
 
@@ -37,8 +37,8 @@ AddOptionsToEpollEvents(
 }  // namespace
 
 kero::IoEventLoopService::IoEventLoopService(
-    const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, kServiceKindIoEventLoop, {}} {}
+    RunnerContextPtr&& runner_context) noexcept
+    : Service{std::move(runner_context), kServiceKindIoEventLoop, {}} {}
 
 auto
 kero::IoEventLoopService::OnCreate() noexcept -> Result<Void> {
@@ -128,19 +128,28 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     }
 
     const auto description = std::string_view{strerror(code)};
-    GetRunnerContext().InvokeEvent(
-        EventSocketError::kEvent,
-        Dict{}
-            .Set(EventSocketError::kFd, static_cast<double>(event.data.fd))
-            .Set(EventSocketError::kErrorCode, static_cast<double>(code))
-            .Set(EventSocketError::kErrorDescription,
-                 std::string{description}));
+    if (auto res = GetRunnerContext().InvokeEvent(
+            EventSocketError::kEvent,
+            Dict{}
+                .Set(EventSocketError::kFd, static_cast<double>(event.data.fd))
+                .Set(EventSocketError::kErrorCode, static_cast<double>(code))
+                .Set(EventSocketError::kErrorDescription,
+                     std::string{description}))) {
+      log::Error("Failed to invoke socket error event")
+          .Data("error", res.TakeErr())
+          .Log();
+    }
   }
 
   if (event.events & EPOLLHUP) {
-    GetRunnerContext().InvokeEvent(
-        EventSocketClose::kEvent,
-        Dict{}.Set(EventSocketClose::kFd, static_cast<double>(event.data.fd)));
+    if (auto res = GetRunnerContext().InvokeEvent(
+            EventSocketClose::kEvent,
+            Dict{}.Set(EventSocketClose::kFd,
+                       static_cast<double>(event.data.fd)))) {
+      log::Error("Failed to invoke socket close event")
+          .Data("error", res.TakeErr())
+          .Log();
+    }
 
     if (auto res = Fd::Close(event.data.fd); res.IsErr()) {
       return ResultT::Err(Error::From(res.TakeErr()));
@@ -148,9 +157,14 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLIN) {
-    GetRunnerContext().InvokeEvent(
-        EventSocketRead::kEvent,
-        Dict{}.Set(EventSocketRead::kFd, static_cast<double>(event.data.fd)));
+    if (auto res = GetRunnerContext().InvokeEvent(
+            EventSocketRead::kEvent,
+            Dict{}.Set(EventSocketRead::kFd,
+                       static_cast<double>(event.data.fd)))) {
+      log::Error("Failed to invoke socket read event")
+          .Data("error", res.TakeErr())
+          .Log();
+    }
   }
 
   return OkVoid();
@@ -259,9 +273,13 @@ kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
     }
 
     if (read == 0) {
-      GetRunnerContext().InvokeEvent(
-          EventSocketClose::kEvent,
-          Dict{}.Set(EventSocketClose::kFd, static_cast<double>(fd)));
+      if (auto res = GetRunnerContext().InvokeEvent(
+              EventSocketClose::kEvent,
+              Dict{}.Set(EventSocketClose::kFd, static_cast<double>(fd)))) {
+        log::Error("Failed to invoke socket close event")
+            .Data("error", res.TakeErr())
+            .Log();
+      }
       return ResultT::Err(
           Error::From(kSocketClosed,
                       Dict{}.Set("fd", static_cast<double>(fd)).Take()));

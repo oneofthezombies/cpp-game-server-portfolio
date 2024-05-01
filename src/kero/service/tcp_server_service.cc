@@ -3,30 +3,38 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "kero/engine/agent.h"
-#include "kero/engine/constants.h"
+#include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/config_service.h"
+#include "kero/service/constants.h"
 #include "kero/service/io_event_loop_service.h"
 
 using namespace kero;
 
-kero::TcpServerService::TcpServerService() noexcept
-    : Service{ServiceKind::kTcpServer,
-              {ServiceKind::kConfig, ServiceKind::kIoEventLoop}} {}
+kero::TcpServerService::TcpServerService(
+    RunnerContextPtr&& runner_context) noexcept
+    : Service{std::move(runner_context),
+              kServiceKindTcpServer,
+              {kServiceKindConfig, kServiceKindIoEventLoop}} {}
 
 auto
-kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  const auto config = agent.GetServiceAs<ConfigService>(ServiceKind::kConfig);
+  const auto config = GetRunnerContext()
+                          .GetService(kServiceKindConfig.id)
+                          .Unwrap()
+                          .As<ConfigService>(kServiceKindConfig.id);
   if (!config) {
     return ResultT::Err(Error::From(
         Dict{}.Set("message", std::string{"ConfigService not found"}).Take()));
   }
 
   const auto io_event_loop =
-      agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
+      GetRunnerContext()
+          .GetService(kServiceKindConfig.id)
+          .Unwrap()
+          .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
   if (!io_event_loop) {
     return ResultT::Err(Error::From(
         Dict{}
@@ -34,7 +42,7 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  if (!agent.SubscribeEvent(EventSocketRead::kEvent, GetKind())) {
+  if (!SubscribeEvent(EventSocketRead::kEvent)) {
     return ResultT::Err(Error::From(
         Dict{}
             .Set("message",
@@ -99,11 +107,11 @@ kero::TcpServerService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   }
 
   server_fd_ = server_fd;
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
-kero::TcpServerService::OnDestroy(Agent& agent) noexcept -> void {
+kero::TcpServerService::OnDestroy() noexcept -> void {
   if (!Fd::IsValid(server_fd_)) {
     return;
   }
@@ -117,14 +125,16 @@ kero::TcpServerService::OnDestroy(Agent& agent) noexcept -> void {
 }
 
 auto
-kero::TcpServerService::OnEvent(Agent& agent,
-                                const std::string& event,
+kero::TcpServerService::OnEvent(const std::string& event,
                                 const Dict& data) noexcept -> void {
   if (event == EventSocketRead::kEvent) {
     const auto fd = data.GetOrDefault<double>(EventSocketRead::kFd, -1);
     if (fd == server_fd_) {
       auto io_event_loop =
-          agent.GetServiceAs<IoEventLoopService>(ServiceKind::kIoEventLoop);
+          GetRunnerContext()
+              .GetService(kServiceKindIoEventLoop.id)
+              .Unwrap()
+              .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
       if (!io_event_loop) {
         log::Error("Failed to get IoEventLoopService").Log();
         return;
@@ -150,11 +160,15 @@ kero::TcpServerService::OnEvent(Agent& agent,
         return;
       }
 
-      agent.Invoke(
-          EventSocketOpen::kEvent,
-          Dict{}
-              .Set(EventSocketOpen::kFd, static_cast<double>(client_fd))
-              .Take());
+      if (auto res = GetRunnerContext().InvokeEvent(
+              EventSocketOpen::kEvent,
+              Dict{}
+                  .Set(EventSocketOpen::kFd, static_cast<double>(client_fd))
+                  .Take())) {
+        log::Error("Failed to invoke socket open event")
+            .Data("error", res.TakeErr())
+            .Log();
+      }
     }
   }
 }
