@@ -10,7 +10,7 @@ class Runner;
 
 class RunnerContext {
  public:
-  explicit RunnerContext(const Pin<Runner> runner) noexcept;
+  explicit RunnerContext(const Pinned<Runner> runner) noexcept;
   ~RunnerContext() noexcept = default;
   CLASS_KIND_PINNABLE(RunnerContext);
 
@@ -36,22 +36,22 @@ class RunnerContext {
       -> bool;
 
   [[nodiscard]] auto
-  SubscribeEvent(const std::string& event,
-                 const ServiceKind& kind) -> Result<Void>;
+  SubscribeEvent(const std::string& event, const ServiceKind& kind)
+      -> Result<Void>;
 
   [[nodiscard]] auto
-  UnsubscribeEvent(const std::string& event,
-                   const ServiceKind& kind) -> Result<Void>;
+  UnsubscribeEvent(const std::string& event, const ServiceKind& kind)
+      -> Result<Void>;
 
   [[nodiscard]] auto
-  InvokeEvent(const std::string& event,
-              const Dict& data) noexcept -> Result<Void>;
+  InvokeEvent(const std::string& event, const Dict& data) noexcept
+      -> Result<Void>;
 
  private:
-  Pin<Runner> runner_;
+  Pinned<Runner> runner_;
 };
 
-using RunnerContextPtr = std::unique_ptr<RunnerContext>;
+using RunnerContextPtr = Owned<RunnerContext>;
 
 }  // namespace kero
 

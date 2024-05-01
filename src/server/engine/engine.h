@@ -19,7 +19,7 @@ class EngineImplRawDeleter final {
   operator()(void *impl_raw) const noexcept;
 };
 
-using EngineImplPtr = std::unique_ptr<void, EngineImplRawDeleter>;
+using EngineImplPtr = Owned<void, EngineImplRawDeleter>;
 
 class Engine final {
  public:
@@ -37,8 +37,8 @@ class Engine final {
   CLASS_KIND_MOVABLE(Engine);
 
   [[nodiscard]] auto
-  RegisterEventLoop(std::string &&name,
-                    EventLoopHandlerPtr &&handler) noexcept -> Result<Void>;
+  RegisterEventLoop(std::string &&name, EventLoopHandlerPtr &&handler) noexcept
+      -> Result<Void>;
 
   [[nodiscard]] auto
   Run() noexcept -> Result<Void>;

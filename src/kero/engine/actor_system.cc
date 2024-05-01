@@ -155,7 +155,7 @@ kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
 }
 
 kero::ThreadActorSystem::ThreadActorSystem(
-    Pin<ActorSystem> actor_system) noexcept
+    Pinned<ActorSystem> actor_system) noexcept
     : actor_system_{actor_system} {}
 
 auto
@@ -191,7 +191,7 @@ kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
 }
 
 auto
-kero::ThreadActorSystem::ThreadMain(Pin<ActorSystem> actor_system,
+kero::ThreadActorSystem::ThreadMain(Pinned<ActorSystem> actor_system,
                                     spsc::Rx<Dict> &&rx) -> void {
   if (auto res = actor_system.Unwrap().Run(std::move(rx))) {
     log::Info("Actor system finished").Log();

@@ -16,7 +16,6 @@ kero::Center::Shutdown(ShutdownConfig&& config) noexcept -> void {
 }
 
 auto
-kero::Center::AddTransport(std::unique_ptr<Transport>&& transport) noexcept
-    -> void {
+kero::Center::AddTransport(Owned<Transport>&& transport) noexcept -> void {
   GetGlobalContext().AddTransport(std::move(transport));
 }

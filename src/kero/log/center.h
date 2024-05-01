@@ -22,7 +22,7 @@ class Center final {
   Shutdown(ShutdownConfig&& config = ShutdownConfig{}) noexcept -> void;
 
   auto
-  AddTransport(std::unique_ptr<Transport>&& transport) noexcept -> void;
+  AddTransport(Owned<Transport>&& transport) noexcept -> void;
 };
 
 }  // namespace kero

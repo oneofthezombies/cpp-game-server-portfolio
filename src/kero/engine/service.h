@@ -64,8 +64,8 @@ class Service {
   UnsubscribeEvent(const std::string& event) -> Result<Void>;
 
   auto
-  InvokeEvent(const std::string& event,
-              const Dict& data) noexcept -> Result<Void>;
+  InvokeEvent(const std::string& event, const Dict& data) noexcept
+      -> Result<Void>;
 
   /**
    * Default implementation of the `OnCreate` method is noop.
@@ -97,7 +97,7 @@ class Service {
   RunnerContextPtr runner_context_;
 };
 
-using ServicePtr = std::unique_ptr<Service>;
+using ServicePtr = Owned<Service>;
 using ServiceFactory = std::function<Result<ServicePtr>(RunnerContextPtr)>;
 
 }  // namespace kero

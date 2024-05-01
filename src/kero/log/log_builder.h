@@ -42,7 +42,7 @@ class LogBuilder final {
   Log() noexcept -> Result<Void>;
 
  private:
-  std::unique_ptr<kero::Log> log_;
+  Owned<kero::Log> log_;
 };
 
 [[nodiscard]] auto

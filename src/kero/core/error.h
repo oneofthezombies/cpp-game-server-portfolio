@@ -11,7 +11,7 @@ namespace kero {
 
 struct Error final {
   using Code = int32_t;
-  using Cause = std::unique_ptr<Error>;
+  using Cause = Owned<Error>;
 
   enum : int32_t {
     kFailed = 1,

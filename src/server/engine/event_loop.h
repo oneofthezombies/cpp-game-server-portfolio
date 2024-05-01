@@ -18,19 +18,19 @@ class EventLoopHandler {
   CLASS_KIND_MOVABLE(EventLoopHandler);
 
   [[nodiscard]] virtual auto
-  OnInit(EventLoop &event_loop,
-         const Config &config) noexcept -> Result<Void> = 0;
+  OnInit(EventLoop &event_loop, const Config &config) noexcept
+      -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
   OnMail(EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  OnSocketIn(EventLoop &event_loop,
-             const SocketId socket_id) noexcept -> Result<Void> = 0;
+  OnSocketIn(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  OnSocketHangUp(EventLoop &event_loop,
-                 const SocketId socket_id) noexcept -> Result<Void> = 0;
+  OnSocketHangUp(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
   OnSocketError(EventLoop &event_loop,
@@ -40,7 +40,7 @@ class EventLoopHandler {
       -> Result<Void> = 0;
 };
 
-using EventLoopHandlerPtr = std::unique_ptr<EventLoopHandler>;
+using EventLoopHandlerPtr = Owned<EventLoopHandler>;
 
 struct EventLoopAddOptions {
   bool in{false};
@@ -62,12 +62,12 @@ class EventLoop {
   GetName() const noexcept -> std::string_view;
 
   auto
-  SendMail(const std::string_view to,
-           MailBody &&mail_body) const noexcept -> void;
+  SendMail(const std::string_view to, MailBody &&mail_body) const noexcept
+      -> void;
 
   auto
-  SendServerEvent(const SocketId socket_id,
-                  core::Message &&message) noexcept -> Result<Void>;
+  SendServerEvent(const SocketId socket_id, core::Message &&message) noexcept
+      -> Result<Void>;
 
   [[nodiscard]] virtual auto
   Init(const Config &config) noexcept -> Result<Void> = 0;
@@ -83,8 +83,8 @@ class EventLoop {
   Remove(const SocketId socket_id) const noexcept -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
-  Write(const SocketId socket_id,
-        const std::string_view data) const noexcept -> Result<Void> = 0;
+  Write(const SocketId socket_id, const std::string_view data) const noexcept
+      -> Result<Void> = 0;
 
   [[nodiscard]] virtual auto
   Read(const SocketId socket_id) const noexcept -> Result<std::string> = 0;
@@ -99,7 +99,7 @@ class EventLoop {
   core::MessageId next_message_id_{1};
 };
 
-using EventLoopPtr = std::unique_ptr<EventLoop>;
+using EventLoopPtr = Owned<EventLoop>;
 
 }  // namespace engine
 

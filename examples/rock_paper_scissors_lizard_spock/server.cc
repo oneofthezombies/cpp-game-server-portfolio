@@ -1,5 +1,6 @@
 #include "battle_service.cc"
 #include "kero/core/utils.h"
+#include "kero/engine/actor_service.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/engine.h"
 #include "kero/engine/pin_object_system.h"
@@ -26,7 +27,35 @@ main(int argc, char** argv) -> int {
   Center{}.AddTransport(std::move(transport));
   Defer defer_log_system{[] { Center{}.Shutdown(); }};
 
-  kero::Engine::Global().CreateRunnerBuilder("main");
+  auto main =
+      kero::Engine::Global()
+          .CreateRunnerBuilder("main")
+          .AddServiceFactory(std::make_unique<ConfigServiceFactory>(argc, argv))
+          .AddServiceFactory(std::make_unique<SignalServiceFactory>())
+          .AddServiceFactory(std::make_unique<ActorServiceFactory>())
+          .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
+          .AddServiceFactory(std::make_unique<TcpServerServiceFactory>())
+          .AddServiceFactory(
+              std::make_unique<SocketRouterServiceFactory>("lobby"))
+          .BuildRunner();
+
+  auto lobby =
+      kero::Engine::Global()
+          .CreateRunnerBuilder("lobby")
+          .AddServiceFactory(std::make_unique<ActorServiceFactory>())
+          .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
+          .AddServiceFactory(std::make_unique<SocketPoolServiceFactory>())
+          .AddServiceFactory(std::make_unique<LobbyServiceFactory>())
+          .BuildThreadRunner();
+
+  auto lobby =
+      kero::Engine::Global()
+          .CreateRunnerBuilder("battle")
+          .AddServiceFactory(std::make_unique<ActorServiceFactory>())
+          .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
+          .AddServiceFactory(std::make_unique<SocketPoolServiceFactory>())
+          .AddServiceFactory(std::make_unique<BattleServiceFactory>())
+          .BuildThreadRunner();
 
   return 0;
 }

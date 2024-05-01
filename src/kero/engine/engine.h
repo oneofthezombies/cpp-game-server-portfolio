@@ -2,7 +2,6 @@
 #define KERO_ENGINE_ENGINE_H
 
 #include "kero/core/common.h"
-#include "kero/core/result.h"
 #include "kero/engine/engine_context.h"
 
 namespace kero {
@@ -16,10 +15,7 @@ class Engine {
   CLASS_KIND_PINNABLE(Engine);
 
   [[nodiscard]] auto
-  CreateRunnerBuilder(std::string&& name) -> Result<RunnerBuilder>;
-
-  [[nodiscard]] static auto
-  Global() -> Engine&;
+  CreateRunnerBuilder(std::string&& runner_name) -> RunnerBuilder;
 
  private:
   EngineContext engine_context_{};

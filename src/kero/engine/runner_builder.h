@@ -1,7 +1,9 @@
 #ifndef KERO_ENGINE_RUNNER_BUILDER_H
 #define KERO_ENGINE_RUNNER_BUILDER_H
 
+#include "kero/core/common.h"
 #include "kero/engine/engine.h"
+#include "kero/engine/engine_context.h"
 #include "kero/engine/service.h"
 
 namespace kero {
@@ -10,19 +12,20 @@ class ThreadRunner;
 
 class RunnerBuilder {
  public:
-  explicit RunnerBuilder(EngineContext* engine_context,
+  explicit RunnerBuilder(Borrowed<EngineContext> engine_context,
                          std::string&& name) noexcept;
   ~RunnerBuilder() noexcept = default;
-  CLASS_KIND_MOVABLE(RunnerBuilder);
+  CLASS_KIND_PINNABLE(RunnerBuilder);
 
   [[nodiscard]] auto
-  AddService(ServiceFactory&& service_factory) noexcept -> RunnerBuilder&;
+  AddServiceFactory(ServiceFactory&& service_factory) noexcept
+      -> RunnerBuilder&;
 
   [[nodiscard]] auto
-  BuildRunner() const noexcept -> Result<Pin<Runner>>;
+  BuildRunner() const noexcept -> Result<Pinned<Runner>>;
 
   [[nodiscard]] auto
-  BuildThreadRunner() const noexcept -> Result<Pin<ThreadRunner>>;
+  BuildThreadRunner() const noexcept -> Result<Pinned<ThreadRunner>>;
 
  private:
   std::vector<ServiceFactory> service_factories_;

@@ -73,7 +73,7 @@ class ActorSystem final {
 
 class ThreadActorSystem {
  public:
-  explicit ThreadActorSystem(Pin<ActorSystem> actor_system) noexcept;
+  explicit ThreadActorSystem(Pinned<ActorSystem> actor_system) noexcept;
   ~ThreadActorSystem() noexcept = default;
 
   [[nodiscard]] auto
@@ -84,10 +84,10 @@ class ThreadActorSystem {
 
  private:
   static auto
-  ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<Dict> &&rx) -> void;
+  ThreadMain(Pinned<ActorSystem> actor_system, spsc::Rx<Dict> &&rx) -> void;
 
-  Pin<ActorSystem> actor_system_;
-  std::unique_ptr<spsc::Tx<Dict>> tx_;
+  Pinned<ActorSystem> actor_system_;
+  Owned<spsc::Tx<Dict>> tx_;
   std::thread thread_;
 };
 

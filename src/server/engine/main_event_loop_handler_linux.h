@@ -14,20 +14,20 @@ class MainEventLoopHandlerLinux final : public EventLoopHandler {
   CLASS_KIND_MOVABLE(MainEventLoopHandlerLinux);
 
   [[nodiscard]] virtual auto
-  OnInit(EventLoop &event_loop,
-         const Config &config) noexcept -> Result<Void> override;
+  OnInit(EventLoop &event_loop, const Config &config) noexcept
+      -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnMail(EventLoop &event_loop,
-         const Mail &mail) noexcept -> Result<Void> override;
+  OnMail(EventLoop &event_loop, const Mail &mail) noexcept
+      -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnSocketIn(EventLoop &event_loop,
-             const SocketId socket_id) noexcept -> Result<Void> override;
+  OnSocketIn(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> override;
 
   [[nodiscard]] virtual auto
-  OnSocketHangUp(EventLoop &event_loop,
-                 const SocketId socket_id) noexcept -> Result<Void> override;
+  OnSocketHangUp(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> override;
 
   [[nodiscard]] virtual auto
   OnSocketError(EventLoop &event_loop,
@@ -37,7 +37,7 @@ class MainEventLoopHandlerLinux final : public EventLoopHandler {
       -> Result<Void> override;
 
  private:
-  std::unique_ptr<FileDescriptorLinux> server_fd_;
+  Owned<FileDescriptorLinux> server_fd_;
   std::string primary_event_loop_name_;
 };
 

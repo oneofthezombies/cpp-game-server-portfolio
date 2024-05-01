@@ -54,16 +54,16 @@ class Runner {
       -> bool;
 
   [[nodiscard]] auto
-  SubscribeEvent(const std::string& event,
-                 const ServiceKind& kind) -> Result<Void>;
+  SubscribeEvent(const std::string& event, const ServiceKind& kind)
+      -> Result<Void>;
 
   [[nodiscard]] auto
-  UnsubscribeEvent(const std::string& event,
-                   const ServiceKind& kind) -> Result<Void>;
+  UnsubscribeEvent(const std::string& event, const ServiceKind& kind)
+      -> Result<Void>;
 
   [[nodiscard]] auto
-  InvokeEvent(const std::string& event,
-              const Dict& data) noexcept -> Result<Void>;
+  InvokeEvent(const std::string& event, const Dict& data) noexcept
+      -> Result<Void>;
 
  private:
   [[nodiscard]] auto
@@ -87,7 +87,7 @@ class Runner {
 
 class ThreadRunner {
  public:
-  explicit ThreadRunner(Pin<Runner> runner) noexcept;
+  explicit ThreadRunner(Pinned<Runner> runner) noexcept;
   ~ThreadRunner() noexcept = default;
   CLASS_KIND_MOVABLE(ThreadRunner);
 
@@ -99,10 +99,10 @@ class ThreadRunner {
 
  private:
   static void
-  ThreadMain(Pin<Runner> runner) noexcept;
+  ThreadMain(Pinned<Runner> runner) noexcept;
 
   std::thread thread_;
-  Pin<Runner> runner_;
+  Pinned<Runner> runner_;
 };
 
 }  // namespace kero

@@ -10,12 +10,11 @@
 using namespace kero;
 
 auto
-kero::GlobalContext::Builder::Build() const noexcept
-    -> std::unique_ptr<GlobalContext> {
+kero::GlobalContext::Builder::Build() const noexcept -> Owned<GlobalContext> {
   auto [runner_event_tx, runner_event_rx] =
-      mpsc::Channel<std::unique_ptr<RunnerEvent>>::Builder{}.Build();
+      mpsc::Channel<Owned<RunnerEvent>>::Builder{}.Build();
   auto runner_thread = std::thread{RunOnThread, std::move(runner_event_rx)};
-  return std::unique_ptr<GlobalContext>{
+  return Owned<GlobalContext>{
       new GlobalContext{std::move(runner_event_tx), std::move(runner_thread)}};
 }
 
@@ -24,7 +23,7 @@ kero::GlobalContext::SharedState::SharedState(
     : system_error_stream{system_error_stream} {}
 
 kero::GlobalContext::GlobalContext(
-    mpsc::Tx<std::unique_ptr<RunnerEvent>>&& runner_event_tx,
+    mpsc::Tx<Owned<RunnerEvent>>&& runner_event_tx,
     std::thread&& runner_thread) noexcept
     : shared_state_{null_stream_},
       runner_event_tx_{std::move(runner_event_tx)},
@@ -44,9 +43,9 @@ kero::GlobalContext::LogSystemError(std::string&& message) noexcept -> void {
 }
 
 auto
-kero::GlobalContext::AddLogRx(
-    const std::string& thread_id,
-    spsc::Rx<std::unique_ptr<kero::Log>>&& log_rx) noexcept -> bool {
+kero::GlobalContext::AddLogRx(const std::string& thread_id,
+                              spsc::Rx<Owned<kero::Log>>&& log_rx) noexcept
+    -> bool {
   std::lock_guard<std::mutex> lock(shared_state_mutex_);
   if (shared_state_.log_rx_map.find(thread_id) !=
       shared_state_.log_rx_map.end()) {
@@ -82,15 +81,14 @@ kero::GlobalContext::Shutdown(ShutdownConfig&& config) noexcept -> void {
 }
 
 auto
-kero::GlobalContext::AddTransport(
-    std::unique_ptr<Transport>&& transport) noexcept -> void {
+kero::GlobalContext::AddTransport(Owned<Transport>&& transport) noexcept
+    -> void {
   std::lock_guard<std::mutex> lock(shared_state_mutex_);
   shared_state_.transports.push_back(std::move(transport));
 }
 
 auto
-kero::GlobalContext::TryPopLog() noexcept
-    -> Option<std::unique_ptr<kero::Log>> {
+kero::GlobalContext::TryPopLog() noexcept -> Option<Owned<kero::Log>> {
   std::lock_guard<std::mutex> lock(shared_state_mutex_);
 
   if (!shared_state_.orphaned_logs.empty()) {
@@ -126,7 +124,7 @@ kero::GlobalContext::HandleLog(const kero::Log& log) const noexcept -> void {
 
 auto
 kero::GetGlobalContext() -> GlobalContext& {
-  static std::unique_ptr<GlobalContext> global_context{nullptr};
+  static Owned<GlobalContext> global_context{nullptr};
   static std::once_flag flag{};
   std::call_once(flag,
                  []() { global_context = GlobalContext::Builder{}.Build(); });
@@ -134,8 +132,7 @@ kero::GetGlobalContext() -> GlobalContext& {
 }
 
 auto
-kero::RunOnThread(mpsc::Rx<std::unique_ptr<RunnerEvent>>&& runner_event_rx)
-    -> void {
+kero::RunOnThread(mpsc::Rx<Owned<RunnerEvent>>&& runner_event_rx) -> void {
   std::optional<std::chrono::steady_clock::time_point> shutdown_deadline{};
 
   while (true) {

@@ -13,34 +13,34 @@
 namespace kero {
 
 template <typename T>
-class Pin final {
+class Pinned final {
  public:
-  explicit Pin(T* data) noexcept : data_{data} {
+  explicit Pinned(T* data) noexcept : data_{data} {
     assert(data_ != nullptr && "data must not be nullptr");
   }
 
-  ~Pin() noexcept = default;
-  CLASS_KIND_COPYABLE(Pin);
+  ~Pinned() noexcept = default;
+  CLASS_KIND_COPYABLE(Pinned);
 
-  // [[nodiscard]] auto
-  // operator->() noexcept -> T* {
-  //   return data_;
-  // }
+  [[nodiscard]] auto
+  operator->() noexcept -> T* {
+    return data_;
+  }
 
-  // [[nodiscard]] auto
-  // operator->() const noexcept -> const T* {
-  //   return data_;
-  // }
+  [[nodiscard]] auto
+  operator->() const noexcept -> const T* {
+    return data_;
+  }
 
-  // [[nodiscard]] auto
-  // operator*() noexcept -> T& {
-  //   return Unwrap();
-  // }
+  [[nodiscard]] auto
+  operator*() noexcept -> T& {
+    return Unwrap();
+  }
 
-  // [[nodiscard]] auto
-  // operator*() const noexcept -> const T& {
-  //   return Unwrap();
-  // }
+  [[nodiscard]] auto
+  operator*() const noexcept -> const T& {
+    return Unwrap();
+  }
 
   [[nodiscard]] auto
   Unwrap() noexcept -> T& {
@@ -73,8 +73,8 @@ class PinObjectSystem final {
 
   template <typename T>
   [[nodiscard]] auto
-  CreatePinObject(PinObjectFactory<T>&& factory) noexcept -> Result<Pin<T>> {
-    using ResultT = Result<Pin<T>>;
+  CreatePinObject(PinObjectFactory<T>&& factory) noexcept -> Result<Pinned<T>> {
+    using ResultT = Result<Pinned<T>>;
 
     auto res = factory();
     if (res.IsErr()) {
@@ -104,7 +104,7 @@ class PinObjectSystem final {
     }
 
     delete_ptr.Cancel();
-    return ResultT::Ok(Pin<T>{ptr});
+    return ResultT::Ok(Pinned<T>{ptr});
   }
 
  private:

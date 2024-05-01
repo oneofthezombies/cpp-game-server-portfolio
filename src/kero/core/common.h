@@ -1,6 +1,8 @@
 #ifndef KERO_CORE_COMMON_H
 #define KERO_CORE_COMMON_H
 
+#include <memory>
+
 #define CLASS_KIND_COPYABLE(cls)                           \
   cls(const cls &) noexcept = default;                     \
   cls(cls &&) noexcept = default;                          \
@@ -26,6 +28,12 @@ struct Void final {
   ~Void() noexcept = default;
   CLASS_KIND_COPYABLE(Void);
 };
+
+template <typename T>
+using Owned = std::unique_ptr<T>;
+
+template <typename T>
+using Borrowed = T *;
 
 }  // namespace kero
 

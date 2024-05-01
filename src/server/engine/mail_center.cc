@@ -22,8 +22,8 @@ engine::Mail::Clone() const noexcept -> Mail {
 }
 
 auto
-engine::operator<<(std::ostream &os,
-                   const Mail &mail) noexcept -> std::ostream & {
+engine::operator<<(std::ostream &os, const Mail &mail) noexcept
+    -> std::ostream & {
   os << "Mail{";
   os << "from=" << mail.from;
   os << ", ";
@@ -170,14 +170,15 @@ engine::MailCenter::StartRunThread(core::Rx<MailBody> &&run_rx) noexcept
 }
 
 auto
-engine::MailCenter::RunThreadMain(
-    MailCenter &mail_center, core::Rx<MailBody> &&run_rx) noexcept -> void {
+engine::MailCenter::RunThreadMain(MailCenter &mail_center,
+                                  core::Rx<MailBody> &&run_rx) noexcept
+    -> void {
   mail_center.RunOnThread(std::move(run_rx));
 }
 
 auto
 engine::MailCenter::Global() noexcept -> MailCenter & {
-  static std::unique_ptr<MailCenter> instance{nullptr};
+  static Owned<MailCenter> instance{nullptr};
   static std::once_flag flag;
   std::call_once(flag, [] {
     auto [tx, rx] = core::Channel<MailBody>::Builder{}.Build();

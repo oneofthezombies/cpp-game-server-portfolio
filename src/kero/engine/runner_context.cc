@@ -4,7 +4,7 @@
 
 using namespace kero;
 
-kero::RunnerContext::RunnerContext(const Pin<Runner> runner) noexcept
+kero::RunnerContext::RunnerContext(const Pinned<Runner> runner) noexcept
     : runner_{runner} {}
 
 auto

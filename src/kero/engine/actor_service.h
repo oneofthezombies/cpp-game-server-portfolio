@@ -36,7 +36,7 @@ class ActorService final : public Service {
   friend class ActorSystem;
 };
 
-using ActorServicePtr = std::unique_ptr<ActorService>;
+using ActorServicePtr = Owned<ActorService>;
 
 }  // namespace kero
 

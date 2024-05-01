@@ -8,8 +8,7 @@
 
 namespace kero {
 
-[[nodiscard]]
-auto
+[[nodiscard]] auto
 OkVoid() -> Result<Void>;
 
 template <typename T>
