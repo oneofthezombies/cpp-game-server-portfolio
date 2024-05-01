@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "kero/core/common.h"
-#include "kero/engine/mail_box.h"
+#include "kero/engine/actor_system.h"
 #include "kero/engine/service.h"
 
 namespace kero {

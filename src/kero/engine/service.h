@@ -111,7 +111,8 @@ class Service {
 };
 
 using ServicePtr = std::unique_ptr<Service>;
-using ServiceFactory = std::function<Result<ServicePtr>(Pin<RunnerContext>)>;
+using ServiceFactory =
+    std::function<Result<ServicePtr>(const Pin<RunnerContext>)>;
 
 class ServiceMap {
  public:
@@ -188,5 +189,26 @@ class ServiceTraverser {
 };
 
 }  // namespace kero
+
+namespace std {
+
+template <>
+struct hash<kero::Service::Kind> {
+  [[nodiscard]] auto
+  operator()(const kero::Service::Kind& kind) const noexcept -> size_t {
+    return std::hash<kero::Service::Kind::Id>{}(kind.id);
+  }
+};
+
+template <>
+struct equal_to<kero::Service::Kind> {
+  [[nodiscard]] auto
+  operator()(const kero::Service::Kind& lhs,
+             const kero::Service::Kind& rhs) const noexcept -> bool {
+    return lhs.id == rhs.id;
+  }
+};
+
+}  // namespace std
 
 #endif  // KERO_ENGINE_SERVICE_H

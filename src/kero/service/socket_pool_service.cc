@@ -1,17 +1,19 @@
 #include "socket_pool_service.h"
 
+#include "constants.h"
 #include "io_event_loop_service.h"
-#include "kero/engine/agent.h"
 #include "kero/engine/constants.h"
+#include "kero/engine/runner.h"
 #include "kero/log/log_builder.h"
 
 using namespace kero;
 
-kero::SocketPoolService::SocketPoolService() noexcept
-    : Service{ServiceKind::kSocketPool, {ServiceKind::kIoEventLoop}} {}
+kero::SocketPoolService::SocketPoolService(
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{runner_context, kServiceKindSocketPool, {}} {}
 
 auto
-kero::SocketPoolService::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (!agent.SubscribeEvent(EventSocketOpen::kEvent, GetKind())) {
@@ -30,12 +32,11 @@ kero::SocketPoolService::OnCreate(Agent& agent) noexcept -> Result<Void> {
             .Take()));
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
-kero::SocketPoolService::OnEvent(Agent& agent,
-                                 const std::string& event,
+kero::SocketPoolService::OnEvent(const std::string& event,
                                  const Dict& data) noexcept -> void {
   if (event == EventSocketOpen::kEvent) {
     OnSocketOpen(agent, data);
@@ -47,8 +48,7 @@ kero::SocketPoolService::OnEvent(Agent& agent,
 }
 
 auto
-kero::SocketPoolService::OnSocketOpen(Agent& agent, const Dict& data) noexcept
-    -> void {
+kero::SocketPoolService::OnSocketOpen(const Dict& data) noexcept -> void {
   auto fd = data.GetOrDefault<double>(EventSocketOpen::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
@@ -76,8 +76,7 @@ kero::SocketPoolService::OnSocketOpen(Agent& agent, const Dict& data) noexcept
 }
 
 auto
-kero::SocketPoolService::OnSocketClose(Agent& agent, const Dict& data) noexcept
-    -> void {
+kero::SocketPoolService::OnSocketClose(const Dict& data) noexcept -> void {
   auto fd = data.GetOrDefault<double>(EventSocketClose::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();

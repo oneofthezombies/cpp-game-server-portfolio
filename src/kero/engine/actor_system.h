@@ -8,54 +8,87 @@
 #include "kero/core/dict.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
-#include "kero/engine/actor_service.h"
+#include "kero/engine/pin_object_system.h"
 
 namespace kero {
 
+struct Mail final {
+  std::string from;
+  std::string to;
+  std::string event;
+  Dict body;
+
+  explicit Mail() noexcept = default;
+  explicit Mail(std::string &&from,
+                std::string &&to,
+                std::string &&event,
+                Dict &&body) noexcept;
+  ~Mail() noexcept = default;
+  CLASS_KIND_MOVABLE(Mail);
+
+  [[nodiscard]] auto
+  Clone() const noexcept -> Mail;
+};
+
+struct MailBox final {
+  std::string name;
+  spsc::Tx<Mail> tx;
+  spsc::Rx<Mail> rx;
+
+  ~MailBox() noexcept = default;
+  CLASS_KIND_MOVABLE(MailBox);
+
+ private:
+  explicit MailBox(std::string &&name,
+                   spsc::Tx<Mail> &&tx,
+                   spsc::Rx<Mail> &&rx) noexcept;
+
+  friend class ActorSystem;
+};
+
 class ActorSystem final {
  public:
-  enum : Error::Code {
-    kEmptyNameNotAllowed = 1,
-    kNameTooLong = 2,
-    kMailBoxNameAlreadyExists = 3,
-    kMailBoxNameNotFound = 4,
-    kReservedNameNotAllowed = 5,
-    kAlreadyRunning = 6,
-    kMultipleStartNotAllowed,
-  };
-
-  explicit ActorSystem() noexcept;
-  ~ActorSystem() noexcept;
+  explicit ActorSystem() noexcept = default;
+  ~ActorSystem() noexcept = default;
   CLASS_KIND_PINNABLE(ActorSystem);
+
+  [[nodiscard]] auto
+  CreateMailBox(const std::string &name) noexcept -> Result<MailBox>;
+
+  [[nodiscard]] auto
+  DestroyMailBox(const std::string &name) noexcept -> Result<Void>;
+
+  [[nodiscard]] auto
+  Run(spsc::Rx<Dict> &&rx) -> Result<Void>;
+
+ private:
+  [[nodiscard]] auto
+  ValidateName(const std::string &name) const noexcept -> Result<Void>;
+
+  std::unordered_map<std::string, MailBox> mail_boxes_;
+  std::mutex mutex_;
+
+  static constexpr auto kMaxNameLength = 64;
+};
+
+class ThreadActorSystem {
+ public:
+  explicit ThreadActorSystem(Pin<ActorSystem> actor_system) noexcept;
+  ~ThreadActorSystem() noexcept = default;
 
   [[nodiscard]] auto
   Start() noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  Stop() noexcept -> bool;
-
-  [[nodiscard]] auto
-  IsRunning() const noexcept -> bool;
-
-  [[nodiscard]] auto
-  CreateActorService(std::string &&name) noexcept -> Result<ActorServicePtr>;
-
-  [[nodiscard]] auto
-  DestroyMailBox(const std::string &name) noexcept -> bool;
+  Stop() noexcept -> Result<Void>;
 
  private:
-  auto
-  ValidateName(const std::string &name) const noexcept -> Result<Void>;
-
   static auto
-  ThreadMain(ActorSystemPtr self) -> void;
+  ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<Dict> &&rx) -> void;
 
-  std::unordered_map<std::string, MailBox> mail_boxes_;
-  std::mutex mutex_;
-  spsc::Channel<Dict> run_channel_;
-  std::thread run_thread_;
-
-  static constexpr auto kMaxNameLength = 64;
+  Pin<ActorSystem> actor_system_;
+  std::unique_ptr<spsc::Tx<Dict>> tx_;
+  std::thread thread_;
 };
 
 }  // namespace kero

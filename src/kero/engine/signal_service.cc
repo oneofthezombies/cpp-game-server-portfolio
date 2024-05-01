@@ -4,6 +4,7 @@
 
 #include "kero/core/utils_linux.h"
 #include "kero/engine/actor_service.h"
+#include "kero/engine/constants.h"
 #include "kero/engine/runner.h"
 #include "kero/log/log_builder.h"
 

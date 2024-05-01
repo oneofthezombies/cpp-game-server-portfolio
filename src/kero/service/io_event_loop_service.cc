@@ -6,7 +6,7 @@
 #include <cstring>
 
 #include "kero/core/utils_linux.h"
-#include "kero/engine/agent.h"
+#include "kero/engine/runner.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/constants.h"
 
@@ -41,7 +41,7 @@ kero::IoEventLoopService::IoEventLoopService(
     : Service{runner_context, kServiceKindIoEventLoop, {}} {}
 
 auto
-kero::IoEventLoopService::OnCreate(Agent& agent) noexcept -> Result<Void> {
+kero::IoEventLoopService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   const auto epoll_fd = epoll_create1(0);
@@ -54,11 +54,11 @@ kero::IoEventLoopService::OnCreate(Agent& agent) noexcept -> Result<Void> {
   }
 
   epoll_fd_ = epoll_fd;
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
-kero::IoEventLoopService::OnDestroy(Agent& agent) noexcept -> void {
+kero::IoEventLoopService::OnDestroy() noexcept -> void {
   if (!Fd::IsValid(epoll_fd_)) {
     return;
   }
@@ -69,7 +69,7 @@ kero::IoEventLoopService::OnDestroy(Agent& agent) noexcept -> void {
 }
 
 auto
-kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
+kero::IoEventLoopService::OnUpdate() noexcept -> void {
   if (!Fd::IsValid(epoll_fd_)) {
     log::Error("Invalid epoll fd").Data("fd", epoll_fd_).Log();
     return;
@@ -91,7 +91,7 @@ kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
 
   for (int i = 0; i < fd_count; ++i) {
     const auto& event = events[i];
-    if (auto res = OnUpdateEpollEvent(agent, event); res.IsErr()) {
+    if (auto res = OnUpdateEpollEvent(event); res.IsErr()) {
       log::Error("Failed to update epoll event")
           .Data("fd", event.data.fd)
           .Data("error", res.TakeErr())
@@ -103,7 +103,7 @@ kero::IoEventLoopService::OnUpdate(Agent& agent) noexcept -> void {
 
 auto
 kero::IoEventLoopService::OnUpdateEpollEvent(
-    Agent& agent, const struct epoll_event& event) noexcept -> Result<Void> {
+    const struct epoll_event& event) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (event.events & EPOLLERR) {
@@ -128,7 +128,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     }
 
     const auto description = std::string_view{strerror(code)};
-    agent.Invoke(
+    GetRunnerContext().InvokeEvent(
         EventSocketError::kEvent,
         Dict{}
             .Set(EventSocketError::kFd, static_cast<double>(event.data.fd))
@@ -138,7 +138,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLHUP) {
-    agent.Invoke(
+    GetRunnerContext().InvokeEvent(
         EventSocketClose::kEvent,
         Dict{}.Set(EventSocketClose::kFd, static_cast<double>(event.data.fd)));
 
@@ -148,18 +148,17 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLIN) {
-    agent.Invoke(
+    GetRunnerContext().InvokeEvent(
         EventSocketRead::kEvent,
         Dict{}.Set(EventSocketRead::kFd, static_cast<double>(event.data.fd)));
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
-kero::IoEventLoopService::AddFd(const Fd::Value fd,
-                                const AddOptions options) const noexcept
-    -> Result<Void> {
+kero::IoEventLoopService::AddFd(const Fd::Value fd, const AddOptions options)
+    const noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (!Fd::IsValid(epoll_fd_)) {
@@ -178,7 +177,7 @@ kero::IoEventLoopService::AddFd(const Fd::Value fd,
             .Take()));
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -199,7 +198,7 @@ kero::IoEventLoopService::RemoveFd(const Fd::Value fd) const noexcept
             .Take()));
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
@@ -230,12 +229,11 @@ kero::IoEventLoopService::WriteToFd(const Fd::Value fd,
     data_sent += sent;
   }
 
-  return OkVoid;
+  return OkVoid();
 }
 
 auto
-kero::IoEventLoopService::ReadFromFd(Agent& agent,
-                                     const Fd::Value fd) const noexcept
+kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
     -> Result<std::string> {
   using ResultT = Result<std::string>;
 
@@ -261,8 +259,9 @@ kero::IoEventLoopService::ReadFromFd(Agent& agent,
     }
 
     if (read == 0) {
-      agent.Invoke(EventSocketClose::kEvent,
-                   Dict{}.Set(EventSocketClose::kFd, static_cast<double>(fd)));
+      GetRunnerContext().InvokeEvent(
+          EventSocketClose::kEvent,
+          Dict{}.Set(EventSocketClose::kFd, static_cast<double>(fd)));
       return ResultT::Err(
           Error::From(kSocketClosed,
                       Dict{}.Set("fd", static_cast<double>(fd)).Take()));

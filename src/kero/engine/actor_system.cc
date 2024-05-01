@@ -1,122 +1,118 @@
 #include "actor_system.h"
 
-#include "kero/engine/actor_service.h"
+#include "kero/core/utils.h"
 #include "kero/log/log_builder.h"
 
 using namespace kero;
 
-static constexpr std::string_view kShutdown = "shutdown";
+static constexpr std::string kShutdown = "shutdown";
 
-kero::ActorSystem::ActorSystem() noexcept
-    : run_channel_{spsc::Channel<Dict>::Builder{}.Build()} {}
-
-auto
-kero::ActorSystem::Builder::Build() noexcept -> ActorSystemPtr {
-  return std::make_shared<ActorSystem>();
-}
-
-kero::ActorSystem::~ActorSystem() noexcept {
-  if (IsRunning()) {
-    [[maybe_unused]] auto stopped = Stop();
-  }
-}
+kero::Mail::Mail(std::string &&from,
+                 std::string &&to,
+                 std::string &&event,
+                 Dict &&body) noexcept
+    : from{std::move(from)},
+      to{std::move(to)},
+      event{std::move(event)},
+      body{std::move(body)} {}
 
 auto
-kero::ActorSystem::Start() noexcept -> Result<Void> {
-  if (IsRunning()) {
-    return Error::From(kAlreadyRunning);
-  }
-
-  run_thread_ = std::thread{ThreadMain, shared_from_this()};
-  return Void{};
+kero::Mail::Clone() const noexcept -> Mail {
+  return Mail{std::string{from},
+              std::string{to},
+              std::string{event},
+              body.Clone()};
 }
 
-auto
-kero::ActorSystem::Stop() noexcept -> bool {
-  if (!IsRunning()) {
-    return false;
-  }
-
-  run_channel_.tx.Send(Dict{}.Set(std::string{kShutdown}, true).Take());
-  run_thread_.join();
-  return true;
-}
+kero::MailBox::MailBox(std::string &&name,
+                       spsc::Tx<Mail> &&tx,
+                       spsc::Rx<Mail> &&rx) noexcept
+    : name{std::move(name)}, tx{std::move(tx)}, rx{std::move(rx)} {}
 
 auto
-kero::ActorSystem::IsRunning() const noexcept -> bool {
-  return run_thread_.joinable();
-}
+kero::ActorSystem::CreateMailBox(const std::string &name) noexcept
+    -> Result<MailBox> {
+  using ResultT = Result<MailBox>;
 
-auto
-kero::ActorSystem::CreateActorService(std::string &&name) noexcept
-    -> Result<ActorServicePtr> {
   if (auto res = ValidateName(name); res.IsErr()) {
-    return Result<ActorServicePtr>{Error::From(res.TakeErr())};
+    return ResultT::Err(res.TakeErr());
   }
 
   std::lock_guard lock{mutex_};
   if (mail_boxes_.find(name) != mail_boxes_.end()) {
-    return Result<ActorServicePtr>{
-        Error::From(kMailBoxNameAlreadyExists,
-                    Dict{}.Set("name", name).Take())};
+    return ResultT::Err(Dict{}
+                            .Set("message", "mailbox name already exists")
+                            .Set("name", name)
+                            .Take());
   }
 
   auto [from_actor_tx, to_system_rx] = spsc::Channel<Mail>::Builder{}.Build();
   auto [from_system_tx, to_actor_rx] = spsc::Channel<Mail>::Builder{}.Build();
 
   mail_boxes_.try_emplace(name,
-                          MailBox{spsc::Tx<Mail>{std::move(from_system_tx)},
+                          MailBox{std::string{name},
+                                  spsc::Tx<Mail>{std::move(from_system_tx)},
                                   spsc::Rx<Mail>{std::move(to_system_rx)}});
 
-  return Result<ActorServicePtr>{std::unique_ptr<ActorService>{new ActorService{
-      std::move(name),
-      MailBox{std::move(from_actor_tx), std::move(to_actor_rx)}}}};
+  return ResultT::Ok(MailBox{std::string{name},
+                             spsc::Tx<Mail>{std::move(from_actor_tx)},
+                             spsc::Rx<Mail>{std::move(to_actor_rx)}});
 }
 
 auto
-kero::ActorSystem::DestroyMailBox(const std::string &name) noexcept -> bool {
+kero::ActorSystem::DestroyMailBox(const std::string &name) noexcept
+    -> Result<Void> {
+  using ResultT = Result<Void>;
+
   std::lock_guard lock{mutex_};
   if (mail_boxes_.find(name) == mail_boxes_.end()) {
-    return false;
+    return ResultT::Err(Dict{}
+                            .Set("message", "mailbox name not found")
+                            .Set("name", name)
+                            .Take());
   }
 
   mail_boxes_.erase(name);
-  return true;
+  return OkVoid();
 }
 
 auto
 kero::ActorSystem::ValidateName(const std::string &name) const noexcept
     -> Result<Void> {
+  using ResultT = Result<Void>;
+
   if (name.empty()) {
-    return Error::From(kEmptyNameNotAllowed,
-                       Dict{}.Set("name", std::string{name}).Take());
+    return ResultT::Err(Dict{}.Set("message", "name is empty").Take());
   }
 
   if (name.size() > kMaxNameLength) {
-    return Error::From(kNameTooLong,
-                       Dict{}.Set("name", std::string{name}).Take());
+    return ResultT::Err(
+        Dict{}
+            .Set("message", "name is too long")
+            .Set("max_length", static_cast<double>(kMaxNameLength))
+            .Set("length", static_cast<double>(name.size()))
+            .Take());
   }
 
   if (name == "all") {
-    return Error::From(kReservedNameNotAllowed,
-                       Dict{}.Set("name", std::string{name}).Take());
+    return ResultT::Err(Dict{}.Set("message", "name is reserved").Take());
   }
 
-  return Void{};
+  return OkVoid();
 }
 
 auto
-kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
+kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
   while (true) {
-    if (auto message = self->run_channel_.rx.TryReceive(); message.IsSome()) {
-      if (message.TakeUnwrap().Has(std::string{kShutdown})) {
+    if (auto message = rx.TryReceive(); message.IsSome()) {
+      if (message.TakeUnwrap().Has(kShutdown)) {
         break;
       }
     }
 
     {
-      std::lock_guard lock{self->mutex_};
-      for (auto &[name, mail_box] : self->mail_boxes_) {
+      std::lock_guard lock{mutex_};
+      for (auto &[name, mail_box] : mail_boxes_) {
         auto mail = mail_box.rx.TryReceive();
         if (mail.IsNone()) {
           continue;
@@ -126,7 +122,7 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
 
         // broadcast
         if (to == "all") {
-          for (auto &[name, other_mail_box] : self->mail_boxes_) {
+          for (auto &[name, other_mail_box] : mail_boxes_) {
             other_mail_box.tx.Send(Mail{std::string{from},
                                         std::string{name},
                                         std::string{event},
@@ -137,8 +133,8 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
         }
 
         // unicast
-        auto it = self->mail_boxes_.find(to);
-        if (it == self->mail_boxes_.end()) {
+        auto it = mail_boxes_.find(to);
+        if (it == mail_boxes_.end()) {
           log::Warn("Failed to find mail box")
               .Data("from", from)
               .Data("to", to)
@@ -153,5 +149,53 @@ kero::ActorSystem::ThreadMain(ActorSystemPtr self) -> void {
                                 body.Clone()});
       }
     }
+  }
+
+  return OkVoid();
+}
+
+kero::ThreadActorSystem::ThreadActorSystem(
+    Pin<ActorSystem> actor_system) noexcept
+    : actor_system_{actor_system} {}
+
+auto
+kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
+  if (thread_.joinable()) {
+    return Error::From(Dict{}.Set("message", "thread already started").Take());
+  }
+
+  if (tx_ != nullptr) {
+    return Error::From(Dict{}.Set("message", "tx already initialized").Take());
+  }
+
+  auto [tx, rx] = spsc::Channel<Dict>::Builder{}.Build();
+  tx_ = std::make_unique<spsc::Tx<Dict>>(std::move(tx));
+
+  thread_ = std::thread{ThreadMain, actor_system_, std::move(rx)};
+  return OkVoid();
+}
+
+auto
+kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
+  if (!thread_.joinable()) {
+    return Error::From(Dict{}.Set("message", "thread not started").Take());
+  }
+
+  if (tx_ == nullptr) {
+    return Error::From(Dict{}.Set("message", "tx not initialized").Take());
+  }
+
+  tx_->Send(Dict{}.Set(std::string{kShutdown}, true).Take());
+  thread_.join();
+  return OkVoid();
+}
+
+auto
+kero::ThreadActorSystem::ThreadMain(Pin<ActorSystem> actor_system,
+                                    spsc::Rx<Dict> &&rx) -> void {
+  if (auto res = actor_system.Unwrap().Run(std::move(rx))) {
+    log::Info("Actor system finished").Log();
+  } else {
+    log::Error("Actor system failed").Data("error", res.TakeErr()).Log();
   }
 }

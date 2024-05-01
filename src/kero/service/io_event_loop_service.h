@@ -32,18 +32,18 @@ class IoEventLoopService final : public Service {
   OnUpdate() noexcept -> void override;
 
   [[nodiscard]] auto
-  AddFd(const Fd::Value fd, const AddOptions options) const noexcept
-      -> Result<Void>;
+  AddFd(const Fd::Value fd,
+        const AddOptions options) const noexcept -> Result<Void>;
 
   [[nodiscard]] auto
   RemoveFd(const Fd::Value fd) const noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  WriteToFd(const Fd::Value fd, const std::string_view data) const noexcept
-      -> Result<Void>;
+  WriteToFd(const Fd::Value fd,
+            const std::string_view data) const noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  ReadFromFd(const Fd::Value fd) const noexcept -> Result<std::string>;
+  ReadFromFd(const Fd::Value fd) noexcept -> Result<std::string>;
 
  private:
   auto

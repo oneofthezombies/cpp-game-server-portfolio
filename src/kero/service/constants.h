@@ -1,5 +1,5 @@
-#ifndef KERO_ENGINE_CONSTANTS_H
-#define KERO_ENGINE_CONSTANTS_H
+#ifndef KERO_SERVICE_CONSTANTS_H
+#define KERO_SERVICE_CONSTANTS_H
 
 #include "kero/engine/service.h"
 
@@ -10,10 +10,6 @@ static const Service::Kind kServiceKindTcpServer = {4, "tcp_server"};
 static const Service::Kind kServiceKindConfig = {5, "config"};
 static const Service::Kind kServiceKindSocketPool = {6, "socket_pool"};
 static const Service::Kind kServiceKindSocketRouter = {7, "socket_router"};
-
-struct EventShutdown {
-  static constexpr auto kEvent = "shutdown";
-};
 
 struct EventSocketError {
   static constexpr auto kEvent = "socket_error";
@@ -49,4 +45,4 @@ struct EventSocketUnregister {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_CONSTANTS_H
+#endif  // KERO_SERVICE_CONSTANTS_H

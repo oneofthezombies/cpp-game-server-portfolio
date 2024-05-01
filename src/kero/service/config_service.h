@@ -28,7 +28,8 @@ class ConfigService final : public Service {
   GetConfig() noexcept -> Dict&;
 
  private:
-  explicit ConfigService(Dict&& config) noexcept;
+  explicit ConfigService(const Pin<RunnerContext> runner_context,
+                         Dict&& config) noexcept;
 
   Dict config_;
 
