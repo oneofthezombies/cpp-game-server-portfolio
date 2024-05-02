@@ -26,8 +26,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
   CLASS_KIND_MOVABLE(SocketEventLoopHandler);
 
   [[nodiscard]] virtual auto
-  OnInit(EventLoop &event_loop,
-         const Config &config) noexcept -> Result<Void> override {
+  OnInit(EventLoop &event_loop, const Config &config) noexcept
+      -> Result<Void> override {
     using ResultT = Result<Void>;
 
     // noop
@@ -36,16 +36,17 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] virtual auto
-  OnMail(EventLoop &event_loop,
-         const Mail &mail) noexcept -> Result<Void> override {
+  OnMail(EventLoop &event_loop, const Mail &mail) noexcept
+      -> Result<Void> override {
     using ResultT = Result<Void>;
 
     if (mail.from == "main") {
       auto socket_id_res = mail.body.GetAsNumber<SocketId>("socket_id");
       if (socket_id_res.IsErr()) {
-        return ResultT{Error::From(kSocketEventLoopHandlerMailSocketIdNotFound,
-                                   core::TinyJson{}.Set("mail", mail).IntoMap(),
-                                   socket_id_res.TakeErr())};
+        return ResultT{
+            Error::From(kSocketEventLoopHandlerMailSocketIdNotFound,
+                        core::JsonParser{}.Set("mail", mail).IntoMap(),
+                        socket_id_res.TakeErr())};
       }
 
       const auto socket_id = socket_id_res.Ok();
@@ -57,7 +58,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     auto kind_res = mail.body.Get("kind");
     if (kind_res.IsErr()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMailKindNotFound,
-                                 core::TinyJson{}.Set("mail", mail).IntoMap(),
+                                 core::JsonParser{}.Set("mail", mail).IntoMap(),
                                  kind_res.TakeErr())};
     }
 
@@ -65,7 +66,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     const auto handler = mail_handlers_.find(std::string{kind});
     if (handler == mail_handlers_.end()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMailHandlerNotFound,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("mail", mail)
                                      .Set("name", event_loop.GetName())
                                      .IntoMap())};
@@ -75,7 +76,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
             (handler->second)(static_cast<Derived &>(*this), event_loop, mail);
         res.IsErr()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMailHandlerFailed,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("mail", mail)
                                      .Set("name", event_loop.GetName())
                                      .IntoMap(),
@@ -86,8 +87,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] virtual auto
-  OnSocketIn(EventLoop &event_loop,
-             const SocketId socket_id) noexcept -> Result<Void> override {
+  OnSocketIn(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> override {
     using ResultT = Result<Void>;
 
     auto message_res = event_loop.Read(socket_id);
@@ -108,7 +109,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     auto parse_res = core::Message::Parse(message);
     if (!parse_res) {
       return ResultT{Error::From(kSocketEventLoopHandlerMessageParseFailed,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("message", message)
                                      .Set("name", event_loop.GetName())
                                      .IntoMap())};
@@ -117,7 +118,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     auto kind_res = parse_res->Get("kind");
     if (kind_res.IsErr()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMessageKindNotFound,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("message", message)
                                      .Set("name", event_loop.GetName())
                                      .IntoMap(),
@@ -128,7 +129,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     const auto handler = message_handlers_.find(std::string{kind});
     if (handler == message_handlers_.end()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMessageHandlerNotFound,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("message", message)
                                      .Set("name", event_loop.GetName())
                                      .IntoMap())};
@@ -140,7 +141,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
                                      std::move(*parse_res));
         res.IsErr()) {
       return ResultT{Error::From(kSocketEventLoopHandlerMessageHandlerFailed,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("message", message)
                                      .Set("name", event_loop.GetName())
                                      .IntoMap(),
@@ -151,8 +152,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] virtual auto
-  OnSocketHangUp(EventLoop &event_loop,
-                 const SocketId socket_id) noexcept -> Result<Void> override {
+  OnSocketHangUp(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> override {
     using ResultT = Result<Void>;
 
     if (auto res = OnSocketClose(event_loop, socket_id, "socket hang up");
@@ -171,7 +172,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
       -> Result<Void> override {
     using ResultT = Result<Void>;
 
-    core::TinyJson{}
+    core::JsonParser{}
         .Set("message", "socket error")
         .Set("name", event_loop.GetName())
         .Set("socket_id", socket_id)
@@ -182,8 +183,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] auto
-  RegisterSocket(EventLoop &event_loop,
-                 const SocketId socket_id) noexcept -> Result<Void> {
+  RegisterSocket(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> {
     using ResultT = Result<Void>;
 
     if (auto res =
@@ -200,8 +201,8 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] auto
-  UnregisterSocket(EventLoop &event_loop,
-                   const SocketId socket_id) noexcept -> Result<Void> {
+  UnregisterSocket(EventLoop &event_loop, const SocketId socket_id) noexcept
+      -> Result<Void> {
     using ResultT = Result<Void>;
 
     if (auto res = RemoveSocketFromSet(socket_id); res.IsErr()) {
@@ -221,9 +222,9 @@ class SocketEventLoopHandler : public EventLoopHandler {
     using ResultT = Result<Void>;
 
     if (sockets_.find(socket_id) != sockets_.end()) {
-      return ResultT{
-          Error::From(kSocketEventLoopHandlerSocketIdAlreadyExists,
-                      core::TinyJson{}.Set("socket_id", socket_id).IntoMap())};
+      return ResultT{Error::From(
+          kSocketEventLoopHandlerSocketIdAlreadyExists,
+          core::JsonParser{}.Set("socket_id", socket_id).IntoMap())};
     }
 
     sockets_.emplace(socket_id);
@@ -236,9 +237,9 @@ class SocketEventLoopHandler : public EventLoopHandler {
 
     const auto found = sockets_.find(socket_id);
     if (found == sockets_.end()) {
-      return ResultT{
-          Error::From(kSocketEventLoopHandlerSocketIdNotFound,
-                      core::TinyJson{}.Set("socket_id", socket_id).IntoMap())};
+      return ResultT{Error::From(
+          kSocketEventLoopHandlerSocketIdNotFound,
+          core::JsonParser{}.Set("socket_id", socket_id).IntoMap())};
     }
 
     sockets_.erase(found);
@@ -246,14 +247,14 @@ class SocketEventLoopHandler : public EventLoopHandler {
   }
 
   [[nodiscard]] auto
-  RegisterMailHandler(std::string &&kind,
-                      MailHandler &&handler) noexcept -> Result<Void> {
+  RegisterMailHandler(std::string &&kind, MailHandler &&handler) noexcept
+      -> Result<Void> {
     using ResultT = Result<Void>;
 
     if (mail_handlers_.find(kind) != mail_handlers_.end()) {
       return ResultT{
           Error::From(kSocketEventLoopHandlerMailHandlerAlreadyExists,
-                      core::TinyJson{}.Set("kind", kind).IntoMap())};
+                      core::JsonParser{}.Set("kind", kind).IntoMap())};
     }
 
     mail_handlers_.emplace(kind, handler);
@@ -267,7 +268,7 @@ class SocketEventLoopHandler : public EventLoopHandler {
     using ResultT = Result<Void>;
 
     if (auto res = UnregisterSocket(event_loop, socket_id); res.IsErr()) {
-      core::TinyJson{}
+      core::JsonParser{}
           .Set("message", message)
           .Set("name", event_loop.GetName())
           .Set("socket_id", socket_id)

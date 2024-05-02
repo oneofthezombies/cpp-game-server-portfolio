@@ -3,29 +3,17 @@
 
 #include <string>
 #include <thread>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "kero/core/common.h"
 #include "kero/core/result.h"
+#include "kero/engine/runner_context.h"
 #include "kero/engine/service.h"
-#include "kero/engine/service_map.h"
 
 namespace kero {
 
-class ThreadRunner;
-struct EngineContext;
-
 class Runner {
  public:
-  using EventHandlerMapT = std::unordered_map<std::string /* event */,
-                                              std::unordered_set<ServiceKind>>;
-
-  enum : Error::Code {
-    kInterrupted = 3,
-  };
-
-  explicit Runner(std::string&& name) noexcept;
+  explicit Runner(const Pinned<RunnerContext> runner_context) noexcept;
   ~Runner() noexcept = default;
   CLASS_KIND_PINNABLE(Runner);
 
@@ -33,18 +21,25 @@ class Runner {
   Run() noexcept -> Result<Void>;
 
   [[nodiscard]] auto
+  GetService(const ServiceKind& service_kind) const noexcept
+      -> OptionRef<Service&>;
+
+  [[nodiscard]] auto
   GetService(const ServiceKind::Id service_kind_id) const noexcept
       -> OptionRef<Service&>;
 
   [[nodiscard]] auto
-  GetService(const ServiceKind::Name service_kind_name) const noexcept
+  GetService(const ServiceKind::Name& service_kind_name) const noexcept
       -> OptionRef<Service&>;
+
+  [[nodiscard]] auto
+  HasService(const ServiceKind& service_kind) const noexcept -> bool;
 
   [[nodiscard]] auto
   HasService(const ServiceKind::Id service_kind_id) const noexcept -> bool;
 
   [[nodiscard]] auto
-  HasService(const ServiceKind::Name service_kind_name) const noexcept -> bool;
+  HasService(const ServiceKind::Name& service_kind_name) const noexcept -> bool;
 
   [[nodiscard]] auto
   HasServiceIs(const ServiceKind::Id service_kind_id) const noexcept -> bool;
@@ -62,7 +57,7 @@ class Runner {
       -> Result<Void>;
 
   [[nodiscard]] auto
-  InvokeEvent(const std::string& event, const Dict& data) noexcept
+  InvokeEvent(const std::string& event, const Json& data) noexcept
       -> Result<Void>;
 
  private:
@@ -78,11 +73,7 @@ class Runner {
   auto
   UpdateServices() noexcept -> void;
 
-  ServiceMap service_map_;
-  EventHandlerMapT event_handler_map_;
-  std::string name_;
-
-  friend class RunnerBuilder;
+  Pinned<RunnerContext> runner_context_;
 };
 
 class ThreadRunner {

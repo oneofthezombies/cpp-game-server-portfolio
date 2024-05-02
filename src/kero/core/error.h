@@ -1,30 +1,28 @@
 #ifndef KERO_CORE_ERROR_H
 #define KERO_CORE_ERROR_H
 
-#include <cstdint>
-#include <memory>
 #include <source_location>
 
-#include "kero/core/dict.h"
+#include "kero/core/json.h"
 
 namespace kero {
 
 struct Error final {
-  using Code = int32_t;
+  using Code = i32;
   using Cause = Owned<Error>;
 
-  enum : int32_t {
+  enum : i32 {
     kFailed = 1,
     kPropagated = 2,
   };
 
   Code code;
-  Dict details;
+  Json details;
   std::source_location location;
   Cause cause;
 
   explicit Error(const Code code,
-                 Dict &&details,
+                 Json &&details,
                  std::source_location &&location,
                  Cause &&cause) noexcept;
 
@@ -36,14 +34,14 @@ struct Error final {
 
   [[nodiscard]] static auto
   From(const Code code,
-       Dict &&details,
+       Json &&details,
        Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
   From(const Code code,
-       Dict &&details,
+       Json &&details,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 
@@ -54,7 +52,7 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(Dict &&details,
+  From(Json &&details,
        Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
@@ -65,7 +63,7 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(Dict &&details,
+  From(Json &&details,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 

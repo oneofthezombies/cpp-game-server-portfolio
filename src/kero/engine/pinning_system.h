@@ -8,22 +8,9 @@
 #include "kero/core/common.h"
 #include "kero/core/result.h"
 #include "kero/core/utils.h"
+#include "kero/engine/pinned.h"
 
 namespace kero {
-
-template <typename T>
-using Pinned = T*;
-
-template <typename T>
-class PinnedFactory {
- public:
-  explicit PinnedFactory() noexcept = default;
-  virtual ~PinnedFactory() noexcept = default;
-  CLASS_KIND_PINNABLE(PinnedFactory);
-
-  [[nodiscard]] virtual auto
-  Create() noexcept -> Result<Pinned<T>> = 0;
-};
 
 class PinningSystem final {
  public:
@@ -42,18 +29,12 @@ class PinningSystem final {
 
   template <typename T>
   [[nodiscard]] auto
-  Create(Owned<PinnedFactory<T>>&& factory) noexcept -> Result<Pinned<T>> {
+  Register(T* ptr) noexcept -> Result<Pinned<T>> {
     using ResultT = Result<Pinned<T>>;
 
-    auto res = factory();
-    if (res.IsErr()) {
-      return ResultT::Err(res.TakeErr());
-    }
-
-    T* ptr = res.TakeOk();
     if (ptr == nullptr) {
       return ResultT::Err(
-          Dict{}.Set("message", "factory must not return nullptr").Take());
+          Json{}.Set("message", "factory must not return nullptr").Take());
     }
 
     Defer delete_ptr{[ptr] { delete ptr; }};
@@ -64,7 +45,7 @@ class PinningSystem final {
       auto found = pinned_map_.find(raw);
       if (found != pinned_map_.end()) {
         return ResultT::Err(Error::From(
-            Dict{}
+            Json{}
                 .Set("message", "factory returned duplicate pointer")
                 .Take()));
       }

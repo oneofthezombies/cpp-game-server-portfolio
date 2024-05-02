@@ -14,7 +14,7 @@
 #include "core/tiny_json.h"
 #include "core/utils.h"
 
-enum Symbol : int32_t {
+enum Symbol : i32 {
   kHelpRequested = 0,
   kIpArgNotFound,
   kIpValueNotFound,
@@ -32,13 +32,13 @@ operator<<(std::ostream &os, const Symbol symbol) -> std::ostream & {
 
 struct Config final {
   std::string ip;
-  uint16_t port{kUndefinedPort};
+  u16 port{kUndefinedPort};
 
   explicit Config() noexcept = default;
   ~Config() noexcept = default;
   CLASS_KIND_MOVABLE(Config);
 
-  static constexpr uint16_t kUndefinedPort{0};
+  static constexpr u16 kUndefinedPort{0};
 };
 
 using Error = core::Error;
@@ -85,11 +85,11 @@ ParseArgs(core::Args &&args) noexcept -> Result<Config> {
       }
 
       const auto next_token = *next;
-      auto result = core::ParseNumberString<uint16_t>(next_token);
+      auto result = core::ParseNumberString<u16>(next_token);
       if (result.IsErr()) {
         return ResultT{
             Error::From(kPortParsingFailed,
-                        core::TinyJson{}.Set("token", next_token).IntoMap(),
+                        core::JsonParser{}.Set("token", next_token).IntoMap(),
                         result.TakeErr())};
       }
 
@@ -98,8 +98,9 @@ ParseArgs(core::Args &&args) noexcept -> Result<Config> {
       continue;
     }
 
-    return ResultT{Error::From(kUnknownArgument,
-                               core::TinyJson{}.Set("token", token).IntoMap())};
+    return ResultT{
+        Error::From(kUnknownArgument,
+                    core::JsonParser{}.Set("token", token).IntoMap())};
   }
 
   if (config.ip.empty()) {
@@ -176,7 +177,7 @@ main(int argc, char **argv) noexcept -> int {
     std::cout << "[DEBUG] Server: " << buffer << " (" << read_size << " bytes)"
               << std::endl;
 
-    const auto message = core::TinyJson::Parse(buffer.substr(0, read_size));
+    const auto message = core::JsonParser::Parse(buffer.substr(0, read_size));
     if (!message) {
       std::cout << "Failed to parse the message." << std::endl;
       continue;
@@ -236,7 +237,7 @@ main(int argc, char **argv) noexcept -> int {
         valid_move = true;
       }
 
-      const auto data = core::TinyJson{}
+      const auto data = core::JsonParser{}
                             .Set("kind", "battle_move")
                             .Set("move", move)
                             .ToString();

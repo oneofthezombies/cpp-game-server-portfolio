@@ -11,7 +11,7 @@ static const ServiceKind kServiceKindSignal = {1, "signal"};
 
 class SignalService final : public Service {
  public:
-  explicit SignalService(RunnerContextPtr&& runner_context) noexcept;
+  explicit SignalService(const Pinned<RunnerContext> runner_context) noexcept;
   virtual ~SignalService() noexcept override = default;
   CLASS_KIND_MOVABLE(SignalService);
 

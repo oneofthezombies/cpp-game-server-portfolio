@@ -47,7 +47,7 @@ ParseNumberString(const std::string_view token) noexcept -> Result<T> {
       std::from_chars(token.data(), token.data() + token.size(), value);
   if (ec != std::errc{}) {
     return ResultT{
-        Error::From(static_cast<int32_t>(ec),
+        Error::From(static_cast<i32>(ec),
                     {{"message", std::make_error_code(ec).message()}})};
   }
 

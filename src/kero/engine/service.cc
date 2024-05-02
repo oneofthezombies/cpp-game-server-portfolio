@@ -47,8 +47,8 @@ kero::Service::UnsubscribeEvent(const std::string& event) -> Result<Void> {
 }
 
 auto
-kero::Service::InvokeEvent(const std::string& event,
-                           const Dict& data) noexcept -> Result<Void> {
+kero::Service::InvokeEvent(const std::string& event, const Json& data) noexcept
+    -> Result<Void> {
   return runner_context_->InvokeEvent(event, data);
 }
 
@@ -68,7 +68,7 @@ kero::Service::OnUpdate() noexcept -> void {
 }
 
 auto
-kero::Service::OnEvent(const std::string& event,
-                       const Dict& data) noexcept -> void {
+kero::Service::OnEvent(const std::string& event, const Json& data) noexcept
+    -> void {
   // noop
 }

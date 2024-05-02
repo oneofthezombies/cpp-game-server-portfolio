@@ -1,17 +1,18 @@
 #include "service_map.h"
 
-#include "kero/core/dict.h"
+#include "kero/core/json.h"
 #include "kero/core/result.h"
 #include "kero/engine/service.h"
 
 using namespace kero;
 
 auto
-kero::ServiceMap::AddService(ServicePtr&& service) noexcept -> Result<Void> {
+kero::ServiceMap::AddService(Owned<Service>&& service) noexcept
+    -> Result<Void> {
   const auto kind = service->GetKind();
   auto found = service_map_.find(kind.id);
   if (found != service_map_.end()) {
-    return Result<Void>::Err(Dict{}
+    return Result<Void>::Err(Json{}
                                  .Set("message", "service already exists")
                                  .Set("kind_id", static_cast<double>(kind.id))
                                  .Set("kind_name", kind.name)
@@ -20,7 +21,7 @@ kero::ServiceMap::AddService(ServicePtr&& service) noexcept -> Result<Void> {
 
   auto found_id = service_kind_id_map_.find(kind.name);
   if (found_id != service_kind_id_map_.end()) {
-    return Result<Void>::Err(Dict{}
+    return Result<Void>::Err(Json{}
                                  .Set("message", "service already exists")
                                  .Set("kind_id", static_cast<double>(kind.id))
                                  .Set("kind_name", kind.name)

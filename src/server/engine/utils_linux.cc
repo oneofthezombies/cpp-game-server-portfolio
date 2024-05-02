@@ -6,8 +6,8 @@ using namespace engine;
 
 auto
 engine::EventLoopAddOptionsToEpollEvents(
-    const EventLoopAddOptions &options) noexcept -> uint32_t {
-  uint32_t events{0};
+    const EventLoopAddOptions &options) noexcept -> u32 {
+  u32 events{0};
 
   if (options.in) {
     events |= EPOLLIN;

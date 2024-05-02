@@ -1,5 +1,5 @@
-#ifndef KERO_CORE_CHANNEL_H
-#define KERO_CORE_CHANNEL_H
+#ifndef KERO_CORE_SPSC_CHANNEL_H
+#define KERO_CORE_SPSC_CHANNEL_H
 
 #include <atomic>
 #include <memory>
@@ -146,4 +146,4 @@ struct Channel final {
 }  // namespace spsc
 }  // namespace kero
 
-#endif  // KERO_CORE_CHANNEL_H
+#endif  // KERO_CORE_SPSC_CHANNEL_H

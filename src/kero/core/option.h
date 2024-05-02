@@ -56,6 +56,16 @@ class OptionRef final {
     return std::get<Wrapper>(data_).get();
   }
 
+  [[nodiscard]] static auto
+  Some(T& data) noexcept -> OptionRef {
+    return OptionRef{data};
+  }
+
+  [[nodiscard]] static auto
+  None() noexcept -> OptionRef {
+    return OptionRef{None};
+  }
+
  private:
   using Wrapper = std::reference_wrapper<std::remove_reference_t<T>>;
 
@@ -93,6 +103,16 @@ class Option final {
   [[nodiscard]] auto
   TakeUnwrap() noexcept -> T {
     return std::move(std::get<T>(data_));
+  }
+
+  [[nodiscard]] static auto
+  Some(T&& data) noexcept -> Option {
+    return Option{std::move(data)};
+  }
+
+  [[nodiscard]] static auto
+  None() noexcept -> Option {
+    return Option{None};
   }
 
  private:

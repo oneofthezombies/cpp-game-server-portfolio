@@ -8,20 +8,20 @@ namespace core {
 /**
  * Common symbols start from 1,000,000
  */
-enum Symbol : int32_t {
+enum Symbol : i32 {
   kCommonBegin = 1'000'000,
   // Add symbols after kBegin
 
   kErrorPropagated,
 
-  kTinyJsonKeyNotFound,
+  kJsonParserKeyNotFound,
 
   // Add symbols before kEnd
   kCommonEnd
 };
 
-using SocketId = uint64_t;
-using BattleId = uint64_t;
+using SocketId = u64;
+using BattleId = u64;
 
 }  // namespace core
 

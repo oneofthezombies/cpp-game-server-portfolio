@@ -107,7 +107,7 @@ contents::Battle::OnStart(Self &self,
 
   if (auto res = event_loop.SendServerEvent(
           first_socket_id,
-          core::TinyJson{}
+          core::JsonParser{}
               .Set("kind", "battle_start")
               .Set("battle_id", battle_id)
               .Set("opponent_socket_id", second_socket_id)
@@ -118,7 +118,7 @@ contents::Battle::OnStart(Self &self,
 
   if (auto res = event_loop.SendServerEvent(
           second_socket_id,
-          core::TinyJson{}
+          core::JsonParser{}
               .Set("kind", "battle_start")
               .Set("battle_id", battle_id)
               .Set("opponent_socket_id", first_socket_id)
@@ -143,7 +143,7 @@ contents::Battle::OnBattleMove(Self &self,
   if (battle_id_res == self.socket_id_to_battle_ids_.end()) {
     return ResultT{
         Error::From(kBattleBattleIdNotFound,
-                    core::TinyJson{}.Set("socket_id", socket_id).IntoMap())};
+                    core::JsonParser{}.Set("socket_id", socket_id).IntoMap())};
   }
 
   const auto battle_id = battle_id_res->second;
@@ -151,7 +151,7 @@ contents::Battle::OnBattleMove(Self &self,
   if (battle_state_res == self.battle_states_.end()) {
     return ResultT{
         Error::From(kBattleBattleStateNotFound,
-                    core::TinyJson{}.Set("battle_id", battle_id).IntoMap())};
+                    core::JsonParser{}.Set("battle_id", battle_id).IntoMap())};
   }
 
   auto move_res = message.Get("move");
@@ -164,14 +164,14 @@ contents::Battle::OnBattleMove(Self &self,
   // check move
   if (kRules.find(move) == kRules.end()) {
     return ResultT{Error::From(kBattleMoveNotFound,
-                               core::TinyJson{}.Set("move", move).IntoMap())};
+                               core::JsonParser{}.Set("move", move).IntoMap())};
   }
 
   auto &battle_state = battle_state_res->second;
   if (battle_state.first_socket_id == socket_id) {
     if (!battle_state.first_socket_move.empty()) {
       return ResultT{Error::From(kBattleSocketMoveAlreadySet,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("socket_id", socket_id)
                                      .Set("battle_id", battle_id)
                                      .IntoMap())};
@@ -181,7 +181,7 @@ contents::Battle::OnBattleMove(Self &self,
   } else if (battle_state.second_socket_id == socket_id) {
     if (!battle_state.second_socket_move.empty()) {
       return ResultT{Error::From(kBattleSocketMoveAlreadySet,
-                                 core::TinyJson{}
+                                 core::JsonParser{}
                                      .Set("socket_id", socket_id)
                                      .Set("battle_id", battle_id)
                                      .IntoMap())};
@@ -191,7 +191,7 @@ contents::Battle::OnBattleMove(Self &self,
   } else {
     return ResultT{
         Error::From(kBattleSocketIdNotFound,
-                    core::TinyJson{}.Set("socket_id", socket_id).IntoMap())};
+                    core::JsonParser{}.Set("socket_id", socket_id).IntoMap())};
   }
 
   if (battle_state.first_socket_move.empty() ||
@@ -205,12 +205,12 @@ contents::Battle::OnBattleMove(Self &self,
   if (first_move == second_move) {
     // send draw
     event_loop.SendServerEvent(battle_state.first_socket_id,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("kind", "battle_result")
                                    .Set("result", "draw")
                                    .Take());
     event_loop.SendServerEvent(battle_state.second_socket_id,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("kind", "battle_result")
                                    .Set("result", "draw")
                                    .Take());
@@ -222,12 +222,12 @@ contents::Battle::OnBattleMove(Self &self,
       std::find(first_win_moves.begin(), first_win_moves.end(), second_move)) {
     // send first win
     event_loop.SendServerEvent(battle_state.first_socket_id,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("kind", "battle_result")
                                    .Set("result", "win")
                                    .Take());
     event_loop.SendServerEvent(battle_state.second_socket_id,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("kind", "battle_result")
                                    .Set("result", "lose")
                                    .Take());
@@ -239,12 +239,12 @@ contents::Battle::OnBattleMove(Self &self,
       std::find(second_win_moves.begin(), second_win_moves.end(), first_move)) {
     // send second win
     event_loop.SendServerEvent(battle_state.first_socket_id,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("kind", "battle_result")
                                    .Set("result", "lose")
                                    .Take());
     event_loop.SendServerEvent(battle_state.second_socket_id,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("kind", "battle_result")
                                    .Set("result", "win")
                                    .Take());
@@ -253,7 +253,7 @@ contents::Battle::OnBattleMove(Self &self,
 
   // return error
   return ResultT{Error::From(kBattleMoveLogicError,
-                             core::TinyJson{}
+                             core::JsonParser{}
                                  .Set("first_move", first_move)
                                  .Set("second_move", second_move)
                                  .IntoMap())};

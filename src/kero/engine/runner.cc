@@ -9,7 +9,8 @@
 
 using namespace kero;
 
-kero::Runner::Runner(std::string&& name) noexcept : name_{std::move(name)} {}
+kero::Runner::Runner(const Pinned<RunnerContext> runner_context) noexcept
+    : runner_context_{runner_context} {}
 
 auto
 kero::Runner::Run() noexcept -> Result<Void> {
@@ -100,7 +101,7 @@ kero::Runner::SubscribeEvent(const std::string& event, const ServiceKind& kind)
 
   auto& service_kinds = it->second;
   if (service_kinds.contains(kind)) {
-    return ResultT::Err(Dict{}
+    return ResultT::Err(Json{}
                             .Set("message", "already subscribed")
                             .Set("kind_id", static_cast<double>(kind.id))
                             .Set("kind_name", kind.name)
@@ -119,12 +120,12 @@ kero::Runner::UnsubscribeEvent(const std::string& event,
   auto it = event_handler_map_.find(event);
   if (it == event_handler_map_.end()) {
     return ResultT::Err(
-        Dict{}.Set("message", "event not found").Set("event", event).Take());
+        Json{}.Set("message", "event not found").Set("event", event).Take());
   }
 
   auto& service_kinds = it->second;
   if (!service_kinds.contains(kind)) {
-    return ResultT::Err(Dict{}
+    return ResultT::Err(Json{}
                             .Set("message", "not subscribed")
                             .Set("kind_id", static_cast<double>(kind.id))
                             .Set("kind_name", kind.name)
@@ -136,20 +137,20 @@ kero::Runner::UnsubscribeEvent(const std::string& event,
 }
 
 auto
-kero::Runner::InvokeEvent(const std::string& event, const Dict& data) noexcept
+kero::Runner::InvokeEvent(const std::string& event, const Json& data) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto it = event_handler_map_.find(event);
   if (it == event_handler_map_.end() || it->second.empty()) {
-    return ResultT::Err(Dict{}
+    return ResultT::Err(Json{}
                             .Set("message", "no services subscribed to event")
                             .Set("event", event)
                             .Take());
   }
 
-  Dict error{};
-  int64_t i{};
+  Json error{};
+  i64 i{};
   bool message_set{false};
   for (const auto& kind : it->second) {
     auto service = GetService(kind.id);
@@ -223,7 +224,7 @@ auto
 kero::ThreadRunner::Start() -> Result<Void> {
   if (thread_.joinable()) {
     return Result<Void>::Err(
-        Dict{}.Set("message", "thread already started").Take());
+        Json{}.Set("message", "thread already started").Take());
   }
 
   thread_ = std::thread{ThreadMain, runner_};
@@ -234,7 +235,7 @@ auto
 kero::ThreadRunner::Stop() -> Result<Void> {
   if (!thread_.joinable()) {
     return Result<Void>::Err(
-        Dict{}.Set("message", "thread not started").Take());
+        Json{}.Set("message", "thread not started").Take());
   }
 
   thread_.join();

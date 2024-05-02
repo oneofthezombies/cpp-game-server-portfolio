@@ -2,9 +2,9 @@
 
 using namespace kero;
 
-kero::ArgsScanner::ArgsScanner(const Args &args) noexcept : args_(args) {}
+kero::ArgsScanner::ArgsScanner(const Args &args) noexcept : args_{args} {}
 
-kero::ArgsScanner::ArgsScanner(Args &&args) noexcept : args_(std::move(args)) {}
+kero::ArgsScanner::ArgsScanner(Args &&args) noexcept : args_{std::move(args)} {}
 
 auto
 kero::ArgsScanner::Current() const noexcept -> OptionRef<const std::string &> {
@@ -25,7 +25,9 @@ kero::ArgsScanner::Next() const noexcept -> OptionRef<const std::string &> {
 
 auto
 kero::ArgsScanner::Eat() noexcept -> void {
-  if (index_ < args_.size()) {
-    index_ += 1;
+  if (index_ >= args_.size()) {
+    return;
   }
+
+  index_ += 1;
 }

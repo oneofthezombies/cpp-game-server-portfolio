@@ -3,7 +3,7 @@
 using namespace kero;
 
 kero::Error::Error(const Code code,
-                   Dict &&details,
+                   Json &&details,
                    std::source_location &&location,
                    Cause &&cause) noexcept
     : code{code},
@@ -18,7 +18,7 @@ kero::Error::Take() noexcept -> Error {
 
 auto
 kero::Error::From(const Code code,
-                  Dict &&details,
+                  Json &&details,
                   Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{code,
@@ -29,7 +29,7 @@ kero::Error::From(const Code code,
 
 auto
 kero::Error::From(const Code code,
-                  Dict &&details,
+                  Json &&details,
                   std::source_location &&location) noexcept -> Error {
   return Error{code, std::move(details), std::move(location), nullptr};
 }
@@ -39,13 +39,13 @@ kero::Error::From(const Code code,
                   Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{code,
-               Dict{},
+               Json{},
                std::move(location),
                std::make_unique<Error>(std::move(cause))};
 }
 
 auto
-kero::Error::From(Dict &&details,
+kero::Error::From(Json &&details,
                   Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{kFailed,
@@ -57,11 +57,11 @@ kero::Error::From(Dict &&details,
 auto
 kero::Error::From(const Code code, std::source_location &&location) noexcept
     -> Error {
-  return Error{code, Dict{}, std::move(location), nullptr};
+  return Error{code, Json{}, std::move(location), nullptr};
 }
 
 auto
-kero::Error::From(Dict &&details, std::source_location &&location) noexcept
+kero::Error::From(Json &&details, std::source_location &&location) noexcept
     -> Error {
   return Error{kFailed, std::move(details), std::move(location), nullptr};
 }
@@ -70,7 +70,7 @@ auto
 kero::Error::From(Error &&cause, std::source_location &&location) noexcept
     -> Error {
   return Error{kPropagated,
-               Dict{},
+               Json{},
                std::move(location),
                std::make_unique<Error>(std::move(cause))};
 }
@@ -78,7 +78,7 @@ kero::Error::From(Error &&cause, std::source_location &&location) noexcept
 auto
 kero::operator<<(std::ostream &os, const Error &error) -> std::ostream & {
   os << "Error{";
-  os << "code: " << static_cast<int32_t>(error.code) << ", ";
+  os << "code: " << static_cast<i32>(error.code) << ", ";
   os << "details: " << error.details << ", ";
   os << "location: " << error.location.file_name() << ":"
      << error.location.line() << ":" << error.location.column() << " "

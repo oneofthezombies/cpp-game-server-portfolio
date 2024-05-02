@@ -1,10 +1,12 @@
 #ifndef KERO_ENGINE_RUNNER_BUILDER_H
 #define KERO_ENGINE_RUNNER_BUILDER_H
 
+#include "kero/core/borrowed.h"
 #include "kero/core/common.h"
 #include "kero/engine/engine.h"
 #include "kero/engine/engine_context.h"
-#include "kero/engine/service.h"
+#include "kero/engine/runner.h"
+#include "kero/engine/service_factory.h"
 
 namespace kero {
 
@@ -12,25 +14,25 @@ class ThreadRunner;
 
 class RunnerBuilder {
  public:
-  explicit RunnerBuilder(Borrowed<EngineContext> engine_context,
-                         std::string&& name) noexcept;
+  explicit RunnerBuilder(const Borrowed<EngineContext> engine_context,
+                         std::string&& runner_name) noexcept;
   ~RunnerBuilder() noexcept = default;
   CLASS_KIND_PINNABLE(RunnerBuilder);
 
   [[nodiscard]] auto
-  AddServiceFactory(ServiceFactory&& service_factory) noexcept
+  AddServiceFactory(Owned<ServiceFactory>&& service_factory) noexcept
       -> RunnerBuilder&;
 
   [[nodiscard]] auto
-  BuildRunner() const noexcept -> Result<Pinned<Runner>>;
+  BuildRunner() noexcept -> Result<Pinned<Runner>>;
 
   [[nodiscard]] auto
-  BuildThreadRunner() const noexcept -> Result<Pinned<ThreadRunner>>;
+  BuildThreadRunner() noexcept -> Result<Pinned<ThreadRunner>>;
 
  private:
-  std::vector<ServiceFactory> service_factories_;
-  std::string name_;
-  EngineContext* engine_context_;
+  std::vector<Owned<ServiceFactory>> service_factories_;
+  std::string runner_name_;
+  Borrowed<EngineContext> engine_context_;
 };
 
 }  // namespace kero

@@ -10,7 +10,7 @@ static const std::string kShutdown = "shutdown";
 kero::Mail::Mail(std::string &&from,
                  std::string &&to,
                  std::string &&event,
-                 Dict &&body) noexcept
+                 Json &&body) noexcept
     : from{std::move(from)},
       to{std::move(to)},
       event{std::move(event)},
@@ -40,7 +40,7 @@ kero::ActorSystem::CreateMailBox(const std::string &name) noexcept
 
   std::lock_guard lock{mutex_};
   if (mail_box_map_.find(name) != mail_box_map_.end()) {
-    return ResultT::Err(Dict{}
+    return ResultT::Err(Json{}
                             .Set("message", "mailbox name already exists")
                             .Set("name", name)
                             .Take());
@@ -66,7 +66,7 @@ kero::ActorSystem::DestroyMailBox(const std::string &name) noexcept
 
   std::lock_guard lock{mutex_};
   if (mail_box_map_.find(name) == mail_box_map_.end()) {
-    return ResultT::Err(Dict{}
+    return ResultT::Err(Json{}
                             .Set("message", "mailbox name not found")
                             .Set("name", name)
                             .Take());
@@ -82,12 +82,12 @@ kero::ActorSystem::ValidateName(const std::string &name) const noexcept
   using ResultT = Result<Void>;
 
   if (name.empty()) {
-    return ResultT::Err(Dict{}.Set("message", "name is empty").Take());
+    return ResultT::Err(Json{}.Set("message", "name is empty").Take());
   }
 
   if (name.size() > kMaxNameLength) {
     return ResultT::Err(
-        Dict{}
+        Json{}
             .Set("message", "name is too long")
             .Set("max_length", static_cast<double>(kMaxNameLength))
             .Set("length", static_cast<double>(name.size()))
@@ -95,14 +95,14 @@ kero::ActorSystem::ValidateName(const std::string &name) const noexcept
   }
 
   if (name == "all") {
-    return ResultT::Err(Dict{}.Set("message", "name is reserved").Take());
+    return ResultT::Err(Json{}.Set("message", "name is reserved").Take());
   }
 
   return OkVoid();
 }
 
 auto
-kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
+kero::ActorSystem::Run(spsc::Rx<Json> &&rx) -> Result<Void> {
   while (true) {
     if (auto message = rx.TryReceive()) {
       if (message.TakeUnwrap().Has(kShutdown)) {
@@ -155,21 +155,21 @@ kero::ActorSystem::Run(spsc::Rx<Dict> &&rx) -> Result<Void> {
 }
 
 kero::ThreadActorSystem::ThreadActorSystem(
-    Pinned<ActorSystem> actor_system) noexcept
+    const Pinned<ActorSystem> actor_system) noexcept
     : actor_system_{actor_system} {}
 
 auto
 kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
   if (thread_.joinable()) {
-    return Error::From(Dict{}.Set("message", "thread already started").Take());
+    return Error::From(Json{}.Set("message", "thread already started").Take());
   }
 
   if (tx_ != nullptr) {
-    return Error::From(Dict{}.Set("message", "tx already initialized").Take());
+    return Error::From(Json{}.Set("message", "tx already initialized").Take());
   }
 
-  auto [tx, rx] = spsc::Channel<Dict>::Builder{}.Build();
-  tx_ = std::make_unique<spsc::Tx<Dict>>(std::move(tx));
+  auto [tx, rx] = spsc::Channel<Json>::Builder{}.Build();
+  tx_ = std::make_unique<spsc::Tx<Json>>(std::move(tx));
 
   thread_ = std::thread{ThreadMain, actor_system_, std::move(rx)};
   return OkVoid();
@@ -178,21 +178,21 @@ kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
 auto
 kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
   if (!thread_.joinable()) {
-    return Error::From(Dict{}.Set("message", "thread not started").Take());
+    return Error::From(Json{}.Set("message", "thread not started").Take());
   }
 
   if (tx_ == nullptr) {
-    return Error::From(Dict{}.Set("message", "tx not initialized").Take());
+    return Error::From(Json{}.Set("message", "tx not initialized").Take());
   }
 
-  tx_->Send(Dict{}.Set(std::string{kShutdown}, true).Take());
+  tx_->Send(Json{}.Set(std::string{kShutdown}, true).Take());
   thread_.join();
   return OkVoid();
 }
 
 auto
-kero::ThreadActorSystem::ThreadMain(Pinned<ActorSystem> actor_system,
-                                    spsc::Rx<Dict> &&rx) -> void {
+kero::ThreadActorSystem::ThreadMain(const Pinned<ActorSystem> actor_system,
+                                    spsc::Rx<Json> &&rx) -> void {
   if (auto res = actor_system->Run(std::move(rx))) {
     log::Info("Actor system finished").Log();
   } else {

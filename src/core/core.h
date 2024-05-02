@@ -37,7 +37,7 @@ struct Void final {
 auto
 operator<<(std::ostream &os, const Void &) -> std::ostream &;
 
-using ErrorCode = int32_t;
+using ErrorCode = i32;
 using ErrorDetails = std::unordered_map<std::string, std::string>;
 
 auto

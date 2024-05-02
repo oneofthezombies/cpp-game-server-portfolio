@@ -19,7 +19,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
 
   if (!SubscribeEvent(EventSocketOpen::kEvent)) {
     return ResultT::Err(Error::From(
-        Dict{}
+        Json{}
             .Set("message",
                  std::string{"Failed to subscribe to socket open event"})
             .Take()));
@@ -27,7 +27,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
 
   if (!SubscribeEvent(EventSocketClose::kEvent)) {
     return ResultT::Err(Error::From(
-        Dict{}
+        Json{}
             .Set("message",
                  std::string{"Failed to subscribe to socket close event"})
             .Take()));
@@ -38,7 +38,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
 
 auto
 kero::SocketPoolService::OnEvent(const std::string& event,
-                                 const Dict& data) noexcept -> void {
+                                 const Json& data) noexcept -> void {
   if (event == EventSocketOpen::kEvent) {
     OnSocketOpen(data);
   } else if (event == EventSocketClose::kEvent) {
@@ -49,7 +49,7 @@ kero::SocketPoolService::OnEvent(const std::string& event,
 }
 
 auto
-kero::SocketPoolService::OnSocketOpen(const Dict& data) noexcept -> void {
+kero::SocketPoolService::OnSocketOpen(const Json& data) noexcept -> void {
   auto fd = data.GetOrDefault<double>(EventSocketOpen::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
@@ -75,11 +75,11 @@ kero::SocketPoolService::OnSocketOpen(const Dict& data) noexcept -> void {
   sockets_.insert(fd);
 
   InvokeEvent(EventSocketRegister::kEvent,
-              Dict{}.Set(EventSocketRegister::kFd, fd).Take());
+              Json{}.Set(EventSocketRegister::kFd, fd).Take());
 }
 
 auto
-kero::SocketPoolService::OnSocketClose(const Dict& data) noexcept -> void {
+kero::SocketPoolService::OnSocketClose(const Json& data) noexcept -> void {
   auto fd = data.GetOrDefault<double>(EventSocketClose::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
@@ -101,5 +101,5 @@ kero::SocketPoolService::OnSocketClose(const Dict& data) noexcept -> void {
   }
 
   InvokeEvent(EventSocketUnregister::kEvent,
-              Dict{}.Set(EventSocketUnregister::kFd, fd).Take());
+              Json{}.Set(EventSocketUnregister::kFd, fd).Take());
 }

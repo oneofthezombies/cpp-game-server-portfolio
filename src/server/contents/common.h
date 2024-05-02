@@ -9,7 +9,7 @@ namespace contents {
 /**
  * Server contents symbols start from 3,000,000
  */
-enum Symbol : int32_t {
+enum Symbol : i32 {
   kServerContentsBegin = 3'000'000,
   // Add symbols after kBegin
 

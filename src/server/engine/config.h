@@ -9,10 +9,10 @@
 namespace engine {
 
 struct Config final {
-  uint16_t port{kUndefinedPort};
+  u16 port{kUndefinedPort};
   std::string primary_event_loop_name;
 
-  static constexpr uint16_t kUndefinedPort{0};
+  static constexpr u16 kUndefinedPort{0};
 
   explicit Config() noexcept = default;
   ~Config() noexcept = default;

@@ -36,7 +36,7 @@ engine::EventLoop::SendServerEvent(const SocketId socket_id,
 
   if (auto res = message.Get("__message_kind"); res.IsOk()) {
     return ResultT{Error::From(kEventLoopMessageKindDuplicated,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("socket_id", socket_id)
                                    .Set("message", message)
                                    .IntoMap())};
@@ -44,18 +44,17 @@ engine::EventLoop::SendServerEvent(const SocketId socket_id,
 
   if (auto res = message.Get("__message_id"); res.IsOk()) {
     return ResultT{Error::From(kEventLoopMessageIdDuplicated,
-                               core::TinyJson{}
+                               core::JsonParser{}
                                    .Set("socket_id", socket_id)
                                    .Set("message", message)
                                    .IntoMap())};
   }
 
-  const auto data =
-      message
-          .Set("__message_kind",
-               static_cast<int32_t>(core::MessageKind::kServerEvent))
-          .Set("__message_id", NextMessageId())
-          .ToString();
+  const auto data = message
+                        .Set("__message_kind",
+                             static_cast<i32>(core::MessageKind::kServerEvent))
+                        .Set("__message_id", NextMessageId())
+                        .ToString();
 
   if (auto res = Write(socket_id, data); res.IsErr()) {
     return ResultT{Error::From(res.TakeErr())};

@@ -11,7 +11,7 @@ template <typename T>
 concept IsServiceKind = std::is_base_of_v<Service, T>;
 
 struct ServiceKind {
-  using Id = int64_t;
+  using Id = i64;
   using Name = std::string;
 
   Id id{};

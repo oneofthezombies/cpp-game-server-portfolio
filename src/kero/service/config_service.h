@@ -10,7 +10,7 @@ namespace kero {
 class ConfigService final : public Service {
  public:
   explicit ConfigService(RunnerContextPtr&& runner_context,
-                         Dict&& config) noexcept;
+                         Json&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
   CLASS_KIND_MOVABLE(ConfigService);
 
@@ -24,13 +24,13 @@ class ConfigService final : public Service {
   OnUpdate() noexcept -> void override;
 
   [[nodiscard]] auto
-  GetConfig() const noexcept -> const Dict&;
+  GetConfig() const noexcept -> const Json&;
 
   [[nodiscard]] auto
-  GetConfig() noexcept -> Dict&;
+  GetConfig() noexcept -> Json&;
 
  private:
-  Dict config_;
+  Json config_;
 };
 
 class ConfigServiceFactoryProvider final {

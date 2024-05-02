@@ -10,9 +10,9 @@
 
 using namespace kero;
 
-kero::SignalService::SignalService(RunnerContextPtr&& runner_context) noexcept
-    : Service{
-          std::move(runner_context), kServiceKindSignal, {kServiceKindActor}} {}
+kero::SignalService::SignalService(
+    const Pinned<RunnerContext> runner_context) noexcept
+    : Service{runner_context, kServiceKindSignal, {kServiceKindActor}} {}
 
 auto
 kero::SignalService::OnCreate() noexcept -> Result<Void> {
@@ -21,7 +21,7 @@ kero::SignalService::OnCreate() noexcept -> Result<Void> {
   interrupted_ = false;
 
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
-    return ResultT::Err(Errno::FromErrno().IntoDict());
+    return ResultT::Err(Errno::FromErrno().IntoJson());
   }
 
   return OkVoid();
@@ -51,7 +51,7 @@ kero::SignalService::OnUpdate() noexcept -> void {
     return;
   }
 
-  actor.Unwrap().SendMail("all", EventShutdown::kEvent, Dict{});
+  actor.Unwrap().SendMail("all", EventShutdown::kEvent, Json{});
 }
 
 auto

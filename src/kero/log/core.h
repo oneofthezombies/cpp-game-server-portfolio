@@ -10,7 +10,7 @@
 
 namespace kero {
 
-enum class Level : int8_t {
+enum class Level : i8 {
   kError = 0,
   kWarn = 10,
   kInfo = 20,

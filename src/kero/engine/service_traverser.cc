@@ -40,7 +40,7 @@ kero::ServiceTraverser::TraverseRecursive(const ServiceKind& service_kind,
   const auto service_it = service_map_.find(service_kind.id);
   if (service_it == service_map_.end()) {
     return ResultT::Err(
-        Dict{}
+        Json{}
             .Set("message", "service not found in service map")
             .Set("service_kind_id", static_cast<double>(service_kind.id))
             .Take());
@@ -60,7 +60,7 @@ kero::ServiceTraverser::TraverseRecursive(const ServiceKind& service_kind,
           auto circular_it = visit_map_.find(*it);
           if (circular_it == visit_map_.end()) {
             return ResultT::Err(
-                Dict{}
+                Json{}
                     .Set("message", "circular dependency must be found")
                     .Set("service_kind_id", static_cast<double>(*it))
                     .Take());
@@ -73,7 +73,7 @@ kero::ServiceTraverser::TraverseRecursive(const ServiceKind& service_kind,
         }
 
         return ResultT::Err(
-            Dict{}
+            Json{}
                 .Set("message", "circular dependencies found")
                 .Set("circular_dependencies", std::move(circular_dependencies))
                 .Take());

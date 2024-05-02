@@ -11,7 +11,7 @@ namespace engine {
 /**
  * Server engine symbols start from 2,000,000
  */
-enum Symbol : int32_t {
+enum Symbol : i32 {
   kServerEngineBegin = 2'000'000,
   // Add symbols after kBegin
 

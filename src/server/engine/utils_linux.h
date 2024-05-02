@@ -7,7 +7,7 @@ namespace engine {
 
 [[nodiscard]] auto
 EventLoopAddOptionsToEpollEvents(const EventLoopAddOptions &options) noexcept
-    -> uint32_t;
+    -> u32;
 
 }  // namespace engine
 

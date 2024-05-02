@@ -11,7 +11,7 @@
 
 namespace engine {
 
-using MailBody = core::TinyJson;
+using MailBody = core::JsonParser;
 
 struct Mail final {
   std::string from;

@@ -1,4 +1,7 @@
+#include <span>
+
 #include "battle_service.cc"
+#include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
 #include "kero/engine/actor_service.h"
 #include "kero/engine/actor_system.h"
@@ -27,35 +30,39 @@ main(int argc, char** argv) -> int {
   Center{}.AddTransport(std::move(transport));
   Defer defer_log_system{[] { Center{}.Shutdown(); }};
 
-  auto main =
-      kero::Engine::Global()
-          .CreateRunnerBuilder("main")
-          .AddServiceFactory(std::make_unique<ConfigServiceFactory>(argc, argv))
-          .AddServiceFactory(std::make_unique<SignalServiceFactory>())
-          .AddServiceFactory(std::make_unique<ActorServiceFactory>())
-          .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
-          .AddServiceFactory(std::make_unique<TcpServerServiceFactory>())
-          .AddServiceFactory(
-              std::make_unique<SocketRouterServiceFactory>("lobby"))
-          .BuildRunner();
+  auto engine = Engine{};
+  // engine.CreateRunnerBuilder("main").Borrowed
 
-  auto lobby =
-      kero::Engine::Global()
-          .CreateRunnerBuilder("lobby")
-          .AddServiceFactory(std::make_unique<ActorServiceFactory>())
-          .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
-          .AddServiceFactory(std::make_unique<SocketPoolServiceFactory>())
-          .AddServiceFactory(std::make_unique<LobbyServiceFactory>())
-          .BuildThreadRunner();
+  //   auto main =
+  //       kero::Engine::Global()
+  //           .CreateRunnerBuilder("main")
+  //           .AddServiceFactory(std::make_unique<ConfigServiceFactory>(argc,
+  //           argv))
+  //           .AddServiceFactory(std::make_unique<SignalServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<ActorServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<TcpServerServiceFactory>())
+  //           .AddServiceFactory(
+  //               std::make_unique<SocketRouterServiceFactory>("lobby"))
+  //           .BuildRunner();
 
-  auto lobby =
-      kero::Engine::Global()
-          .CreateRunnerBuilder("battle")
-          .AddServiceFactory(std::make_unique<ActorServiceFactory>())
-          .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
-          .AddServiceFactory(std::make_unique<SocketPoolServiceFactory>())
-          .AddServiceFactory(std::make_unique<BattleServiceFactory>())
-          .BuildThreadRunner();
+  //   auto lobby =
+  //       kero::Engine::Global()
+  //           .CreateRunnerBuilder("lobby")
+  //           .AddServiceFactory(std::make_unique<ActorServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<SocketPoolServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<LobbyServiceFactory>())
+  //           .BuildThreadRunner();
+
+  //   auto lobby =
+  //       kero::Engine::Global()
+  //           .CreateRunnerBuilder("battle")
+  //           .AddServiceFactory(std::make_unique<ActorServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<IoEventLoopServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<SocketPoolServiceFactory>())
+  //           .AddServiceFactory(std::make_unique<BattleServiceFactory>())
+  //           .BuildThreadRunner();
 
   return 0;
 }

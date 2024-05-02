@@ -23,7 +23,7 @@ class ActorService final : public Service {
   GetName() const noexcept -> const std::string &;
 
   auto
-  SendMail(std::string &&to, std::string &&event, Dict &&body) noexcept -> void;
+  SendMail(std::string &&to, std::string &&event, Json &&body) noexcept -> void;
 
  private:
   explicit ActorService(RunnerContextPtr &&runner_context,

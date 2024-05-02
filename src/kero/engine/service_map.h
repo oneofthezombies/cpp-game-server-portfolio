@@ -12,7 +12,7 @@ namespace kero {
 
 class ServiceMap {
  public:
-  using ServiceMapRaw = std::unordered_map<ServiceKind::Id, ServicePtr>;
+  using ServiceMapRaw = std::unordered_map<ServiceKind::Id, Owned<Service>>;
   using ServiceKindIdMapRaw =
       std::unordered_map<ServiceKind::Name, ServiceKind::Id>;
 
@@ -21,7 +21,7 @@ class ServiceMap {
   CLASS_KIND_MOVABLE(ServiceMap);
 
   [[nodiscard]] auto
-  AddService(ServicePtr&& service) noexcept -> Result<Void>;
+  AddService(Owned<Service>&& service) noexcept -> Result<Void>;
 
   [[nodiscard]] auto
   GetService(const ServiceKind::Id service_kind_id) const noexcept

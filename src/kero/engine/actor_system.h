@@ -5,10 +5,10 @@
 #include <unordered_map>
 
 #include "kero/core/common.h"
-#include "kero/core/dict.h"
+#include "kero/core/json.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
-#include "kero/engine/pinning_system.h"
+#include "kero/engine/pinned.h"
 
 namespace kero {
 
@@ -16,13 +16,13 @@ struct Mail final {
   std::string from;
   std::string to;
   std::string event;
-  Dict body;
+  Json body;
 
   explicit Mail() noexcept = default;
   explicit Mail(std::string &&from,
                 std::string &&to,
                 std::string &&event,
-                Dict &&body) noexcept;
+                Json &&body) noexcept;
   ~Mail() noexcept = default;
   CLASS_KIND_MOVABLE(Mail);
 
@@ -59,7 +59,7 @@ class ActorSystem final {
   DestroyMailBox(const std::string &name) noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  Run(spsc::Rx<Dict> &&rx) -> Result<Void>;
+  Run(spsc::Rx<Json> &&rx) -> Result<Void>;
 
  private:
   [[nodiscard]] auto
@@ -73,7 +73,7 @@ class ActorSystem final {
 
 class ThreadActorSystem {
  public:
-  explicit ThreadActorSystem(Pinned<ActorSystem> actor_system) noexcept;
+  explicit ThreadActorSystem(const Pinned<ActorSystem> actor_system) noexcept;
   ~ThreadActorSystem() noexcept = default;
 
   [[nodiscard]] auto
@@ -84,10 +84,10 @@ class ThreadActorSystem {
 
  private:
   static auto
-  ThreadMain(Pinned<ActorSystem> actor_system, spsc::Rx<Dict> &&rx) -> void;
+  ThreadMain(Pinned<ActorSystem> actor_system, spsc::Rx<Json> &&rx) -> void;
 
   Pinned<ActorSystem> actor_system_;
-  Owned<spsc::Tx<Dict>> tx_;
+  Owned<spsc::Tx<Json>> tx_;
   std::thread thread_;
 };
 

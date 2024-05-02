@@ -8,7 +8,7 @@
 using namespace kero;
 
 kero::ConfigService::ConfigService(RunnerContextPtr&& runner_context,
-                                   Dict&& config) noexcept
+                                   Json&& config) noexcept
     : Service{std::move(runner_context), kServiceKindConfig, {}},
       config_{std::move(config)} {}
 
@@ -28,12 +28,12 @@ auto
 kero::ConfigService::OnUpdate() noexcept -> void {}
 
 auto
-kero::ConfigService::GetConfig() const noexcept -> const Dict& {
+kero::ConfigService::GetConfig() const noexcept -> const Json& {
   return config_;
 }
 
 auto
-kero::ConfigService::GetConfig() noexcept -> Dict& {
+kero::ConfigService::GetConfig() noexcept -> Json& {
   return config_;
 }
 
@@ -47,7 +47,7 @@ kero::ConfigServiceFactoryProvider::Create() noexcept -> ServiceFactory {
       [args = args_](RunnerContextPtr&& runner_context) -> Result<ServicePtr> {
         using ResultT = Result<ServicePtr>;
 
-        Dict config{};
+        Json config{};
         ArgsScanner scanner{args};
 
         // Skip the first argument which is the program name
@@ -66,11 +66,11 @@ kero::ConfigServiceFactoryProvider::Create() noexcept -> ServiceFactory {
             }
 
             auto port_str = next.Unwrap();
-            auto res = ParseNumberString<uint16_t>(port_str);
+            auto res = ParseNumberString<u16>(port_str);
             if (res.IsErr()) {
               return ResultT::Err(
                   Error::From(kPortParsingFailed,
-                              Dict{}.Set("port", std::move(port_str)).Take(),
+                              Json{}.Set("port", std::move(port_str)).Take(),
                               res.TakeErr()));
             };
 
@@ -79,7 +79,7 @@ kero::ConfigServiceFactoryProvider::Create() noexcept -> ServiceFactory {
           } else {
             return ResultT::Err(
                 Error::From(kUnknownArgument,
-                            Dict{}.Set("token", std::string{token}).Take()));
+                            Json{}.Set("token", std::string{token}).Take()));
           }
 
           scanner.Eat();

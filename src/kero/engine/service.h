@@ -4,18 +4,20 @@
 #include <string>
 
 #include "kero/core/common.h"
-#include "kero/core/dict.h"
+#include "kero/core/json.h"
 #include "kero/core/result.h"
-#include "kero/engine/runner_context.h"
+#include "kero/engine/pinned.h"
 #include "kero/engine/service_kind.h"
 
 namespace kero {
+
+class RunnerContext;
 
 class Service {
  public:
   using Dependencies = std::vector<ServiceKind>;
 
-  explicit Service(RunnerContextPtr&& runner_context,
+  explicit Service(const Pinned<RunnerContext> runner_context,
                    const ServiceKind& kind,
                    Dependencies&& dependencies) noexcept;
 
@@ -64,7 +66,7 @@ class Service {
   UnsubscribeEvent(const std::string& event) -> Result<Void>;
 
   auto
-  InvokeEvent(const std::string& event, const Dict& data) noexcept
+  InvokeEvent(const std::string& event, const Json& data) noexcept
       -> Result<Void>;
 
   /**
@@ -89,16 +91,13 @@ class Service {
    * Default implementation of the `OnEvent` method is noop.
    */
   virtual auto
-  OnEvent(const std::string& event, const Dict& data) noexcept -> void;
+  OnEvent(const std::string& event, const Json& data) noexcept -> void;
 
  private:
   ServiceKind kind_;
   Dependencies dependencies_;
-  RunnerContextPtr runner_context_;
+  Pinned<RunnerContext> runner_context_;
 };
-
-using ServicePtr = Owned<Service>;
-using ServiceFactory = std::function<Result<ServicePtr>(RunnerContextPtr)>;
 
 }  // namespace kero
 

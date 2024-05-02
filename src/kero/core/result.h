@@ -73,7 +73,7 @@ class Result {
 
   static auto
   Err(const Error::Code code,
-      Dict&& details,
+      Json&& details,
       Error&& cause,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
@@ -85,7 +85,7 @@ class Result {
 
   static auto
   Err(const Error::Code code,
-      Dict&& details,
+      Json&& details,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
     return Result<T>::From(
@@ -102,7 +102,7 @@ class Result {
   }
 
   static auto
-  Err(Dict&& details,
+  Err(Json&& details,
       Error&& cause,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
@@ -118,7 +118,7 @@ class Result {
   }
 
   static auto
-  Err(Dict&& details,
+  Err(Json&& details,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
     return Result<T>::From(

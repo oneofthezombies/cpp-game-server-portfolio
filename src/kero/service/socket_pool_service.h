@@ -18,13 +18,13 @@ class SocketPoolService final : public Service {
   OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnEvent(const std::string& event, const Dict& data) noexcept -> void override;
+  OnEvent(const std::string& event, const Json& data) noexcept -> void override;
 
  private:
   auto
-  OnSocketOpen(const Dict& data) noexcept -> void;
+  OnSocketOpen(const Json& data) noexcept -> void;
   auto
-  OnSocketClose(const Dict& data) noexcept -> void;
+  OnSocketClose(const Json& data) noexcept -> void;
 
   std::unordered_set<Fd::Value> sockets_;
 };

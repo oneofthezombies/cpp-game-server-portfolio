@@ -42,7 +42,7 @@ kero::ActorService::GetName() const noexcept -> const std::string & {
 auto
 kero::ActorService::SendMail(std::string &&to,
                              std::string &&event,
-                             Dict &&body) noexcept -> void {
+                             Json &&body) noexcept -> void {
   mail_box_.tx.Send(Mail{std::string{name_},
                          std::move(to),
                          std::move(event),

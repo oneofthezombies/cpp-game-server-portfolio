@@ -8,7 +8,7 @@
 
 namespace core {
 
-enum class MessageKind : uint8_t {
+enum class MessageKind : u8 {
   // undefined message kind
   kUndefined = 0,
 
@@ -40,8 +40,8 @@ enum class MessageKind : uint8_t {
 auto
 operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
 
-using MessageId = uint64_t;
-using Message = TinyJson;
+using MessageId = u64;
+using Message = JsonParser;
 
 }  // namespace core
 
