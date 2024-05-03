@@ -59,11 +59,12 @@ kero::JsonParser::Stringify(const Json &json) noexcept -> Result<std::string> {
       }
       str += "\"";
     } else {
-      return ResultT::Err(Error::From(Json{}
-                                          .Set("kind", "stringify")
-                                          .Set("message", "unsupported value")
-                                          .Set("key", key)
-                                          .Take()));
+      return ResultT::Err(
+          Error::From(Json{}
+                          .SetString("kind", "stringify")
+                          .SetString("message", "unsupported value")
+                          .SetString("key", key)
+                          .Take()));
     }
 
     if (std::next(it) != json.AsRaw().end()) {
@@ -91,9 +92,9 @@ kero::JsonParser::Parse(const std::string_view tiny_json_str,
   if (cursor_ < tiny_json_str_.size()) {
     return Result<Json>::Err(
         Error::From(Json{}
-                        .Set("kind", std::string{"parse"})
-                        .Set("message", std::string{"trailing characters"})
-                        .Set("cursor", cursor_)
+                        .SetString("kind", "parse")
+                        .SetString("message", "trailing characters")
+                        .SetU64("cursor", cursor_)
                         .Take()));
   }
 
@@ -111,12 +112,11 @@ kero::JsonParser::ParseObject() noexcept -> Result<Json> {
   }
 
   if (current.Ok() != '{') {
-    return ResultT::Err(
-        Error::From(Json{}
-                        .Set("kind", std::string{"object"})
-                        .Set("message", std::string{"invalid object"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Take()));
+    return ResultT::Err(Error::From(Json{}
+                                        .SetString("kind", "object")
+                                        .SetString("message", "invalid object")
+                                        .SetU64("cursor", cursor_)
+                                        .Take()));
   }
 
   if (auto res = Advance(); res.IsErr()) {
@@ -215,21 +215,19 @@ kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
       }
     }
     default: {
-      return ResultT::Err(
-          Error::From(Json{}
-                          .Set("kind", std::string{"value"})
-                          .Set("message", std::string{"invalid value"})
-                          .Set("cursor", static_cast<double>(cursor_))
-                          .Take()));
+      return ResultT::Err(Error::From(Json{}
+                                          .SetString("kind", "value")
+                                          .SetString("message", "invalid value")
+                                          .SetU64("cursor", cursor_)
+                                          .Take()));
     }
   }
 
-  return ResultT::Err(
-      Error::From(Json{}
-                      .Set("kind", std::string{"value"})
-                      .Set("message", std::string{"invalid value"})
-                      .Set("cursor", static_cast<double>(cursor_))
-                      .Take()));
+  return ResultT::Err(Error::From(Json{}
+                                      .SetString("kind", "value")
+                                      .SetString("message", "invalid value")
+                                      .SetU64("cursor", cursor_)
+                                      .Take()));
 }
 
 auto
@@ -243,12 +241,11 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
   }
 
   if (current.Ok() != '"') {
-    return ResultT::Err(
-        Error::From(Json{}
-                        .Set("kind", std::string{"string"})
-                        .Set("message", std::string{"invalid string"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Take()));
+    return ResultT::Err(Error::From(Json{}
+                                        .SetString("kind", "string")
+                                        .SetString("message", "invalid string")
+                                        .SetU64("cursor", cursor_)
+                                        .Take()));
   }
 
   std::string str;
@@ -306,9 +303,9 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
         default:
           return ResultT::Err(
               Error::From(Json{}
-                              .Set("kind", std::string{"string"})
-                              .Set("message", std::string{"invalid escape"})
-                              .Set("cursor", static_cast<double>(cursor_))
+                              .SetString("kind", "string")
+                              .SetString("message", "invalid escape")
+                              .SetU64("cursor", cursor_)
                               .Take()));
       }
     } else {
@@ -327,9 +324,9 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
     if (current.Ok() == '\0') {
       return ResultT::Err(
           Error::From(Json{}
-                          .Set("kind", std::string{"string"})
-                          .Set("message", std::string{"unterminated string"})
-                          .Set("cursor", static_cast<double>(cursor_))
+                          .SetString("kind", "string")
+                          .SetString("message", "unterminated string")
+                          .SetU64("cursor", cursor_)
                           .Take()));
     }
 
@@ -385,12 +382,11 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
       }
     }
   } else {
-    return ResultT::Err(
-        Error::From(Json{}
-                        .Set("kind", std::string{"number"})
-                        .Set("message", std::string{"invalid number"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Take()));
+    return ResultT::Err(Error::From(Json{}
+                                        .SetString("kind", "number")
+                                        .SetString("message", "invalid number")
+                                        .SetU64("cursor", cursor_)
+                                        .Take()));
   }
 
   if (current.Ok() == '.') {
@@ -407,9 +403,9 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
     if (!isdigit(current.Ok())) {
       return ResultT::Err(
           Error::From(Json{}
-                          .Set("kind", std::string{"number"})
-                          .Set("message", std::string{"invalid number"})
-                          .Set("cursor", static_cast<double>(cursor_))
+                          .SetString("kind", "number")
+                          .SetString("message", "invalid number")
+                          .SetU64("cursor", cursor_)
                           .Take()));
     }
 
@@ -451,9 +447,9 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
     if (!isdigit(current.Ok())) {
       return ResultT::Err(
           Error::From(Json{}
-                          .Set("kind", std::string{"number"})
-                          .Set("message", std::string{"invalid number"})
-                          .Set("cursor", static_cast<double>(cursor_))
+                          .SetString("kind", "number")
+                          .SetString("message", "invalid number")
+                          .SetU64("cursor", cursor_)
                           .Take()));
     }
 
@@ -494,12 +490,11 @@ kero::JsonParser::ParseBool() noexcept -> Result<bool> {
     return ResultT::Ok(false);
   }
 
-  return ResultT::Err(
-      Error::From(Json{}
-                      .Set("kind", std::string{"bool"})
-                      .Set("message", std::string{"invalid bool"})
-                      .Set("cursor", static_cast<double>(cursor_))
-                      .Take()));
+  return ResultT::Err(Error::From(Json{}
+                                      .SetString("kind", "bool")
+                                      .SetString("message", "invalid bool")
+                                      .SetU64("cursor", cursor_)
+                                      .Take()));
 }
 
 auto
@@ -509,9 +504,9 @@ kero::JsonParser::Current() const noexcept -> Result<char> {
   if (cursor_ >= tiny_json_str_.size()) {
     return ResultT::Err(
         Error::From(Json{}
-                        .Set("kind", std::string{"current"})
-                        .Set("message", std::string{"current out of range"})
-                        .Set("cursor", static_cast<double>(cursor_))
+                        .SetString("kind", "current")
+                        .SetString("message", "current out of range")
+                        .SetU64("cursor", cursor_)
                         .Take()));
   }
 
