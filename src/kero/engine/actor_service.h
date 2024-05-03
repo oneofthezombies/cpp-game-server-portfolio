@@ -1,8 +1,6 @@
 #ifndef KERO_SERVICE_ACTOR_SERVICE_H
 #define KERO_SERVICE_ACTOR_SERVICE_H
 
-#include <memory>
-
 #include "kero/core/common.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/service.h"

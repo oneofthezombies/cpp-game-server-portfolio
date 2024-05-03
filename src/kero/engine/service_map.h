@@ -21,14 +21,26 @@ class ServiceMap {
   CLASS_KIND_MOVABLE(ServiceMap);
 
   [[nodiscard]] auto
+  InvokeCreate() noexcept;
+
+  [[nodiscard]] auto
+  InvokeUpdate() noexcept;
+
+  [[nodiscard]] auto
+  InvokeDestroy() noexcept;
+
+  [[nodiscard]] auto
   AddService(Owned<Service>&& service) noexcept -> Result<Void>;
+
+  [[nodiscard]] auto
+  GetService(const ServiceKind& kind) const noexcept -> OptionRef<Service&>;
 
   [[nodiscard]] auto
   GetService(const ServiceKind::Id service_kind_id) const noexcept
       -> OptionRef<Service&>;
 
   [[nodiscard]] auto
-  GetService(const ServiceKind::Name service_kind_name) const noexcept
+  GetService(const ServiceKind::Name& service_kind_name) const noexcept
       -> OptionRef<Service&>;
 
   [[nodiscard]] auto
@@ -37,21 +49,11 @@ class ServiceMap {
   [[nodiscard]] auto
   HasService(const ServiceKind::Name service_kind_name) const noexcept -> bool;
 
-  [[nodiscard]] auto
-  GetServiceMapRaw() const noexcept -> const ServiceMapRaw&;
-
-  [[nodiscard]] auto
-  GetServiceMapRaw() noexcept -> ServiceMapRaw&;
-
-  [[nodiscard]] auto
-  GetServiceKindIdMapRaw() const noexcept -> const ServiceKindIdMapRaw&;
-
-  [[nodiscard]] auto
-  GetServiceKindIdMapRaw() noexcept -> ServiceKindIdMapRaw&;
-
  private:
   ServiceMapRaw service_map_;
   ServiceKindIdMapRaw service_kind_id_map_;
+
+  friend class ServiceTraverser;
 };
 
 }  // namespace kero

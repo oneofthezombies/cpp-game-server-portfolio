@@ -33,11 +33,23 @@ class Service {
   [[nodiscard]] auto
   GetRunnerContext() noexcept -> RunnerContext&;
 
+  /**
+   * Check equality of the service kind id
+   */
+  [[nodiscard]] auto
+  Is(const ServiceKind& kind) const noexcept -> bool;
+
   [[nodiscard]] auto
   Is(const ServiceKind::Id kind_id) const noexcept -> bool;
 
   [[nodiscard]] auto
   Is(const ServiceKind::Name& kind_name) const noexcept -> bool;
+
+  template <IsServiceKind T>
+  [[nodiscard]] auto
+  As(const ServiceKind& kind) noexcept -> OptionRef<T&> {
+    return As<T>(kind.id);
+  }
 
   template <IsServiceKind T>
   [[nodiscard]] auto

@@ -1,7 +1,6 @@
 #ifndef KERO_ENGINE_RUNNER_H
 #define KERO_ENGINE_RUNNER_H
 
-#include <string>
 #include <thread>
 
 #include "kero/core/common.h"
@@ -19,46 +18,6 @@ class Runner {
 
   [[nodiscard]] auto
   Run() noexcept -> Result<Void>;
-
-  [[nodiscard]] auto
-  GetService(const ServiceKind& service_kind) const noexcept
-      -> OptionRef<Service&>;
-
-  [[nodiscard]] auto
-  GetService(const ServiceKind::Id service_kind_id) const noexcept
-      -> OptionRef<Service&>;
-
-  [[nodiscard]] auto
-  GetService(const ServiceKind::Name& service_kind_name) const noexcept
-      -> OptionRef<Service&>;
-
-  [[nodiscard]] auto
-  HasService(const ServiceKind& service_kind) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  HasService(const ServiceKind::Id service_kind_id) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  HasService(const ServiceKind::Name& service_kind_name) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  HasServiceIs(const ServiceKind::Id service_kind_id) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  HasServiceIs(const ServiceKind::Name service_kind_name) const noexcept
-      -> bool;
-
-  [[nodiscard]] auto
-  SubscribeEvent(const std::string& event,
-                 const ServiceKind& kind) -> Result<Void>;
-
-  [[nodiscard]] auto
-  UnsubscribeEvent(const std::string& event,
-                   const ServiceKind& kind) -> Result<Void>;
-
-  [[nodiscard]] auto
-  InvokeEvent(const std::string& event,
-              const Json& data) noexcept -> Result<Void>;
 
  private:
   [[nodiscard]] auto

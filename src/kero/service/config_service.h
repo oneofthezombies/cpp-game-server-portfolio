@@ -4,12 +4,13 @@
 #include "kero/core/args_scanner.h"
 #include "kero/core/common.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_factory.h"
 
 namespace kero {
 
 class ConfigService final : public Service {
  public:
-  explicit ConfigService(RunnerContextPtr&& runner_context,
+  explicit ConfigService(const Pin<RunnerContext> runner_context,
                          Json&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
   CLASS_KIND_MOVABLE(ConfigService);
@@ -33,7 +34,7 @@ class ConfigService final : public Service {
   Json config_;
 };
 
-class ConfigServiceFactoryProvider final {
+class ConfigServiceFactory : public ServiceFactory {
  public:
   enum : Error::Code {
     kPortNotFound = 1,
@@ -41,12 +42,12 @@ class ConfigServiceFactoryProvider final {
     kUnknownArgument
   };
 
-  explicit ConfigServiceFactoryProvider(int argc, char** argv) noexcept;
-  ~ConfigServiceFactoryProvider() noexcept = default;
-  CLASS_KIND_PINNABLE(ConfigServiceFactoryProvider);
+  explicit ConfigServiceFactory(int argc, char** argv) noexcept;
+  virtual ~ConfigServiceFactory() noexcept override = default;
 
-  [[nodiscard]] auto
-  Create() noexcept -> ServiceFactory;
+  [[nodiscard]] virtual auto
+  Create(const Pin<RunnerContext> runner_context) noexcept
+      -> Result<Owned<Service>> override;
 
  private:
   Args args_;

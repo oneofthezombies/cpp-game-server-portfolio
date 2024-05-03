@@ -2,9 +2,49 @@
 
 #include "kero/core/json.h"
 #include "kero/core/result.h"
+#include "kero/core/utils.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_traverser.h"
 
 using namespace kero;
+
+auto
+kero::ServiceMap::InvokeCreate() noexcept {
+  using ResultT = Result<Void>;
+
+  ServiceTraverser traverser{service_map_};
+  auto res = traverser.Traverse([](Service& service) {
+    using ResultT = Result<Void>;
+
+    if (auto res = service.OnCreate(); res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    return OkVoid();
+  });
+
+  if (res.IsErr()) {
+    return ResultT::Err(res.TakeErr());
+  }
+
+  return OkVoid();
+}
+
+auto
+kero::ServiceMap::InvokeUpdate() noexcept {
+  for (auto& [_, service] : service_map_) {
+    service->OnUpdate();
+  }
+}
+
+auto
+kero::ServiceMap::InvokeDestroy() noexcept {
+  for (auto& [_, service] : service_map_) {
+    service->OnDestroy();
+  }
+  service_map_.clear();
+  service_kind_id_map_.clear();
+}
 
 auto
 kero::ServiceMap::AddService(Owned<Service>&& service) noexcept
@@ -34,6 +74,12 @@ kero::ServiceMap::AddService(Owned<Service>&& service) noexcept
 }
 
 auto
+kero::ServiceMap::GetService(const ServiceKind& kind) const noexcept
+    -> OptionRef<Service&> {
+  return GetService(kind.id);
+}
+
+auto
 kero::ServiceMap::GetService(const ServiceKind::Id service_kind_id)
     const noexcept -> OptionRef<Service&> {
   auto it = service_map_.find(service_kind_id);
@@ -45,7 +91,7 @@ kero::ServiceMap::GetService(const ServiceKind::Id service_kind_id)
 }
 
 auto
-kero::ServiceMap::GetService(const ServiceKind::Name service_kind_name)
+kero::ServiceMap::GetService(const ServiceKind::Name& service_kind_name)
     const noexcept -> OptionRef<Service&> {
   auto it = service_kind_id_map_.find(service_kind_name);
   if (it == service_kind_id_map_.end()) {
@@ -65,25 +111,4 @@ auto
 kero::ServiceMap::HasService(
     const ServiceKind::Name service_kind_name) const noexcept -> bool {
   return service_kind_id_map_.contains(service_kind_name);
-}
-
-auto
-kero::ServiceMap::GetServiceMapRaw() const noexcept -> const ServiceMapRaw& {
-  return service_map_;
-}
-
-auto
-kero::ServiceMap::GetServiceMapRaw() noexcept -> ServiceMapRaw& {
-  return service_map_;
-}
-
-auto
-kero::ServiceMap::GetServiceKindIdMapRaw() const noexcept
-    -> const ServiceKindIdMapRaw& {
-  return service_kind_id_map_;
-}
-
-auto
-kero::ServiceMap::GetServiceKindIdMapRaw() noexcept -> ServiceKindIdMapRaw& {
-  return service_kind_id_map_;
 }

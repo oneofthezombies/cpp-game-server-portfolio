@@ -15,7 +15,7 @@ namespace kero {
 using PinDestroyer = std::function<void()>;
 
 template <typename T>
-struct PinResult {
+struct CreatePinOutput {
   Pin<T> pin;
   PinDestroyer destroyer;
 };
@@ -34,7 +34,8 @@ class PinSystem final {
 
   template <typename T>
   [[nodiscard]] auto
-  Create(Owned<PinDataFactory<T>>&& factory) noexcept -> Result<PinResult<T>> {
+  Create(Owned<PinDataFactory<T>>&& factory) noexcept
+      -> Result<CreatePinOutput<T>> {
     return Create<T>([factory = std::move(factory)]() -> Result<T*> {
       return factory->Create();
     });
@@ -42,12 +43,13 @@ class PinSystem final {
 
   template <typename T>
   auto
-  Create(PinDataFactoryFn<T>&& factory_fn) noexcept -> Result<PinResult<T>> {
+  Create(PinDataFactoryFn<T>&& factory_fn) noexcept
+      -> Result<CreatePinOutput<T>> {
     using ResultT = Result<Pin<T>>;
 
     auto factory_res = factory_fn();
     if (factory_res.IsErr()) {
-      return ResultT::Err(factory_res.TakeErr());
+      return ResultT::Err(Error::From(factory_res.TakeErr()));
     }
 
     auto pin_data = factory_res.TakeOk();

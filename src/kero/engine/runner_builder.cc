@@ -19,38 +19,43 @@ auto
 kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
   using ResultT = Result<Pin<Runner>>;
 
-  auto runner_context_res = engine_context_->pin_system.Create<RunnerContext>(
-      []() { return Result<RunnerContext*>::Ok(new RunnerContext{}); });
-  if (runner_context_res.IsErr()) {
-    return ResultT::Err(runner_context_res.TakeErr());
+  auto runner_context_output_res =
+      engine_context_->pin_system.Create<RunnerContext>(
+          []() { return Result<RunnerContext*>::Ok(new RunnerContext{}); });
+  if (runner_context_output_res.IsErr()) {
+    return ResultT::Err(Error::From(runner_context_output_res.TakeErr()));
   }
 
-  auto pin_res_runner_context = runner_context_res.TakeOk();
-  auto pin_runner_context = pin_res_runner_context.pin;
+  auto runner_context_output = runner_context_output_res.TakeOk();
+  auto runner_context = runner_context_output.pin;
   Defer destroy_runner_context{
-      [destroyer = pin_res_runner_context.destroyer] { destroyer(); }};
+      [destroyer = runner_context_output.destroyer] { destroyer(); }};
 
   for (const auto& service_factory : service_factories_) {
-    auto service_res = service_factory->Create(pin_runner_context);
+    auto service_res = service_factory->Create(runner_context);
     if (service_res.IsErr()) {
       return ResultT::Err(service_res.TakeErr());
     }
 
     auto service = service_res.TakeOk();
     if (auto res =
-            pin_runner_context->service_map.AddService(std::move(service))) {
+            runner_context->service_map_.AddService(std::move(service))) {
       return ResultT::Err(res.TakeErr());
     }
   }
 
-  auto runner_res =
-      engine_context_->pin_system.Register(new Runner{runner_context});
-  if (runner_res.IsErr()) {
-    return ResultT::Err(runner_res.TakeErr());
+  auto runner_output_res =
+      engine_context_->pin_system.Create<Runner>([runner_context]() {
+        return Result<Runner*>::Ok(new Runner{runner_context});
+      });
+  if (runner_output_res.IsErr()) {
+    return ResultT::Err(runner_output_res.TakeErr());
   }
 
+  auto runner_output = runner_output_res.TakeOk();
+  auto runner = runner_output.pin;
   destroy_runner_context.Cancel();
-  return ResultT::Ok(runner_res.TakeOk());
+  return ResultT::Ok(std::move(runner));
 }
 
 auto
@@ -62,11 +67,15 @@ kero::RunnerBuilder::BuildThreadRunner() noexcept -> Result<Pin<ThreadRunner>> {
     return ResultT::Err(runner_res.TakeErr());
   }
 
-  auto thread_runner_res = engine_context_->pin_system.Register(
-      new ThreadRunner{runner_res.TakeOk()});
-  if (thread_runner_res.IsErr()) {
-    return ResultT::Err(thread_runner_res.TakeErr());
+  auto runner = runner_res.TakeOk();
+  auto thread_runner_output_res =
+      engine_context_->pin_system.Create<ThreadRunner>([runner]() {
+        return Result<ThreadRunner*>::Ok(new ThreadRunner{runner});
+      });
+  if (thread_runner_output_res.IsErr()) {
+    return ResultT::Err(thread_runner_output_res.TakeErr());
   }
 
-  return ResultT::Ok(thread_runner_res.TakeOk());
+  auto thread_runner_output = thread_runner_output_res.TakeOk();
+  return ResultT::Ok(std::move(thread_runner_output.pin));
 }

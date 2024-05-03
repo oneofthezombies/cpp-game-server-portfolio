@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "kero/core/common.h"
+
 namespace kero {
 
 class Service;

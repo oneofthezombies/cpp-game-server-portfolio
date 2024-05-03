@@ -21,7 +21,7 @@ class Pin final {
   }
 
   [[nodiscard]] auto
-  operator*() const noexcept -> T const& {
+  operator*() const noexcept -> T& {
     return *Get();
   }
 

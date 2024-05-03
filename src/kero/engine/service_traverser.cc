@@ -1,5 +1,7 @@
 #include "service_traverser.h"
 
+#include "kero/core/utils.h"
+
 using namespace kero;
 
 kero::ServiceTraverser::ServiceTraverser(

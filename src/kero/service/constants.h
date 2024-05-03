@@ -1,7 +1,7 @@
 #ifndef KERO_SERVICE_CONSTANTS_H
 #define KERO_SERVICE_CONSTANTS_H
 
-#include "kero/engine/service.h"
+#include "kero/engine/service_kind.h"
 
 namespace kero {
 
