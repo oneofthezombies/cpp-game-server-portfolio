@@ -5,10 +5,10 @@
 
 using namespace kero;
 
-kero::ActorService::ActorService(RunnerContextPtr &&runner_context,
+kero::ActorService::ActorService(const Pin<RunnerContext> runner_context,
                                  std::string &&name,
                                  MailBox &&mail_box) noexcept
-    : Service{std::move(runner_context), kServiceKindActor, {}},
+    : Service{runner_context, kServiceKindActor, {}},
       mail_box_{std::move(mail_box)},
       name_{std::move(name)} {}
 

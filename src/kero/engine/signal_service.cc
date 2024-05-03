@@ -11,7 +11,7 @@
 using namespace kero;
 
 kero::SignalService::SignalService(
-    const Pinned<RunnerContext> runner_context) noexcept
+    const Pin<RunnerContext> runner_context) noexcept
     : Service{runner_context, kServiceKindSignal, {kServiceKindActor}} {}
 
 auto

@@ -155,7 +155,7 @@ kero::ActorSystem::Run(spsc::Rx<Json> &&rx) -> Result<Void> {
 }
 
 kero::ThreadActorSystem::ThreadActorSystem(
-    const Pinned<ActorSystem> actor_system) noexcept
+    const Pin<ActorSystem> actor_system) noexcept
     : actor_system_{actor_system} {}
 
 auto
@@ -191,7 +191,7 @@ kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
 }
 
 auto
-kero::ThreadActorSystem::ThreadMain(const Pinned<ActorSystem> actor_system,
+kero::ThreadActorSystem::ThreadMain(const Pin<ActorSystem> actor_system,
                                     spsc::Rx<Json> &&rx) -> void {
   if (auto res = actor_system->Run(std::move(rx))) {
     log::Info("Actor system finished").Log();

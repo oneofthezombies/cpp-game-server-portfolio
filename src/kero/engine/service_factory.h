@@ -3,7 +3,7 @@
 
 #include "kero/core/common.h"
 #include "kero/core/result.h"
-#include "kero/engine/pinned.h"
+#include "kero/engine/pin.h"
 
 namespace kero {
 
@@ -17,7 +17,7 @@ class ServiceFactory {
   CLASS_KIND_MOVABLE(ServiceFactory);
 
   [[nodiscard]] virtual auto
-  Create(const Pinned<RunnerContext> runner_context) noexcept
+  Create(const Pin<RunnerContext> runner_context) noexcept
       -> Result<Owned<Service>> = 0;
 };
 

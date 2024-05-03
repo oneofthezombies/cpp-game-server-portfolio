@@ -6,6 +6,7 @@
 #include "kero/core/common.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/service.h"
+#include "runner_context.h"
 
 namespace kero {
 
@@ -26,7 +27,7 @@ class ActorService final : public Service {
   SendMail(std::string &&to, std::string &&event, Json &&body) noexcept -> void;
 
  private:
-  explicit ActorService(RunnerContextPtr &&runner_context,
+  explicit ActorService(const Pin<RunnerContext> runner_context,
                         std::string &&name,
                         MailBox &&mail_box) noexcept;
 

@@ -6,7 +6,7 @@
 #include "kero/core/common.h"
 #include "kero/core/json.h"
 #include "kero/core/result.h"
-#include "kero/engine/pinned.h"
+#include "kero/engine/pin.h"
 #include "kero/engine/service_kind.h"
 
 namespace kero {
@@ -17,7 +17,7 @@ class Service {
  public:
   using Dependencies = std::vector<ServiceKind>;
 
-  explicit Service(const Pinned<RunnerContext> runner_context,
+  explicit Service(const Pin<RunnerContext> runner_context,
                    const ServiceKind& kind,
                    Dependencies&& dependencies) noexcept;
 
@@ -66,8 +66,8 @@ class Service {
   UnsubscribeEvent(const std::string& event) -> Result<Void>;
 
   auto
-  InvokeEvent(const std::string& event, const Json& data) noexcept
-      -> Result<Void>;
+  InvokeEvent(const std::string& event,
+              const Json& data) noexcept -> Result<Void>;
 
   /**
    * Default implementation of the `OnCreate` method is noop.
@@ -96,7 +96,7 @@ class Service {
  private:
   ServiceKind kind_;
   Dependencies dependencies_;
-  Pinned<RunnerContext> runner_context_;
+  Pin<RunnerContext> runner_context_;
 };
 
 }  // namespace kero

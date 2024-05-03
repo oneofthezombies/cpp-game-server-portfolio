@@ -13,7 +13,7 @@ namespace kero {
 
 class Runner {
  public:
-  explicit Runner(const Pinned<RunnerContext> runner_context) noexcept;
+  explicit Runner(const Pin<RunnerContext> runner_context) noexcept;
   ~Runner() noexcept = default;
   CLASS_KIND_PINNABLE(Runner);
 
@@ -49,16 +49,16 @@ class Runner {
       -> bool;
 
   [[nodiscard]] auto
-  SubscribeEvent(const std::string& event, const ServiceKind& kind)
-      -> Result<Void>;
+  SubscribeEvent(const std::string& event,
+                 const ServiceKind& kind) -> Result<Void>;
 
   [[nodiscard]] auto
-  UnsubscribeEvent(const std::string& event, const ServiceKind& kind)
-      -> Result<Void>;
+  UnsubscribeEvent(const std::string& event,
+                   const ServiceKind& kind) -> Result<Void>;
 
   [[nodiscard]] auto
-  InvokeEvent(const std::string& event, const Json& data) noexcept
-      -> Result<Void>;
+  InvokeEvent(const std::string& event,
+              const Json& data) noexcept -> Result<Void>;
 
  private:
   [[nodiscard]] auto
@@ -73,12 +73,12 @@ class Runner {
   auto
   UpdateServices() noexcept -> void;
 
-  Pinned<RunnerContext> runner_context_;
+  Pin<RunnerContext> runner_context_;
 };
 
 class ThreadRunner {
  public:
-  explicit ThreadRunner(Pinned<Runner> runner) noexcept;
+  explicit ThreadRunner(Pin<Runner> runner) noexcept;
   ~ThreadRunner() noexcept = default;
   CLASS_KIND_MOVABLE(ThreadRunner);
 
@@ -90,10 +90,10 @@ class ThreadRunner {
 
  private:
   static void
-  ThreadMain(Pinned<Runner> runner) noexcept;
+  ThreadMain(Pin<Runner> runner) noexcept;
 
   std::thread thread_;
-  Pinned<Runner> runner_;
+  Pin<Runner> runner_;
 };
 
 }  // namespace kero

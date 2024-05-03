@@ -16,8 +16,8 @@ kero::RunnerBuilder::AddServiceFactory(
 }
 
 auto
-kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pinned<Runner>> {
-  using ResultT = Result<Pinned<Runner>>;
+kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
+  using ResultT = Result<Pin<Runner>>;
 
   auto runner_context_res =
       engine_context_->pinning_system.Register(new RunnerContext{});
@@ -53,9 +53,8 @@ kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pinned<Runner>> {
 }
 
 auto
-kero::RunnerBuilder::BuildThreadRunner() noexcept
-    -> Result<Pinned<ThreadRunner>> {
-  using ResultT = Result<Pinned<ThreadRunner>>;
+kero::RunnerBuilder::BuildThreadRunner() noexcept -> Result<Pin<ThreadRunner>> {
+  using ResultT = Result<Pin<ThreadRunner>>;
 
   auto runner_res = BuildRunner();
   if (runner_res.IsErr()) {

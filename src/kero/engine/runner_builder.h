@@ -24,10 +24,10 @@ class RunnerBuilder {
       -> RunnerBuilder&;
 
   [[nodiscard]] auto
-  BuildRunner() noexcept -> Result<Pinned<Runner>>;
+  BuildRunner() noexcept -> Result<Pin<Runner>>;
 
   [[nodiscard]] auto
-  BuildThreadRunner() noexcept -> Result<Pinned<ThreadRunner>>;
+  BuildThreadRunner() noexcept -> Result<Pin<ThreadRunner>>;
 
  private:
   std::vector<Owned<ServiceFactory>> service_factories_;

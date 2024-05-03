@@ -9,7 +9,7 @@
 
 using namespace kero;
 
-kero::Runner::Runner(const Pinned<RunnerContext> runner_context) noexcept
+kero::Runner::Runner(const Pin<RunnerContext> runner_context) noexcept
     : runner_context_{runner_context} {}
 
 auto
@@ -90,8 +90,8 @@ kero::Runner::HasServiceIs(
 }
 
 auto
-kero::Runner::SubscribeEvent(const std::string& event, const ServiceKind& kind)
-    -> Result<Void> {
+kero::Runner::SubscribeEvent(const std::string& event,
+                             const ServiceKind& kind) -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto it = event_handler_map_.find(event);
@@ -137,8 +137,8 @@ kero::Runner::UnsubscribeEvent(const std::string& event,
 }
 
 auto
-kero::Runner::InvokeEvent(const std::string& event, const Json& data) noexcept
-    -> Result<Void> {
+kero::Runner::InvokeEvent(const std::string& event,
+                          const Json& data) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto it = event_handler_map_.find(event);
@@ -217,7 +217,7 @@ kero::Runner::UpdateServices() noexcept -> void {
   }
 }
 
-kero::ThreadRunner::ThreadRunner(Pinned<Runner> runner) noexcept
+kero::ThreadRunner::ThreadRunner(Pin<Runner> runner) noexcept
     : runner_{runner} {}
 
 auto
@@ -243,7 +243,7 @@ kero::ThreadRunner::Stop() -> Result<Void> {
 }
 
 auto
-kero::ThreadRunner::ThreadMain(Pinned<Runner> runner) noexcept -> void {
+kero::ThreadRunner::ThreadMain(Pin<Runner> runner) noexcept -> void {
   if (auto res = runner.Unwrap().Run()) {
     log::Info("Runner finished").Log();
   } else {
@@ -256,8 +256,8 @@ kero::RunnerBuilder::RunnerBuilder(EngineContext* engine_context,
     : engine_context_{engine_context}, name_{std::move(name)} {}
 
 auto
-kero::RunnerBuilder::BuildRunner() const noexcept -> Result<Pinned<Runner>> {
-  using ResultT = Result<Pinned<Runner>>;
+kero::RunnerBuilder::BuildRunner() const noexcept -> Result<Pin<Runner>> {
+  using ResultT = Result<Pin<Runner>>;
 
   auto runner_res = engine_context_->pin_object_system.CreatePinning<Runner>(
       [name = name_]() {
@@ -286,8 +286,8 @@ kero::RunnerBuilder::BuildRunner() const noexcept -> Result<Pinned<Runner>> {
 
 auto
 kero::RunnerBuilder::BuildThreadRunner() const noexcept
-    -> Result<Pinned<ThreadRunner>> {
-  using ResultT = Result<Pinned<ThreadRunner>>;
+    -> Result<Pin<ThreadRunner>> {
+  using ResultT = Result<Pin<ThreadRunner>>;
 
   auto runner_res = BuildRunner();
   if (runner_res.IsErr()) {

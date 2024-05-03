@@ -8,7 +8,7 @@
 #include "kero/core/json.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
-#include "kero/engine/pinned.h"
+#include "kero/engine/pin.h"
 
 namespace kero {
 
@@ -73,7 +73,7 @@ class ActorSystem final {
 
 class ThreadActorSystem {
  public:
-  explicit ThreadActorSystem(const Pinned<ActorSystem> actor_system) noexcept;
+  explicit ThreadActorSystem(const Pin<ActorSystem> actor_system) noexcept;
   ~ThreadActorSystem() noexcept = default;
 
   [[nodiscard]] auto
@@ -84,9 +84,9 @@ class ThreadActorSystem {
 
  private:
   static auto
-  ThreadMain(Pinned<ActorSystem> actor_system, spsc::Rx<Json> &&rx) -> void;
+  ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<Json> &&rx) -> void;
 
-  Pinned<ActorSystem> actor_system_;
+  Pin<ActorSystem> actor_system_;
   Owned<spsc::Tx<Json>> tx_;
   std::thread thread_;
 };
