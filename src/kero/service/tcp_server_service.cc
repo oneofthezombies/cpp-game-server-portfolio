@@ -162,9 +162,7 @@ kero::TcpServerService::OnEvent(const std::string& event,
 
       if (auto res = GetRunnerContext().InvokeEvent(
               EventSocketOpen::kEvent,
-              Json{}
-                  .Set(EventSocketOpen::kFd, static_cast<double>(client_fd))
-                  .Take())) {
+              Json{}.Set(EventSocketOpen::kFd, client_fd).Take())) {
         log::Error("Failed to invoke socket open event")
             .Data("error", res.TakeErr())
             .Log();

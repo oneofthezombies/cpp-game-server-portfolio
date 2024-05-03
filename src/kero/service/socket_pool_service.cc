@@ -50,8 +50,8 @@ kero::SocketPoolService::OnEvent(const std::string& event,
 
 auto
 kero::SocketPoolService::OnSocketOpen(const Json& data) noexcept -> void {
-  auto fd = data.GetOrDefault<double>(EventSocketOpen::kFd, -1);
-  if (fd == -1) {
+  auto fd = data.TryGetAsI64(EventSocketOpen::kFd);
+  if (fd.IsNone()) {
     log::Error("Failed to get fd from event data").Log();
     return;
   }
