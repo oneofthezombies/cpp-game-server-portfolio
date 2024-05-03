@@ -17,6 +17,19 @@ concept IsJsonValueType = std::disjunction_v<std::is_same<T, bool>,
                                              std::is_same<T, double>,
                                              std::is_same<T, std::string>>;
 
+template <typename T>
+concept IsPrimitive = std::disjunction_v<std::is_same<T, bool>,
+                                         std::is_same<T, i8>,
+                                         std::is_same<T, i16>,
+                                         std::is_same<T, i32>,
+                                         std::is_same<T, i64>,
+                                         std::is_same<T, u8>,
+                                         std::is_same<T, u16>,
+                                         std::is_same<T, u32>,
+                                         std::is_same<T, u64>,
+                                         std::is_same<T, float>,
+                                         std::is_same<T, double>>;
+
 class Json final {
  public:
   using ValueStorage = std::variant<bool, double, std::string>;
@@ -28,6 +41,7 @@ class Json final {
   CLASS_KIND_MOVABLE(Json);
 
   template <typename T>
+    requires(!IsPrimitive<T>)
   [[nodiscard]] auto
   TryGet(const std::string& key) const noexcept -> Option<T> {
     static_assert(false, "Unsupported type for TryGet -> Option");
