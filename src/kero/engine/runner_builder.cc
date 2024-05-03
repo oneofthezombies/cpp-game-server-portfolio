@@ -23,7 +23,7 @@ kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
       engine_context_->pin_system.Create<RunnerContext>(
           []() { return Result<RunnerContext*>::Ok(new RunnerContext{}); });
   if (runner_context_output_res.IsErr()) {
-    return ResultT::Err(Error::From(runner_context_output_res.TakeErr()));
+    return ResultT::Err(runner_context_output_res.TakeErr());
   }
 
   auto runner_context_output = runner_context_output_res.TakeOk();

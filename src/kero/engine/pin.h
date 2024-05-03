@@ -36,6 +36,8 @@ class Pin final {
   }
 
   T* data_{};
+
+  friend class PinSystem;
 };
 
 }  // namespace kero

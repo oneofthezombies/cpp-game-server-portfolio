@@ -45,11 +45,11 @@ class PinSystem final {
   auto
   Create(PinDataFactoryFn<T>&& factory_fn) noexcept
       -> Result<CreatePinOutput<T>> {
-    using ResultT = Result<Pin<T>>;
+    using ResultT = Result<CreatePinOutput<T>>;
 
     auto factory_res = factory_fn();
     if (factory_res.IsErr()) {
-      return ResultT::Err(Error::From(factory_res.TakeErr()));
+      return ResultT::Err(factory_res.TakeErr());
     }
 
     auto pin_data = factory_res.TakeOk();

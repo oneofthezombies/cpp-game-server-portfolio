@@ -2,6 +2,7 @@
 
 #include <signal.h>
 
+#include "kero/core/utils.h"
 #include "kero/core/utils_linux.h"
 #include "kero/engine/actor_service.h"
 #include "kero/engine/constants.h"
