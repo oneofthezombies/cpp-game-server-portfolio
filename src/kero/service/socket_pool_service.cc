@@ -1,6 +1,7 @@
 #include "socket_pool_service.h"
 
 #include "constants.h"
+#include "kero/core/utils.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 #include "kero/service/io_event_loop_service.h"
@@ -8,10 +9,9 @@
 using namespace kero;
 
 kero::SocketPoolService::SocketPoolService(
-    RunnerContextPtr&& runner_context) noexcept
-    : Service{std::move(runner_context),
-              kServiceKindSocketPool,
-              {kServiceKindIoEventLoop}} {}
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{
+          runner_context, kServiceKindSocketPool, {kServiceKindIoEventLoop}} {}
 
 auto
 kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {

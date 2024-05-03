@@ -5,6 +5,7 @@
 
 #include <cstring>
 
+#include "kero/core/utils.h"
 #include "kero/core/utils_linux.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
@@ -37,8 +38,8 @@ AddOptionsToEpollEvents(
 }  // namespace
 
 kero::IoEventLoopService::IoEventLoopService(
-    RunnerContextPtr&& runner_context) noexcept
-    : Service{std::move(runner_context), kServiceKindIoEventLoop, {}} {}
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{runner_context, kServiceKindIoEventLoop, {}} {}
 
 auto
 kero::IoEventLoopService::OnCreate() noexcept -> Result<Void> {
@@ -171,9 +172,8 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
 }
 
 auto
-kero::IoEventLoopService::AddFd(const Fd::Value fd,
-                                const AddOptions options) const noexcept
-    -> Result<Void> {
+kero::IoEventLoopService::AddFd(const Fd::Value fd, const AddOptions options)
+    const noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   if (!Fd::IsValid(epoll_fd_)) {

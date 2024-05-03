@@ -28,53 +28,52 @@ class Json final {
   CLASS_KIND_MOVABLE(Json);
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const bool default_value) const noexcept
-      -> bool;
+  GetOrDefault(const std::string& key,
+               const bool default_value) const noexcept -> bool;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const i8 default_value) const noexcept
-      -> i8;
+  GetOrDefault(const std::string& key,
+               const i8 default_value) const noexcept -> i8;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const i16 default_value) const noexcept
-      -> i16;
+  GetOrDefault(const std::string& key,
+               const i16 default_value) const noexcept -> i16;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const i32 default_value) const noexcept
-      -> i32;
+  GetOrDefault(const std::string& key,
+               const i32 default_value) const noexcept -> i32;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const i64 default_value) const noexcept
-      -> i64;
+  GetOrDefault(const std::string& key,
+               const i64 default_value) const noexcept -> i64;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const u8 default_value) const noexcept
-      -> u8;
+  GetOrDefault(const std::string& key,
+               const u8 default_value) const noexcept -> u8;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const u16 default_value) const noexcept
-      -> u16;
+  GetOrDefault(const std::string& key,
+               const u16 default_value) const noexcept -> u16;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const u32 default_value) const noexcept
-      -> u32;
+  GetOrDefault(const std::string& key,
+               const u32 default_value) const noexcept -> u32;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const u64 default_value) const noexcept
-      -> u64;
+  GetOrDefault(const std::string& key,
+               const u64 default_value) const noexcept -> u64;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const float default_value) const noexcept
-      -> float;
+  GetOrDefault(const std::string& key,
+               const float default_value) const noexcept -> float;
 
   [[nodiscard]] auto
   GetOrDefault(const std::string& key,
                const double default_value) const noexcept -> double;
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const std::string& default_value) const noexcept
-      -> const std::string&;
+  GetOrDefault(const std::string& key, const std::string& default_value)
+      const noexcept -> const std::string&;
 
   [[nodiscard]] auto
   TryGetAsBool(const std::string& key) const noexcept -> Option<bool>;
@@ -225,8 +224,8 @@ class Json final {
   template <typename T>
     requires IsJsonValueType<T>
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const T& default_value) const noexcept
-      -> const T& {
+  GetOrDefault(const std::string& key,
+               const T& default_value) const noexcept -> const T& {
     const auto found = data_.find(key);
     if (found == data_.end()) {
       return default_value;

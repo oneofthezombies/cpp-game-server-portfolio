@@ -10,7 +10,7 @@ namespace kero {
 
 class SocketPoolService final : public Service {
  public:
-  explicit SocketPoolService(RunnerContextPtr&& runner_context) noexcept;
+  explicit SocketPoolService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~SocketPoolService() noexcept override = default;
   CLASS_KIND_MOVABLE(SocketPoolService);
 

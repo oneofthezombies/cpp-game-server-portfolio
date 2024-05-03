@@ -7,7 +7,8 @@ namespace kero {
 
 class SocketRouterService final : public Service {
  public:
-  explicit SocketRouterService(RunnerContextPtr&& runner_context) noexcept;
+  explicit SocketRouterService(
+      const Pin<RunnerContext> runner_context) noexcept;
   virtual ~SocketRouterService() noexcept override = default;
   CLASS_KIND_MOVABLE(SocketRouterService);
 

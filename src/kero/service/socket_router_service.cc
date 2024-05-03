@@ -9,8 +9,8 @@
 using namespace kero;
 
 kero::SocketRouterService::SocketRouterService(
-    RunnerContextPtr&& runner_context) noexcept
-    : Service{std::move(runner_context),
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{runner_context,
               kServiceKindSocketRouter,
               {kServiceKindActor, kServiceKindConfig}} {}
 

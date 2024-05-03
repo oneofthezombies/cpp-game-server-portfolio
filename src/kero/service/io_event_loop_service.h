@@ -18,7 +18,7 @@ class IoEventLoopService final : public Service {
     bool edge_trigger{false};
   };
 
-  explicit IoEventLoopService(RunnerContextPtr&& runner_context) noexcept;
+  explicit IoEventLoopService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~IoEventLoopService() noexcept override = default;
   CLASS_KIND_MOVABLE(IoEventLoopService);
 
