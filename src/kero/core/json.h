@@ -27,133 +27,53 @@ class Json final {
   ~Json() noexcept = default;
   CLASS_KIND_MOVABLE(Json);
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsBool(const std::string& key) const noexcept -> Option<bool>;
+  TryGet(const std::string& key) const noexcept -> Option<T> {
+    static_assert(false, "Unsupported type for TryGet -> Option");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsI8(const std::string& key) const noexcept -> Option<i8>;
+  TryGet(const std::string& key) const noexcept -> OptionRef<const T&> {
+    static_assert(false, "Unsupported type for TryGet -> OptionRef");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsI16(const std::string& key) const noexcept -> Option<i16>;
+  Set(std::string&& key, const T value) noexcept -> Json& {
+    static_assert(false, "Unsupported type for Set (const T)");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsI32(const std::string& key) const noexcept -> Option<i32>;
+  Set(std::string&& key, const T& value) noexcept -> Json& {
+    static_assert(false, "Unsupported type for Set (const T&)");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsI64(const std::string& key) const noexcept -> Option<i64>;
+  Set(std::string&& key, T&& value) noexcept -> Json& {
+    static_assert(false, "Unsupported type for Set (T&&)");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsU8(const std::string& key) const noexcept -> Option<u8>;
+  TrySet(std::string&& key, const T value) noexcept -> bool {
+    static_assert(false, "Unsupported type for TrySet (const T)");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsU16(const std::string& key) const noexcept -> Option<u16>;
+  TrySet(std::string&& key, const T& value) noexcept -> bool {
+    static_assert(false, "Unsupported type for TrySet (const T&)");
+  }
 
+  template <typename T>
   [[nodiscard]] auto
-  TryGetAsU32(const std::string& key) const noexcept -> Option<u32>;
-
-  [[nodiscard]] auto
-  TryGetAsU64(const std::string& key) const noexcept -> Option<u64>;
-
-  [[nodiscard]] auto
-  TryGetAsF32(const std::string& key) const noexcept -> Option<float>;
-
-  [[nodiscard]] auto
-  TryGetAsF64(const std::string& key) const noexcept -> Option<double>;
-
-  [[nodiscard]] auto
-  TryGetAsString(const std::string& key) const noexcept
-      -> OptionRef<const std::string&>;
-
-  [[nodiscard]] auto
-  SetBool(std::string&& key, const bool value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetI8(std::string&& key, const i8 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetI16(std::string&& key, const i16 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetI32(std::string&& key, const i32 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetI64(std::string&& key, const i64 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetU8(std::string&& key, const u8 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetU16(std::string&& key, const u16 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetU32(std::string&& key, const u32 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetU64(std::string&& key, const u64 value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetF32(std::string&& key, const float value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetF64(std::string&& key, const double value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetString(std::string&& key, const char* value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetString(std::string&& key, const std::string_view value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetString(std::string&& key, const std::string& value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  SetString(std::string&& key, std::string&& value) noexcept -> Json&;
-
-  [[nodiscard]] auto
-  TrySetBool(std::string&& key, const bool value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetI8(std::string&& key, const i8 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetI16(std::string&& key, const i16 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetI32(std::string&& key, const i32 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetI64(std::string&& key, const i64 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetU8(std::string&& key, const u8 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetU16(std::string&& key, const u16 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetU32(std::string&& key, const u32 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetU64(std::string&& key, const u64 value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetF32(std::string&& key, const float value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetF64(std::string&& key, const double value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetString(std::string&& key, const char* value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetString(std::string&& key,
-               const std::string_view value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetString(std::string&& key, const std::string& value) noexcept -> bool;
-
-  [[nodiscard]] auto
-  TrySetString(std::string&& key, std::string&& value) noexcept -> bool;
+  TrySet(std::string&& key, T&& value) noexcept -> bool {
+    static_assert(false, "Unsupported type for TrySet (T&&)");
+  }
 
   [[nodiscard]] auto
   Unset(const std::string& key) noexcept -> Json&;
