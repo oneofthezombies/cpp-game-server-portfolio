@@ -9,103 +9,6 @@ using namespace kero;
 kero::Json::Json(Data&& data) noexcept : data_{std::move(data)} {}
 
 auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const bool default_value) const noexcept -> bool {
-  return GetOrDefault<bool>(key, default_value);
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const i8 default_value) const noexcept -> i8 {
-  return static_cast<i8>(
-      GetOrDefault<double>(key, static_cast<double>(default_value)));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const i16 default_value) const noexcept -> i16 {
-  return static_cast<i16>(
-      GetOrDefault<double>(key, static_cast<double>(default_value)));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const i32 default_value) const noexcept -> i32 {
-  return static_cast<i32>(
-      GetOrDefault<double>(key, static_cast<double>(default_value)));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const i64 default_value) const noexcept -> i64 {
-  const auto value = TryGet<double>(key);
-  if (value.IsNone()) {
-    return default_value;
-  }
-
-  return static_cast<i64>(value.Unwrap());
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const u8 default_value) const noexcept -> u8 {
-  return static_cast<u8>(
-      GetOrDefault<double>(key, static_cast<double>(default_value)));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const u16 default_value) const noexcept -> u16 {
-  return static_cast<u16>(
-      GetOrDefault<double>(key, static_cast<double>(default_value)));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const u32 default_value) const noexcept -> u32 {
-  return static_cast<u32>(
-      GetOrDefault<double>(key, static_cast<double>(default_value)));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const u64 default_value) const noexcept -> u64 {
-  const auto value = TryGet<double>(key);
-  if (value.IsNone()) {
-    return default_value;
-  }
-
-  if (value.Unwrap() < 0) {
-    log::Warn("u64 value is negative")
-        .Data("key", key)
-        .Data("value", value.Unwrap())
-        .Log();
-    return default_value;
-  }
-
-  return static_cast<u64>(value.Unwrap());
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const float default_value) const noexcept -> float {
-  return GetOrDefault<double>(key, static_cast<double>(default_value));
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const double default_value) const noexcept -> double {
-  return GetOrDefault<double>(key, default_value);
-}
-
-auto
-kero::Json::GetOrDefault(const std::string& key,
-                         const std::string& default_value) const noexcept
-    -> const std::string& {
-  return GetOrDefault<std::string>(key, default_value);
-}
-
-auto
 kero::Json::TryGetAsBool(const std::string& key) const noexcept
     -> Option<bool> {
   using OptionT = Option<bool>;
@@ -247,93 +150,171 @@ kero::Json::TryGetAsString(const std::string& key) const noexcept
 }
 
 auto
-kero::Json::Set(std::string&& key, const bool value) noexcept -> Json& {
-  return Set<bool>(std::move(key), static_cast<bool>(value));
+kero::Json::SetBool(std::string&& key, const bool value) noexcept -> Json& {
+  return SetImpl<bool>(std::move(key), static_cast<bool>(value));
 }
 
+template <>
+auto
+kero::Json::Set(std::string&& key, const bool value) noexcept -> Json& {
+  return SetBool(std::move(key), value);
+}
+
+auto
+kero::Json::SetI8(std::string&& key, const i8 value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const i8 value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetI8(std::move(key), value);
 }
 
+auto
+kero::Json::SetI16(std::string&& key, const i16 value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const i16 value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetI16(std::move(key), value);
 }
 
+auto
+kero::Json::SetI32(std::string&& key, const i32 value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const i32 value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetI32(std::move(key), value);
 }
 
+auto
+kero::Json::SetU8(std::string&& key, const u8 value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const u8 value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetU8(std::move(key), value);
 }
 
+auto
+kero::Json::SetU16(std::string&& key, const u16 value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const u16 value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetU16(std::move(key), value);
 }
 
+auto
+kero::Json::SetU32(std::string&& key, const u32 value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const u32 value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetU32(std::move(key), value);
 }
 
+auto
+kero::Json::SetF32(std::string&& key, const float value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::Set(std::string&& key, const float value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetF32(std::move(key), value);
 }
 
 auto
+kero::Json::SetF64(std::string&& key, const double value) noexcept -> Json& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
+auto
 kero::Json::Set(std::string&& key, const double value) noexcept -> Json& {
-  return Set<double>(std::move(key), static_cast<double>(value));
+  return SetF64(std::move(key), value);
 }
 
 auto
 kero::Json::Set(std::string&& key, const char* value) noexcept -> Json& {
-  return Set<std::string>(std::move(key), std::string{value});
+  return SetImpl<std::string>(std::move(key), std::string{value});
 }
 
 auto
-kero::Json::Set(std::string&& key, const std::string_view value) noexcept
-    -> Json& {
-  return Set<std::string>(std::move(key), std::string{value});
+kero::Json::Set(std::string&& key,
+                const std::string_view value) noexcept -> Json& {
+  return SetImpl<std::string>(std::move(key), std::string{value});
 }
 
 auto
 kero::Json::Set(std::string&& key, const std::string& value) noexcept -> Json& {
-  return Set<std::string>(std::move(key), std::string{value});
+  return SetImpl<std::string>(std::move(key), std::string{value});
 }
 
 auto
 kero::Json::Set(std::string&& key, std::string&& value) noexcept -> Json& {
-  return Set<std::string>(std::move(key), std::move(value));
+  return SetImpl<std::string>(std::move(key), std::move(value));
 }
 
+auto
+kero::Json::TrySetBool(std::string&& key, const bool value) noexcept -> bool {
+  return TrySetImpl<bool>(std::move(key), static_cast<bool>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const bool value) noexcept -> bool {
-  return TrySet<bool>(std::move(key), static_cast<bool>(value));
+  return TrySetBool(std::move(key), value);
 }
 
+auto
+kero::Json::TrySetI8(std::string&& key, const i8 value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const i8 value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetI8(std::move(key), value);
 }
 
+auto
+kero::Json::TrySetI16(std::string&& key, const i16 value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const i16 value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetI16(std::move(key), value);
 }
 
+auto
+kero::Json::TrySetI32(std::string&& key, const i32 value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const i32 value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetI32(std::move(key), value);
 }
 
 auto
-kero::Json::TrySet(std::string&& key, const i64 value) noexcept -> bool {
+kero::Json::TrySetI64(std::string&& key, const i64 value) noexcept -> bool {
   if (!IsSafeInteger(value)) {
     log::Warn("i64 value is not safe for conversion to double")
         .Data("key", key)
@@ -342,26 +323,50 @@ kero::Json::TrySet(std::string&& key, const i64 value) noexcept -> bool {
     return false;
   }
 
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
+template <>
+auto
+kero::Json::TrySet(std::string&& key, const i64 value) noexcept -> bool {
+  return TrySetI64(std::move(key), value);
+}
+
+auto
+kero::Json::TrySetU8(std::string&& key, const u8 value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const u8 value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetU8(std::move(key), value);
 }
 
+auto
+kero::Json::TrySetU16(std::string&& key, const u16 value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const u16 value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetU16(std::move(key), value);
 }
 
+auto
+kero::Json::TrySetU32(std::string&& key, const u32 value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const u32 value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetU32(std::move(key), value);
 }
 
 auto
-kero::Json::TrySet(std::string&& key, const u64 value) noexcept -> bool {
+kero::Json::TrySetU64(std::string&& key, const u64 value) noexcept -> bool {
   if (!IsSafeInteger(value)) {
     log::Warn("u64 value is not safe for conversion to double")
         .Data("key", key)
@@ -370,39 +375,57 @@ kero::Json::TrySet(std::string&& key, const u64 value) noexcept -> bool {
     return false;
   }
 
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
+template <>
+auto
+kero::Json::TrySet(std::string&& key, const u64 value) noexcept -> bool {
+  return TrySetU64(std::move(key), value);
+}
+
+auto
+kero::Json::TrySetF32(std::string&& key, const float value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
 auto
 kero::Json::TrySet(std::string&& key, const float value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetF32(std::move(key), value);
 }
 
 auto
+kero::Json::TrySetF64(std::string&& key, const double value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
+auto
 kero::Json::TrySet(std::string&& key, const double value) noexcept -> bool {
-  return TrySet<double>(std::move(key), static_cast<double>(value));
+  return TrySetF64(std::move(key), value);
 }
 
 auto
 kero::Json::TrySet(std::string&& key, const char* value) noexcept -> bool {
-  return TrySet<std::string>(std::move(key), std::string{value});
+  return TrySetImpl<std::string>(std::move(key), std::string{value});
 }
 
 auto
-kero::Json::TrySet(std::string&& key, const std::string_view value) noexcept
-    -> bool {
-  return TrySet<std::string>(std::move(key), std::string{value});
+kero::Json::TrySet(std::string&& key,
+                   const std::string_view value) noexcept -> bool {
+  return TrySetImpl<std::string>(std::move(key), std::string{value});
 }
 
 auto
-kero::Json::TrySet(std::string&& key, const std::string& value) noexcept
-    -> bool {
-  return TrySet<std::string>(std::move(key), std::string{value});
+kero::Json::TrySet(std::string&& key,
+                   const std::string& value) noexcept -> bool {
+  return TrySetImpl<std::string>(std::move(key), std::string{value});
 }
 
 auto
 kero::Json::TrySet(std::string&& key, std::string&& value) noexcept -> bool {
-  return TrySet<std::string>(std::move(key), std::move(value));
+  return TrySetImpl<std::string>(std::move(key), std::move(value));
 }
 
 auto

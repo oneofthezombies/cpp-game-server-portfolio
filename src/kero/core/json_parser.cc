@@ -93,7 +93,7 @@ kero::JsonParser::Parse(const std::string_view tiny_json_str,
         Error::From(Json{}
                         .Set("kind", std::string{"parse"})
                         .Set("message", std::string{"trailing characters"})
-                        .Set("cursor", static_cast<double>(cursor_))
+                        .Set("cursor", cursor_)
                         .Take()));
   }
 

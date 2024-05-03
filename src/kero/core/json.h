@@ -28,54 +28,6 @@ class Json final {
   CLASS_KIND_MOVABLE(Json);
 
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const bool default_value) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const i8 default_value) const noexcept -> i8;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const i16 default_value) const noexcept -> i16;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const i32 default_value) const noexcept -> i32;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const i64 default_value) const noexcept -> i64;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const u8 default_value) const noexcept -> u8;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const u16 default_value) const noexcept -> u16;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const u32 default_value) const noexcept -> u32;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const u64 default_value) const noexcept -> u64;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const float default_value) const noexcept -> float;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const double default_value) const noexcept -> double;
-
-  [[nodiscard]] auto
-  GetOrDefault(const std::string& key, const std::string& default_value)
-      const noexcept -> const std::string&;
-
-  [[nodiscard]] auto
   TryGetAsBool(const std::string& key) const noexcept -> Option<bool>;
 
   [[nodiscard]] auto
@@ -112,32 +64,39 @@ class Json final {
   TryGetAsString(const std::string& key) const noexcept
       -> OptionRef<const std::string&>;
 
+  template <typename T>
   [[nodiscard]] auto
-  Set(std::string&& key, const bool value) noexcept -> Json&;
+  Set(std::string&& key, const T value) noexcept -> Json& {
+    static_assert(false, "Unsupported type for Json::Set");
+    return *this;
+  }
 
   [[nodiscard]] auto
-  Set(std::string&& key, const i8 value) noexcept -> Json&;
+  SetBool(std::string&& key, const bool value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const i16 value) noexcept -> Json&;
+  SetI8(std::string&& key, const i8 value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const i32 value) noexcept -> Json&;
+  SetI16(std::string&& key, const i16 value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const u8 value) noexcept -> Json&;
+  SetI32(std::string&& key, const i32 value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const u16 value) noexcept -> Json&;
+  SetU8(std::string&& key, const u8 value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const u32 value) noexcept -> Json&;
+  SetU16(std::string&& key, const u16 value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const float value) noexcept -> Json&;
+  SetU32(std::string&& key, const u32 value) noexcept -> Json&;
 
   [[nodiscard]] auto
-  Set(std::string&& key, const double value) noexcept -> Json&;
+  SetF32(std::string&& key, const float value) noexcept -> Json&;
+
+  [[nodiscard]] auto
+  SetF64(std::string&& key, const double value) noexcept -> Json&;
 
   [[nodiscard]] auto
   Set(std::string&& key, const char* value) noexcept -> Json&;
@@ -151,38 +110,45 @@ class Json final {
   [[nodiscard]] auto
   Set(std::string&& key, std::string&& value) noexcept -> Json&;
 
+  template <typename T>
   [[nodiscard]] auto
-  TrySet(std::string&& key, const bool value) noexcept -> bool;
+  TrySet(std::string&& key, const T value) noexcept -> bool {
+    static_assert(false, "Unsupported type for Json::TrySet");
+    return false;
+  }
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const i8 value) noexcept -> bool;
+  TrySetBool(std::string&& key, const bool value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const i16 value) noexcept -> bool;
+  TrySetI8(std::string&& key, const i8 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const i32 value) noexcept -> bool;
+  TrySetI16(std::string&& key, const i16 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const i64 value) noexcept -> bool;
+  TrySetI32(std::string&& key, const i32 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const u8 value) noexcept -> bool;
+  TrySetI64(std::string&& key, const i64 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const u16 value) noexcept -> bool;
+  TrySetU8(std::string&& key, const u8 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const u32 value) noexcept -> bool;
+  TrySetU16(std::string&& key, const u16 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const u64 value) noexcept -> bool;
+  TrySetU32(std::string&& key, const u32 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const float value) noexcept -> bool;
+  TrySetU64(std::string&& key, const u64 value) noexcept -> bool;
 
   [[nodiscard]] auto
-  TrySet(std::string&& key, const double value) noexcept -> bool;
+  TrySetF32(std::string&& key, const float value) noexcept -> bool;
+
+  [[nodiscard]] auto
+  TrySetF64(std::string&& key, const double value) noexcept -> bool;
 
   [[nodiscard]] auto
   TrySet(std::string&& key, const char* value) noexcept -> bool;
@@ -224,24 +190,6 @@ class Json final {
   template <typename T>
     requires IsJsonValueType<T>
   [[nodiscard]] auto
-  GetOrDefault(const std::string& key,
-               const T& default_value) const noexcept -> const T& {
-    const auto found = data_.find(key);
-    if (found == data_.end()) {
-      return default_value;
-    }
-
-    const auto& value = found->second;
-    if (!std::holds_alternative<T>(value)) {
-      return default_value;
-    }
-
-    return std::get<T>(value);
-  }
-
-  template <typename T>
-    requires IsJsonValueType<T>
-  [[nodiscard]] auto
   TryGet(const std::string& key) const noexcept -> OptionRef<const T&> {
     const auto found = data_.find(key);
     if (found == data_.end()) {
@@ -259,7 +207,7 @@ class Json final {
   template <typename T>
     requires IsJsonValueType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, T&& value) noexcept -> Json& {
+  SetImpl(std::string&& key, T&& value) noexcept -> Json& {
     const auto [it, inserted] =
         data_.try_emplace(std::move(key), std::move(value));
     if (!inserted) {
@@ -273,7 +221,7 @@ class Json final {
   template <typename T>
     requires IsJsonValueType<T>
   [[nodiscard]] auto
-  TrySet(std::string&& key, T&& value) noexcept -> bool {
+  TrySetImpl(std::string&& key, T&& value) noexcept -> bool {
     const auto [it, inserted] =
         data_.try_emplace(std::move(key), std::move(value));
     return inserted;

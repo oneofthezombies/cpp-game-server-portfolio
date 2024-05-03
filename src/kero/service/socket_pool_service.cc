@@ -50,12 +50,13 @@ kero::SocketPoolService::OnEvent(const std::string& event,
 
 auto
 kero::SocketPoolService::OnSocketOpen(const Json& data) noexcept -> void {
-  auto fd = data.TryGetAsI64(EventSocketOpen::kFd);
-  if (fd.IsNone()) {
+  auto fd_opt = data.TryGetAsI64(EventSocketOpen::kFd);
+  if (fd_opt.IsNone()) {
     log::Error("Failed to get fd from event data").Log();
     return;
   }
 
+  const auto fd = fd_opt.TakeUnwrap();
   auto io_event_loop = GetRunnerContext()
                            .GetService(kServiceKindIoEventLoop.id)
                            .Unwrap()
@@ -80,7 +81,7 @@ kero::SocketPoolService::OnSocketOpen(const Json& data) noexcept -> void {
 
 auto
 kero::SocketPoolService::OnSocketClose(const Json& data) noexcept -> void {
-  auto fd = data.GetOrDefault<double>(EventSocketClose::kFd, -1);
+  auto fd = data.GetOrDefaultAsI64(EventSocketClose::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
     return;
