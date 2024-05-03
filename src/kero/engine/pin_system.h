@@ -12,6 +12,14 @@
 
 namespace kero {
 
+using PinDestroyer = std::function<void()>;
+
+template <typename T>
+struct PinResult {
+  Pin<T> pin;
+  PinDestroyer destroyer;
+};
+
 class PinSystem final {
  public:
   using PinDataRaw = void*;
@@ -26,7 +34,7 @@ class PinSystem final {
 
   template <typename T>
   [[nodiscard]] auto
-  Create(Owned<PinDataFactory<T>>&& factory) noexcept -> Result<Pin<T>> {
+  Create(Owned<PinDataFactory<T>>&& factory) noexcept -> Result<PinResult<T>> {
     return Create<T>([factory = std::move(factory)]() -> Result<T*> {
       return factory->Create();
     });
@@ -34,7 +42,7 @@ class PinSystem final {
 
   template <typename T>
   auto
-  Create(PinDataFactoryFn<T>&& factory_fn) noexcept -> Result<Pin<T>> {
+  Create(PinDataFactoryFn<T>&& factory_fn) noexcept -> Result<PinResult<T>> {
     using ResultT = Result<Pin<T>>;
 
     auto factory_res = factory_fn();
@@ -67,10 +75,26 @@ class PinSystem final {
     }
 
     delete_pin_data.Cancel();
-    return ResultT::Ok(Pin<T>{pin_data});
+    auto pin = Pin<T>{pin_data};
+    return ResultT::Ok(
+        {.pin = pin, .destroyer = [this, pin] { Destroy<T>(pin); }});
   }
 
  private:
+  template <typename T>
+  auto
+  Destroy(const Pin<T> pin) noexcept -> void {
+    std::lock_guard lock{mutex_};
+    auto pin_data_raw = static_cast<PinDataRaw>(pin.Get());
+    auto found = pin_map_.find(pin_data_raw);
+    if (found == pin_map_.end()) {
+      return;
+    }
+
+    found->second(pin_data_raw);
+    pin_map_.erase(found);
+  }
+
   std::unordered_map<PinDataRaw, PinDataRawDestroyer> pin_map_{};
   std::mutex mutex_{};
 };

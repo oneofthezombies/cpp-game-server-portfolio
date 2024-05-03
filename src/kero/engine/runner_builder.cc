@@ -19,31 +19,32 @@ auto
 kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
   using ResultT = Result<Pin<Runner>>;
 
-  auto runner_context_res =
-      engine_context_->pinning_system.Register(new RunnerContext{});
+  auto runner_context_res = engine_context_->pin_system.Create<RunnerContext>(
+      []() { return Result<RunnerContext*>::Ok(new RunnerContext{}); });
   if (runner_context_res.IsErr()) {
     return ResultT::Err(runner_context_res.TakeErr());
   }
 
-  auto runner_context = runner_context_res.TakeOk();
-  Defer destroy_runner_context{[this, runner_context] {
-    engine_context_->pinning_system.Destroy(runner_context.Get());
-  }};
+  auto pin_res_runner_context = runner_context_res.TakeOk();
+  auto pin_runner_context = pin_res_runner_context.pin;
+  Defer destroy_runner_context{
+      [destroyer = pin_res_runner_context.destroyer] { destroyer(); }};
 
   for (const auto& service_factory : service_factories_) {
-    auto res = service_factory->Create(runner_context);
-    if (res.IsErr()) {
-      return ResultT::Err(res.TakeErr());
+    auto service_res = service_factory->Create(pin_runner_context);
+    if (service_res.IsErr()) {
+      return ResultT::Err(service_res.TakeErr());
     }
 
-    auto service = res.TakeOk();
-    if (auto res = runner_context->service_map.AddService(std::move(service))) {
+    auto service = service_res.TakeOk();
+    if (auto res =
+            pin_runner_context->service_map.AddService(std::move(service))) {
       return ResultT::Err(res.TakeErr());
     }
   }
 
   auto runner_res =
-      engine_context_->pinning_system.Register(new Runner{runner_context});
+      engine_context_->pin_system.Register(new Runner{runner_context});
   if (runner_res.IsErr()) {
     return ResultT::Err(runner_res.TakeErr());
   }
@@ -61,7 +62,7 @@ kero::RunnerBuilder::BuildThreadRunner() noexcept -> Result<Pin<ThreadRunner>> {
     return ResultT::Err(runner_res.TakeErr());
   }
 
-  auto thread_runner_res = engine_context_->pinning_system.Register(
+  auto thread_runner_res = engine_context_->pin_system.Register(
       new ThreadRunner{runner_res.TakeOk()});
   if (thread_runner_res.IsErr()) {
     return ResultT::Err(thread_runner_res.TakeErr());
