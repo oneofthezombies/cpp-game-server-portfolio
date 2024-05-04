@@ -41,6 +41,11 @@ struct EventSocketRead {
   static constexpr auto kSocketId = "socket_id";
 };
 
+struct EventSocketMove {
+  static constexpr auto kEvent = "socket_move";
+  static constexpr auto kSocketId = "socket_id";
+};
+
 }  // namespace kero
 
 #endif  // KERO_MIDDLEWARE_COMMON_H

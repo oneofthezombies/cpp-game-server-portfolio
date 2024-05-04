@@ -158,10 +158,10 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLIN) {
-    if (auto res =
-            InvokeEvent(EventSocketRead::kEvent,
-                        FlatJson{}.Set(EventSocketRead::kSocketId,
-                                       static_cast<u64>(event.data.fd)))) {
+    if (auto res = InvokeEvent(EventSocketRead::kEvent,
+                               FlatJson{}.Set(EventSocketRead::kSocketId,
+                                              static_cast<u64>(event.data.fd)));
+        res.IsErr()) {
       log::Error("Failed to invoke socket read event")
           .Data("error", res.TakeErr())
           .Log();

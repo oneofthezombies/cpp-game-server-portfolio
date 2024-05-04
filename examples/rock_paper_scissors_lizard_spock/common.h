@@ -11,6 +11,12 @@ enum : kero::ServiceKindId {
   kServiceKindId_RpslsEnd,
 };
 
+struct EventBattleSocketCount {
+  static constexpr auto kEvent = "battle_socket_count";
+  static constexpr auto kName = "name";
+  static constexpr auto kCount = "count";
+};
+
 struct EventBattleStart {
   static constexpr auto kEvent = "battle_start";
   static constexpr auto kBattleId = "battle_id";

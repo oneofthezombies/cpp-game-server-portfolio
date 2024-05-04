@@ -16,7 +16,9 @@ namespace kero {
 template <typename T>
 class SocketPoolService : public Service {
  public:
-  using EventHandler = std::function<Result<Void>(T*, const FlatJson&)>;
+  using MethodEventHandler =
+      std::function<Result<Void>(T* self, const FlatJson&)>;
+  using EventHandler = std::function<Result<Void>(const FlatJson&)>;
 
   explicit SocketPoolService(
       const Borrow<RunnerContext> runner_context,
@@ -37,34 +39,18 @@ class SocketPoolService : public Service {
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
-
-    if (!SubscribeEvent(EventSocketOpen::kEvent)) {
-      return ResultT::Err(Error::From(
-          FlatJson{}
-              .Set("message",
-                   std::string{"Failed to subscribe to socket open event"})
-              .Take()));
-    }
-
-    if (!SubscribeEvent(EventSocketClose::kEvent)) {
-      return ResultT::Err(Error::From(
-          FlatJson{}
-              .Set("message",
-                   std::string{"Failed to subscribe to socket close event"})
-              .Take()));
-    }
-
     return OkVoid();
   }
 
   virtual auto
   OnDestroy() noexcept -> void override {
-    if (!UnsubscribeEvent(EventSocketOpen::kEvent)) {
-      log::Error("Failed to unsubscribe from socket open event").Log();
-    }
-
-    if (!UnsubscribeEvent(EventSocketClose::kEvent)) {
-      log::Error("Failed to unsubscribe from socket close event").Log();
+    for (const auto& [event, _] : event_handler_map_) {
+      if (auto res = UnsubscribeEvent(event); res.IsErr()) {
+        log::Error("Failed to unsubscribe event")
+            .Data("event", event)
+            .Data("error", res.TakeErr())
+            .Log();
+      }
     }
   }
 
@@ -79,7 +65,7 @@ class SocketPoolService : public Service {
       return;
     }
 
-    if (auto res = found->second(static_cast<T*>(this), data); res.IsErr()) {
+    if (auto res = found->second(data); res.IsErr()) {
       log::Error("Failed to handle event")
           .Data("event", event)
           .Data("error", res.TakeErr())
@@ -120,16 +106,18 @@ class SocketPoolService : public Service {
     return OkVoid();
   }
 
-  auto
-  RegisterEventHandler(const std::string& event,
-                       EventHandler&& handler) noexcept -> Result<Void> {
+  [[nodiscard]] auto
+  RegisterMethodEventHandler(const std::string& event,
+                             MethodEventHandler&& handler) noexcept
+      -> Result<Void> {
     using ResultT = Result<Void>;
+
+    if (auto res = SubscribeEvent(event); res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
 
     auto found = event_handler_map_.find(event);
     if (found != event_handler_map_.end()) {
-      log::Error("Event handler already registered for event")
-          .Data("event", event)
-          .Log();
       return ResultT::Err(
           FlatJson{}
               .Set("message", "Event handler already registered for event")
@@ -137,7 +125,10 @@ class SocketPoolService : public Service {
               .Take());
     }
 
-    event_handler_map_.emplace(event, std::move(handler));
+    event_handler_map_.emplace(
+        event,
+        std::bind(handler, static_cast<T*>(this), std::placeholders::_1));
+
     return OkVoid();
   }
 

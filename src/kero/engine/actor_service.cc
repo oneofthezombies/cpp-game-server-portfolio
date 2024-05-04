@@ -24,11 +24,13 @@ kero::ActorService::OnUpdate() noexcept -> void {
   if (auto res = InvokeEvent(event,
                              body.Set("__from", std::string{from})
                                  .Set("__to", std::string{to})
-                                 .Take())) {
+                                 .Take());
+      res.IsErr()) {
     log::Error("Failed to invoke event")
         .Data("event", event)
         .Data("from", from)
         .Data("to", to)
+        .Data("error", res.TakeErr())
         .Log();
     return;
   }

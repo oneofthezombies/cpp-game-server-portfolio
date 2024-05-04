@@ -184,36 +184,37 @@ main(int argc, char **argv) noexcept -> int {
       continue;
     }
 
-    auto kind = message.Ok().TryGet<std::string>("kind");
-    if (!kind) {
-      std::cout << "Failed to get the kind of the message." << std::endl;
+    auto event = message.Ok().TryGet<std::string>("event");
+    if (!event) {
+      std::cout << "Failed to get the event of the message." << std::endl;
       continue;
     }
 
-    if (kind.Unwrap() == "connect") {
-      const auto fd = message.Ok().TryGet<u64>("fd");
-      if (!fd) {
+    if (event.Unwrap() == "connect") {
+      auto socket_id = message.Ok().TryGet<u64>("socket_id");
+      if (!socket_id) {
         std::cout << "Failed to get the socket id." << std::endl;
         return 1;
       }
 
-      std::cout << "Connected to the server with fd: " << fd.Unwrap()
-                << std::endl;
-    } else if (kind.Unwrap() == "battle_start") {
+      std::cout << "Connected to the server with socket_id: "
+                << socket_id.Unwrap() << std::endl;
+    } else if (event.Unwrap() == "battle_start") {
       const auto battle_id = message.Ok().TryGet<u64>("battle_id");
       if (!battle_id) {
         std::cout << "Failed to get the battle id." << std::endl;
         return 1;
       }
 
-      const auto opponent_fd = message.Ok().TryGet<u64>("opponent_fd");
-      if (!opponent_fd) {
+      const auto opponent_socket_id =
+          message.Ok().TryGet<u64>("opponent_socket_id");
+      if (!opponent_socket_id) {
         std::cout << "Failed to get the opponent socket id." << std::endl;
         return 1;
       }
 
       std::cout << "Battle started with battle id: " << battle_id.Unwrap()
-                << " and opponent socket id: " << opponent_fd.Unwrap()
+                << " and opponent socket id: " << opponent_socket_id.Unwrap()
                 << std::endl;
 
       std::string move;
@@ -270,7 +271,7 @@ main(int argc, char **argv) noexcept -> int {
         std::cout << "Unknown battle result: " << result.Unwrap() << std::endl;
       }
     } else {
-      std::cout << "Unknown message kind: " << kind.Unwrap() << std::endl;
+      std::cout << "Unknown message event: " << event.Unwrap() << std::endl;
       continue;
     }
   }

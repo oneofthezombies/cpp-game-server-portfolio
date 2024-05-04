@@ -1,3 +1,5 @@
+#include <unordered_map>
+
 #include "common.h"
 #include "kero/core/flat_json.h"
 #include "kero/core/flat_json_parser.h"
@@ -14,10 +16,7 @@ using namespace kero;
 class MatchService final : public SocketPoolService<MatchService> {
  public:
   explicit MatchService(const Borrow<RunnerContext> runner_context) noexcept
-      : SocketPoolService{runner_context, {kServiceKindId_Actor}} {
-    RegisterEventHandler(EventSocketOpen::kEvent, OnSocketOpen);
-    RegisterEventHandler(EventSocketClose::kEvent, OnSocketClose);
-  }
+      : SocketPoolService{runner_context, {kServiceKindId_Actor}} {}
 
   virtual ~MatchService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(MatchService);
@@ -31,6 +30,25 @@ class MatchService final : public SocketPoolService<MatchService> {
       return res;
     }
 
+    if (auto res = RegisterMethodEventHandler(EventSocketMove::kEvent,
+                                              &MatchService::OnSocketMove);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    if (auto res = RegisterMethodEventHandler(EventSocketClose::kEvent,
+                                              &MatchService::OnSocketClose);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    if (auto res =
+            RegisterMethodEventHandler(EventBattleSocketCount::kEvent,
+                                       &MatchService::OnBattleSocketCount);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
     return OkVoid();
   }
 
@@ -40,12 +58,11 @@ class MatchService final : public SocketPoolService<MatchService> {
   }
 
  private:
-  [[nodiscard]] static auto
-  OnSocketOpen(MatchService* self,
-               const FlatJson& data) noexcept -> Result<Void> {
+  [[nodiscard]] auto
+  OnSocketMove(const FlatJson& data) noexcept -> Result<Void> {
     using ResultT = Result<Void>;
 
-    auto socket_id_opt = data.TryGet<u64>(EventSocketOpen::kSocketId);
+    auto socket_id_opt = data.TryGet<u64>(EventSocketMove::kSocketId);
     if (!socket_id_opt) {
       return ResultT::Err(
           FlatJson{}
@@ -54,39 +71,60 @@ class MatchService final : public SocketPoolService<MatchService> {
     }
 
     const auto socket_id = socket_id_opt.Unwrap();
-    if (auto res = self->RegisterSocket(socket_id); res.IsErr()) {
+    if (auto res = RegisterSocket(socket_id); res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
 
     auto stringified = FlatJsonStringifier{}.Stringify(
-        FlatJson{}.Set("kind", "connect").Set("socket_id", socket_id).Take());
+        FlatJson{}.Set("event", "connect").Set("socket_id", socket_id).Take());
     if (stringified.IsErr()) {
       return ResultT::Err(stringified.TakeErr());
     }
 
-    if (auto res = self->GetDependency<IoEventLoopService>()->WriteToFd(
+    if (auto res = GetDependency<IoEventLoopService>()->WriteToFd(
             socket_id,
             stringified.TakeOk());
         res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
 
-    if (self->socket_ids_.size() >= 2) {
-      const auto player1_it = self->socket_ids_.begin();
+    if (socket_ids_.size() >= 2) {
+      const auto player1_it = socket_ids_.begin();
       const auto player1_socket_id = *player1_it;
       const auto player2_it = std::next(player1_it);
       const auto player2_socket_id = *player2_it;
-      if (auto res = self->UnregisterSocket(player1_socket_id); res.IsErr()) {
+      if (auto res = UnregisterSocket(player1_socket_id); res.IsErr()) {
         return ResultT::Err(res.TakeErr());
       }
 
-      if (auto res = self->UnregisterSocket(player2_socket_id); res.IsErr()) {
+      if (auto res = UnregisterSocket(player2_socket_id); res.IsErr()) {
         return ResultT::Err(res.TakeErr());
       }
 
-      const auto battle_id = self->NextBattleId();
-      self->GetDependency<ActorService>()->SendMail(
-          "battle",
+      const auto min_battle_socket_count_it = std::min_element(
+          battle_socket_count_map_.begin(),
+          battle_socket_count_map_.end(),
+          [](const auto& a, const auto& b) { return a.second < b.second; });
+      if (min_battle_socket_count_it == battle_socket_count_map_.end()) {
+        return ResultT::Err(
+            FlatJson{}
+                .Set("message", "Failed to get min battle socket count")
+                .Take());
+      }
+
+      const auto& name = min_battle_socket_count_it->first;
+      GetDependency<ActorService>()->SendMail(
+          std::string{name},
+          EventSocketMove::kEvent,
+          FlatJson{}.Set(EventSocketMove::kSocketId, player1_socket_id).Take());
+      GetDependency<ActorService>()->SendMail(
+          std::string{name},
+          EventSocketMove::kEvent,
+          FlatJson{}.Set(EventSocketMove::kSocketId, player2_socket_id).Take());
+
+      const auto battle_id = NextBattleId();
+      GetDependency<ActorService>()->SendMail(
+          std::string{name},
           EventBattleStart::kEvent,
           FlatJson{}
               .Set(EventBattleStart::kBattleId, battle_id)
@@ -98,9 +136,8 @@ class MatchService final : public SocketPoolService<MatchService> {
     return OkVoid();
   }
 
-  [[nodiscard]] static auto
-  OnSocketClose(MatchService* self,
-                const FlatJson& data) noexcept -> Result<Void> {
+  [[nodiscard]] auto
+  OnSocketClose(const FlatJson& data) noexcept -> Result<Void> {
     using ResultT = Result<Void>;
 
     auto socket_id = data.TryGet<u64>(EventSocketClose::kSocketId);
@@ -111,9 +148,33 @@ class MatchService final : public SocketPoolService<MatchService> {
               .Take());
     }
 
-    if (auto res = self->UnregisterSocket(socket_id.Unwrap()); res.IsErr()) {
+    if (auto res = UnregisterSocket(socket_id.Unwrap()); res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
+
+    return OkVoid();
+  }
+
+  [[nodiscard]] auto
+  OnBattleSocketCount(const FlatJson& data) noexcept -> Result<Void> {
+    using ResultT = Result<Void>;
+
+    const auto name_opt =
+        data.TryGet<std::string>(EventBattleSocketCount::kName);
+    if (!name_opt) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to get name from data").Take());
+    }
+
+    const auto count_opt = data.TryGet<u64>(EventBattleSocketCount::kCount);
+    if (!count_opt) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to get count from data").Take());
+    }
+
+    const auto name = name_opt.Unwrap();
+    const auto count = count_opt.Unwrap();
+    battle_socket_count_map_[name] = count;
 
     return OkVoid();
   }
@@ -123,5 +184,7 @@ class MatchService final : public SocketPoolService<MatchService> {
     return battle_id_++;
   }
 
-  u64 battle_id_{};
+  u64 battle_id_{1};
+  std::unordered_map<std::string /* name */, u64 /* count */>
+      battle_socket_count_map_{};
 };

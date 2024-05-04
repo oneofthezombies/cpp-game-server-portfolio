@@ -4,6 +4,7 @@
 #include "kero/engine/actor_service.h"
 #include "kero/engine/common.h"
 #include "kero/engine/runner_context.h"
+#include "kero/log/log_builder.h"
 #include "kero/middleware/common.h"
 
 using namespace kero;
@@ -40,7 +41,13 @@ kero::SocketRouterService::OnEvent(const std::string& event,
     return;
   }
 
+  const auto socket_id_opt = data.TryGet<u64>(EventSocketOpen::kSocketId);
+  if (!socket_id_opt) {
+    log::Error("Failed to get socket id from data").Data("data", data).Log();
+    return;
+  }
+
   GetDependency<ActorService>()->SendMail(std::string{target_},
-                                          std::string{event},
+                                          EventSocketMove::kEvent,
                                           data.Clone());
 }
