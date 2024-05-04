@@ -27,6 +27,13 @@ class SocketPoolService final : public Service {
   [[nodiscard]] static auto
   GetKindName() noexcept -> ServiceKindName;
 
+  [[nodiscard]] auto
+  GetSockets() noexcept -> std::unordered_set<Fd::Value>&;
+
+  [[nodiscard]] auto
+  UnregisterSocket(const Fd::Value fd,
+                   std::string&& reason) noexcept -> Result<Void>;
+
  private:
   auto
   OnSocketOpen(const FlatJson& data) noexcept -> void;

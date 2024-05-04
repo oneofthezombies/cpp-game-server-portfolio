@@ -21,12 +21,19 @@ kero::SocketRouterService::GetKindName() noexcept -> ServiceKindName {
 }
 
 kero::SocketRouterService::SocketRouterService(
-    const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, {kServiceKindIdActor, kServiceKindIdConfig}} {}
+    const Pin<RunnerContext> runner_context, std::string&& target) noexcept
+    : Service{runner_context, {kServiceKindIdActor}},
+      target_{std::move(target)} {}
 
 auto
 kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
+
+  if (target_.empty()) {
+    return ResultT::Err(Error::From(
+        FlatJson{}.Set("message", std::string{"target must be set"}).Take()));
+  }
+
   if (!SubscribeEvent(EventSocketOpen::kEvent)) {
     return ResultT::Err(Error::From(
         FlatJson{}
@@ -34,18 +41,6 @@ kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
                  std::string{"Failed to subscribe to socket open event"})
             .Take()));
   }
-
-  auto target_actor =
-      GetDependency<ConfigService>()->GetConfig().TryGet<std::string>(
-          "target_actor");
-  if (target_actor.IsNone()) {
-    return ResultT::Err(Error::From(
-        FlatJson{}
-            .Set("message", std::string{"target_actor not found in config"})
-            .Take()));
-  }
-
-  target_actor_ = target_actor.Unwrap();
 
   return OkVoid();
 }
@@ -57,12 +52,7 @@ kero::SocketRouterService::OnEvent(const std::string& event,
     return;
   }
 
-  if (target_actor_.empty()) {
-    log::Error("target_actor must be set for RouterService").Log();
-    return;
-  }
-
-  GetDependency<ActorService>()->SendMail(std::string{target_actor_},
+  GetDependency<ActorService>()->SendMail(std::string{target_},
                                           std::string{event},
                                           data.Clone());
 }

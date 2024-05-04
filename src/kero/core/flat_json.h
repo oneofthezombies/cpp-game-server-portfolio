@@ -250,6 +250,78 @@ kero::FlatJson::TryGet<i64>(const std::string& key) const noexcept
 
 template <>
 inline auto
+kero::FlatJson::TryGet<u8>(const std::string& key) const noexcept
+    -> Option<u8> {
+  const auto value = TryGetImpl<double>(key);
+  if (value.IsNone()) {
+    return None;
+  }
+
+  return Option<u8>::Some(static_cast<u8>(value.Unwrap()));
+}
+
+template <>
+inline auto
+kero::FlatJson::TryGet<u16>(const std::string& key) const noexcept
+    -> Option<u16> {
+  const auto value = TryGetImpl<double>(key);
+  if (value.IsNone()) {
+    return None;
+  }
+
+  return Option<u16>::Some(static_cast<u16>(value.Unwrap()));
+}
+
+template <>
+inline auto
+kero::FlatJson::TryGet<u32>(const std::string& key) const noexcept
+    -> Option<u32> {
+  const auto value = TryGetImpl<double>(key);
+  if (value.IsNone()) {
+    return None;
+  }
+
+  return Option<u32>::Some(static_cast<u32>(value.Unwrap()));
+}
+
+template <>
+inline auto
+kero::FlatJson::TryGet<u64>(const std::string& key) const noexcept
+    -> Option<u64> {
+  const auto value = TryGetImpl<double>(key);
+  if (value.IsNone()) {
+    return None;
+  }
+
+  return Option<u64>::Some(static_cast<u64>(value.Unwrap()));
+}
+
+template <>
+inline auto
+kero::FlatJson::TryGet<float>(const std::string& key) const noexcept
+    -> Option<float> {
+  const auto value = TryGetImpl<double>(key);
+  if (value.IsNone()) {
+    return None;
+  }
+
+  return Option<float>::Some(static_cast<float>(value.Unwrap()));
+}
+
+template <>
+inline auto
+kero::FlatJson::TryGet<double>(const std::string& key) const noexcept
+    -> Option<double> {
+  const auto value = TryGetImpl<double>(key);
+  if (value.IsNone()) {
+    return None;
+  }
+
+  return Option<double>::Some(static_cast<double>(value.Unwrap()));
+}
+
+template <>
+inline auto
 kero::FlatJson::TryGet<std::string>(const std::string& key) const noexcept
     -> OptionRef<const std::string&> {
   const auto value = TryGetImpl<std::string>(key);
@@ -332,6 +404,20 @@ kero::FlatJson::Set<u64>(std::string&& key,
     return *this;
   }
 
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
+inline auto
+kero::FlatJson::Set<float>(std::string&& key,
+                           const float value) noexcept -> FlatJson& {
+  return SetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
+inline auto
+kero::FlatJson::Set<double>(std::string&& key,
+                            const double value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
@@ -441,6 +527,20 @@ kero::FlatJson::TrySet<u64>(std::string&& key,
     return false;
   }
 
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
+inline auto
+kero::FlatJson::TrySet<float>(std::string&& key,
+                              const float value) noexcept -> bool {
+  return TrySetImpl<double>(std::move(key), static_cast<double>(value));
+}
+
+template <>
+inline auto
+kero::FlatJson::TrySet<double>(std::string&& key,
+                               const double value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 

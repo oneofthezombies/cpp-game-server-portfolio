@@ -28,11 +28,6 @@ kero::Service::GetDependencyDeclarations() const noexcept
 }
 
 auto
-kero::Service::GetRunnerContext() noexcept -> RunnerContext& {
-  return *runner_context_;
-}
-
-auto
 kero::Service::GetDependency(const ServiceKindId service_kind_id) noexcept
     -> Borrow<Service> {
   return dependency_map_.GetService(service_kind_id);

@@ -32,11 +32,10 @@ kero::ActorService::OnUpdate() noexcept -> void {
   }
 
   auto [from, to, event, body] = mail.TakeUnwrap();
-  if (auto res =
-          GetRunnerContext().InvokeEvent(event,
-                                         body.Set("__from", std::string{from})
-                                             .Set("__to", std::string{to})
-                                             .Take())) {
+  if (auto res = InvokeEvent(event,
+                             body.Set("__from", std::string{from})
+                                 .Set("__to", std::string{to})
+                                 .Take())) {
     log::Error("Failed to invoke event")
         .Data("event", event)
         .Data("from", from)

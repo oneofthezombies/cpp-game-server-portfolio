@@ -29,10 +29,12 @@ kero::Runner::Run() noexcept -> Result<Void> {
       is_interrupted = signal_service.Unwrap()->IsInterrupted();
     }
 
-    UpdateServices();
+    if (auto res = runner_context_->service_map_.InvokeUpdate(); res.IsErr()) {
+      log::Error("service update failed").Data("error", res.TakeErr()).Log();
+    }
   }
 
-  DestroyServices();
+  runner_context_->service_map_.InvokeDestroy();
 
   if (is_interrupted) {
     return ResultT::Err(Error::From(kInterrupted));

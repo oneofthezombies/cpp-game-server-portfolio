@@ -4,6 +4,7 @@
 #include "kero/core/common.h"
 #include "kero/core/result.h"
 #include "kero/engine/pin.h"
+#include "service_kind.h"
 
 namespace kero {
 
@@ -37,6 +38,20 @@ class ServiceFactoryFnImpl final : public ServiceFactory {
 
  private:
   ServiceFactoryFn fn_;
+};
+
+template <IsServiceKind T>
+class DefaultServiceFactory final : public ServiceFactory {
+ public:
+  explicit DefaultServiceFactory() noexcept = default;
+  virtual ~DefaultServiceFactory() noexcept override = default;
+  CLASS_KIND_MOVABLE(DefaultServiceFactory);
+
+  [[nodiscard]] virtual auto
+  Create(const Pin<RunnerContext> runner_context) noexcept
+      -> Result<Own<Service>> override {
+    return Result<Own<Service>>::Ok(std::make_unique<T>(runner_context));
+  };
 };
 
 }  // namespace kero

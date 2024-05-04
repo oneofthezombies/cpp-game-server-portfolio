@@ -3,7 +3,7 @@
 using namespace kero;
 
 auto
-kero::FlatJsonParser::Stringify(const FlatJson& json) noexcept
+kero::FlatJsonStringifier::Stringify(const FlatJson& json) noexcept
     -> Result<std::string> {
   using ResultT = Result<std::string>;
 

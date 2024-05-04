@@ -139,7 +139,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     }
 
     const auto description = std::string_view{strerror(code)};
-    if (auto res = GetRunnerContext().InvokeEvent(
+    if (auto res = InvokeEvent(
             EventSocketError::kEvent,
             FlatJson{}
                 .Set(EventSocketError::kFd, static_cast<double>(event.data.fd))
@@ -153,10 +153,10 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLHUP) {
-    if (auto res = GetRunnerContext().InvokeEvent(
-            EventSocketClose::kEvent,
-            FlatJson{}.Set(EventSocketClose::kFd,
-                           static_cast<double>(event.data.fd)))) {
+    if (auto res =
+            InvokeEvent(EventSocketClose::kEvent,
+                        FlatJson{}.Set(EventSocketClose::kFd,
+                                       static_cast<double>(event.data.fd)))) {
       log::Error("Failed to invoke socket close event")
           .Data("error", res.TakeErr())
           .Log();
@@ -168,10 +168,10 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   }
 
   if (event.events & EPOLLIN) {
-    if (auto res = GetRunnerContext().InvokeEvent(
-            EventSocketRead::kEvent,
-            FlatJson{}.Set(EventSocketRead::kFd,
-                           static_cast<double>(event.data.fd)))) {
+    if (auto res =
+            InvokeEvent(EventSocketRead::kEvent,
+                        FlatJson{}.Set(EventSocketRead::kFd,
+                                       static_cast<double>(event.data.fd)))) {
       log::Error("Failed to invoke socket read event")
           .Data("error", res.TakeErr())
           .Log();
@@ -284,7 +284,7 @@ kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
     }
 
     if (read == 0) {
-      if (auto res = GetRunnerContext().InvokeEvent(
+      if (auto res = InvokeEvent(
               EventSocketClose::kEvent,
               FlatJson{}.Set(EventSocketClose::kFd, static_cast<double>(fd)))) {
         log::Error("Failed to invoke socket close event")

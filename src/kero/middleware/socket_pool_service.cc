@@ -76,7 +76,10 @@ kero::SocketPoolService::OnSocketOpen(const FlatJson& data) noexcept -> void {
   sockets_.insert(fd);
 
   InvokeEvent(EventSocketRegister::kEvent,
-              FlatJson{}.Set(EventSocketRegister::kFd, fd).Take());
+              FlatJson{}
+                  .Set(EventSocketRegister::kFd, fd)
+                  .Set(EventSocketRegister::kCount, sockets_.size())
+                  .Take());
 }
 
 auto
@@ -88,13 +91,34 @@ kero::SocketPoolService::OnSocketClose(const FlatJson& data) noexcept -> void {
   }
 
   const auto fd = fd_opt.TakeUnwrap();
-  sockets_.erase(fd);
+  if (auto res = UnregisterSocket(fd, "close"); res.IsErr()) {
+    log::Error("Failed to unregister socket").Data("fd", fd).Log();
+  }
+}
 
-  auto io_event_loop = GetDependency<IoEventLoopService>();
-  if (auto res = io_event_loop->RemoveFd(fd); res.IsErr()) {
+auto
+kero::SocketPoolService::GetSockets() noexcept
+    -> std::unordered_set<Fd::Value>& {
+  return sockets_;
+}
+
+auto
+kero::SocketPoolService::UnregisterSocket(
+    const Fd::Value fd, std::string&& reason) noexcept -> Result<Void> {
+  if (sockets_.erase(fd) == 0) {
+    log::Error("Failed to remove fd from set").Data("fd", fd).Log();
+  }
+
+  if (auto res = GetDependency<IoEventLoopService>()->RemoveFd(fd);
+      res.IsErr()) {
     log::Error("Failed to remove fd from epoll").Data("fd", fd).Log();
   }
 
   InvokeEvent(EventSocketUnregister::kEvent,
-              FlatJson{}.Set(EventSocketUnregister::kFd, fd).Take());
+              FlatJson{}
+                  .Set(EventSocketUnregister::kFd, fd)
+                  .Set(EventSocketUnregister::kReason, std::move(reason))
+                  .Take());
+
+  return OkVoid();
 }

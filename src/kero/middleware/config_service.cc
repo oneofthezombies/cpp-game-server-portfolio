@@ -75,7 +75,7 @@ kero::ConfigServiceFactory::Create(
                         res.TakeErr()));
       };
 
-      (void)config.Set("port", static_cast<double>(res.TakeOk()));
+      (void)config.Set("port", res.TakeOk());
       scanner.Eat();
     } else {
       return ResultT::Err(

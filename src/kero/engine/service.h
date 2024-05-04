@@ -35,9 +35,6 @@ class Service {
   GetDependencyDeclarations() const noexcept -> const DependencyDeclarations&;
 
   [[nodiscard]] auto
-  GetRunnerContext() noexcept -> RunnerContext&;
-
-  [[nodiscard]] auto
   GetDependency(const ServiceKindId kind_id) noexcept -> Borrow<Service>;
 
   [[nodiscard]] auto

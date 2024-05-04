@@ -38,11 +38,13 @@ struct EventSocketOpen {
 struct EventSocketRegister {
   static constexpr auto kEvent = "socket_register";
   static constexpr auto kFd = "fd";
+  static constexpr auto kCount = "count";
 };
 
 struct EventSocketUnregister {
   static constexpr auto kEvent = "socket_unregister";
   static constexpr auto kFd = "fd";
+  static constexpr auto kReason = "reason";
 };
 
 }  // namespace kero

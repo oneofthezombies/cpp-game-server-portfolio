@@ -12,7 +12,7 @@
 using namespace kero;
 
 auto
-kero::ServiceMap::InvokeCreate() noexcept {
+kero::ServiceMap::InvokeCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   ServiceTraverser traverser{*this};
@@ -41,7 +41,7 @@ kero::ServiceMap::InvokeCreate() noexcept {
 }
 
 auto
-kero::ServiceMap::InvokeUpdate() noexcept {
+kero::ServiceMap::InvokeUpdate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   ServiceTraverser traverser{*this};
@@ -59,7 +59,7 @@ kero::ServiceMap::InvokeUpdate() noexcept {
 }
 
 auto
-kero::ServiceMap::InvokeDestroy() noexcept {
+kero::ServiceMap::InvokeDestroy() noexcept -> void {
   for (auto& [_, service] : id_to_service_map_) {
     service->OnDestroy();
   }

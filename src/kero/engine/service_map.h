@@ -22,13 +22,13 @@ class ServiceMap {
   CLASS_KIND_MOVABLE(ServiceMap);
 
   [[nodiscard]] auto
-  InvokeCreate() noexcept;
+  InvokeCreate() noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  InvokeUpdate() noexcept;
+  InvokeUpdate() noexcept -> Result<Void>;
 
-  [[nodiscard]] auto
-  InvokeDestroy() noexcept;
+  auto
+  InvokeDestroy() noexcept -> void;
 
   [[nodiscard]] auto
   AddService(Own<Service>&& service) noexcept -> Result<Void>;

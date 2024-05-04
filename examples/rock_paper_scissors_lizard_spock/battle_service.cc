@@ -1,69 +1,51 @@
-// #include "kero/engine/runner_context.h"
-// #include "kero/engine/service.h"
-// #include "kero/log/log_builder.h"
-// #include "kero/service/constants.h"
+#include "common.h"
+#include "kero/engine/runner_context.h"
+#include "kero/engine/service.h"
+#include "kero/log/log_builder.h"
+#include "kero/middleware/constants.h"
 
-// using namespace kero;
+using namespace kero;
 
-// class BattleService final : public Service {
-//  public:
-//   explicit BattleService(RunnerContextPtr &&runner_context) noexcept
-//       : Service{std::move(runner_context),
-//                 {101, "battle"},
-//                 {kServiceKindSocketPool}} {}
+class BattleService final : public Service {
+ public:
+  explicit BattleService(const Pin<RunnerContext> runner_context) noexcept
+      : Service{runner_context, {kServiceKindIdSocketPool}} {}
 
-//   auto
-//   OnCreate() noexcept -> Result<Void> override {
-//     using ResultT = Result<Void>;
+  auto
+  OnCreate() noexcept -> Result<Void> override {
+    using ResultT = Result<Void>;
 
-//     if (!SubscribeEvent(EventSocketRegister::kEvent)) {
-//       return ResultT::Err(Error::From(
-//           Dict{}
-//               .Set("message", "Failed to subscribe to socket register event")
-//               .Take()));
-//     }
+    if (!SubscribeEvent(EventBattleStart::kEvent)) {
+      return ResultT::Err(Error::From(
+          FlatJson{}
+              .Set("message", "Failed to subscribe to battle start event")
+              .Take()));
+    }
 
-//     if (!SubscribeEvent(EventSocketUnregister::kEvent)) {
-//       return ResultT::Err(Error::From(
-//           Dict{}
-//               .Set("message", "Failed to subscribe to socket unregister
-//               event") .Take()));
-//     }
+    return ResultT::Ok(Void{});
+  }
 
-//     return ResultT::Ok(Void{});
-//   }
+  auto
+  OnDestroy() noexcept -> void override {
+    if (!UnsubscribeEvent(EventBattleStart::kEvent)) {
+      log::Error("Failed to unsubscribe from battle start event").Log();
+    }
+  }
 
-//   auto
-//   OnDestroy() noexcept -> void override {
-//     if (!UnsubscribeEvent(EventSocketRegister::kEvent)) {
-//       log::Error("Failed to unsubscribe from socket register event").Log();
-//     }
+  auto
+  OnEvent(const std::string &event,
+          const FlatJson &data) noexcept -> void override {
+    if (event == EventBattleStart::kEvent) {
+    } else {
+      log::Error("Unknown event").Data("event", event).Log();
+    }
+  }
 
-//     if (!UnsubscribeEvent(EventSocketUnregister::kEvent)) {
-//       log::Error("Failed to unsubscribe from socket unregister event").Log();
-//     }
-//   }
+ private:
+  auto
+  NextBattleId() noexcept -> u64 {
+    return battle_id_++;
+  }
 
-//   auto
-//   OnEvent(const std::string &event,
-//           const Dict &data) noexcept -> void override {
-//     if (event == EventSocketRegister::kEvent) {
-//       OnSocketRegister(data);
-//     } else if (event == EventSocketUnregister::kEvent) {
-//       OnSocketUnregister(data);
-//     } else {
-//       log::Error("Unknown event").Data("event", event).Log();
-//     }
-//   }
-
-//  private:
-//   auto
-//   OnSocketRegister(const Dict &data) noexcept -> void {
-//     // TODO: Implement this method
-//   }
-
-//   auto
-//   OnSocketUnregister(const Dict &data) noexcept -> void {
-//     // TODO: Implement this method
-//   }
-// };
+  u64 battle_id_{};
+};
