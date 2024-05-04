@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_ACTOR_SERVICE_H
-#define KERO_SERVICE_ACTOR_SERVICE_H
+#ifndef KERO_MIDDLEWARE_ACTOR_SERVICE_H
+#define KERO_MIDDLEWARE_ACTOR_SERVICE_H
 
 #include "kero/core/common.h"
 #include "kero/engine/actor_system.h"
@@ -49,4 +49,4 @@ using ActorServicePtr = Own<ActorService>;
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_ACTOR_SERVICE_H
+#endif  // KERO_MIDDLEWARE_ACTOR_SERVICE_H

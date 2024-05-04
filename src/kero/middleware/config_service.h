@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_CONFIG_SERVICE_H
-#define KERO_SERVICE_CONFIG_SERVICE_H
+#ifndef KERO_MIDDLEWARE_CONFIG_SERVICE_H
+#define KERO_MIDDLEWARE_CONFIG_SERVICE_H
 
 #include "kero/core/args_scanner.h"
 #include "kero/core/common.h"
@@ -55,4 +55,4 @@ class ConfigServiceFactory : public ServiceFactory {
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_CONFIG_SERVICE_H
+#endif  // KERO_MIDDLEWARE_CONFIG_SERVICE_H

@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_CONSTANTS_H
-#define KERO_SERVICE_CONSTANTS_H
+#ifndef KERO_MIDDLEWARE_CONSTANTS_H
+#define KERO_MIDDLEWARE_CONSTANTS_H
 
 #include "kero/engine/service_kind.h"
 
@@ -47,4 +47,4 @@ struct EventSocketUnregister {
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_CONSTANTS_H
+#endif  // KERO_MIDDLEWARE_CONSTANTS_H

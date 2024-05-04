@@ -66,17 +66,8 @@ kero::SocketPoolService::OnSocketOpen(const FlatJson& data) noexcept -> void {
   }
 
   const auto fd = fd_opt.TakeUnwrap();
-  auto io_event_loop = GetRunnerContext()
-                           .GetService(kServiceKindIoEventLoop.id)
-                           .Unwrap()
-                           .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
-  if (!io_event_loop) {
-    log::Error("Failed to get IoEventLoopService").Log();
-    return;
-  }
-
-  if (auto res =
-          io_event_loop.Unwrap().AddFd(fd, {.in = true, .edge_trigger = true});
+  auto io_event_loop = GetDependency<IoEventLoopService>();
+  if (auto res = io_event_loop->AddFd(fd, {.in = true, .edge_trigger = true});
       res.IsErr()) {
     log::Error("Failed to add fd to epoll").Data("fd", fd).Log();
     return;
@@ -90,24 +81,18 @@ kero::SocketPoolService::OnSocketOpen(const FlatJson& data) noexcept -> void {
 
 auto
 kero::SocketPoolService::OnSocketClose(const FlatJson& data) noexcept -> void {
-  auto fd = data.GetOrDefaultAsI64(EventSocketClose::kFd, -1);
-  if (fd == -1) {
+  auto fd_opt = data.TryGet<u64>(EventSocketClose::kFd);
+  if (fd_opt.IsNone()) {
     log::Error("Failed to get fd from event data").Log();
     return;
   }
 
+  const auto fd = fd_opt.TakeUnwrap();
   sockets_.erase(fd);
 
-  auto io_event_loop = GetRunnerContext()
-                           .GetService(kServiceKindIoEventLoop.id)
-                           .Unwrap()
-                           .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
-  if (!io_event_loop) {
-    log::Error("Failed to get IoEventLoopService").Log();
-  } else {
-    if (auto res = io_event_loop.Unwrap().RemoveFd(fd); res.IsErr()) {
-      log::Error("Failed to remove fd from epoll").Data("fd", fd).Log();
-    }
+  auto io_event_loop = GetDependency<IoEventLoopService>();
+  if (auto res = io_event_loop->RemoveFd(fd); res.IsErr()) {
+    log::Error("Failed to remove fd from epoll").Data("fd", fd).Log();
   }
 
   InvokeEvent(EventSocketUnregister::kEvent,

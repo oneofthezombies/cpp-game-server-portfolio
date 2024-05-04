@@ -3,46 +3,34 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "kero/core/common.h"
+#include "kero/core/utils.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/config_service.h"
-#include "kero/service/constants.h"
-#include "kero/service/io_event_loop_service.h"
+#include "kero/middleware/config_service.h"
+#include "kero/middleware/constants.h"
+#include "kero/middleware/io_event_loop_service.h"
 
 using namespace kero;
+
+auto
+kero::TcpServerService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdTcpServer;
+}
+
+auto
+kero::TcpServerService::GetKindName() noexcept -> ServiceKindName {
+  return "tcp_server";
+}
 
 kero::TcpServerService::TcpServerService(
     const Pin<RunnerContext> runner_context) noexcept
     : Service{runner_context,
-              kServiceKindTcpServer,
-              {kServiceKindConfig, kServiceKindIoEventLoop}} {}
+              {kServiceKindIdConfig, kServiceKindIdIoEventLoop}} {}
 
 auto
 kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
-
-  const auto config = GetRunnerContext()
-                          .GetService(kServiceKindConfig.id)
-                          .Unwrap()
-                          .As<ConfigService>(kServiceKindConfig.id);
-  if (!config) {
-    return ResultT::Err(
-        Error::From(FlatJson{}
-                        .Set("message", std::string{"ConfigService not found"})
-                        .Take()));
-  }
-
-  const auto io_event_loop =
-      GetRunnerContext()
-          .GetService(kServiceKindConfig.id)
-          .Unwrap()
-          .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
-  if (!io_event_loop) {
-    return ResultT::Err(Error::From(
-        FlatJson{}
-            .Set("message", std::string{"IoEventLoopService not found"})
-            .Take()));
-  }
 
   if (!SubscribeEvent(EventSocketRead::kEvent)) {
     return ResultT::Err(Error::From(
@@ -52,14 +40,16 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
             .Take()));
   }
 
-  const auto port = config.Unwrap().GetConfig().GetOrDefault<double>("port", 0);
-  if (port == 0) {
+  auto port_opt =
+      GetDependency<ConfigService>()->GetConfig().TryGet<u16>("port");
+  if (port_opt.IsNone()) {
     return ResultT::Err(
         Error::From(FlatJson{}
                         .Set("message", std::string{"port not found in config"})
                         .Take()));
   }
 
+  const auto port = port_opt.TakeUnwrap();
   auto server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (!Fd::IsValid(server_fd)) {
     return ResultT::Err(Error::From(
@@ -105,7 +95,8 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
             .Take()));
   }
 
-  if (auto res = io_event_loop.Unwrap().AddFd(server_fd, {.in = true});
+  if (auto res =
+          GetDependency<IoEventLoopService>()->AddFd(server_fd, {.in = true});
       res.IsErr()) {
     return ResultT::Err(Error::From(res.TakeErr()));
   }
@@ -132,18 +123,14 @@ auto
 kero::TcpServerService::OnEvent(const std::string& event,
                                 const FlatJson& data) noexcept -> void {
   if (event == EventSocketRead::kEvent) {
-    const auto fd = data.GetOrDefault<double>(EventSocketRead::kFd, -1);
-    if (fd == server_fd_) {
-      auto io_event_loop =
-          GetRunnerContext()
-              .GetService(kServiceKindIoEventLoop.id)
-              .Unwrap()
-              .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
-      if (!io_event_loop) {
-        log::Error("Failed to get IoEventLoopService").Log();
-        return;
-      }
+    auto fd_opt = data.TryGet<u64>(EventSocketRead::kFd);
+    if (fd_opt.IsNone()) {
+      log::Error("Failed to get fd from event data").Log();
+      return;
+    }
 
+    const auto fd = fd_opt.TakeUnwrap();
+    if (fd == server_fd_) {
       struct sockaddr_in client_addr {};
       socklen_t addrlen = sizeof(struct sockaddr_in);
       auto client_fd =

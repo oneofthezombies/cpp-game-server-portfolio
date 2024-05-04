@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_SIGNAL_SERVICE_H
-#define KERO_SERVICE_SIGNAL_SERVICE_H
+#ifndef KERO_MIDDLEWARE_SIGNAL_SERVICE_H
+#define KERO_MIDDLEWARE_SIGNAL_SERVICE_H
 
 #include <atomic>
 
@@ -40,4 +40,4 @@ class SignalService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_SIGNAL_SERVICE_H
+#endif  // KERO_MIDDLEWARE_SIGNAL_SERVICE_H

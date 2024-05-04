@@ -1,18 +1,28 @@
 #include "socket_router_service.h"
 
+#include "kero/core/utils.h"
 #include "kero/engine/actor_service.h"
+#include "kero/engine/constants.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/config_service.h"
-#include "kero/service/constants.h"
+#include "kero/middleware/config_service.h"
+#include "kero/middleware/constants.h"
 
 using namespace kero;
 
+auto
+kero::SocketRouterService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdSocketRouter;
+}
+
+auto
+kero::SocketRouterService::GetKindName() noexcept -> ServiceKindName {
+  return "socket_router";
+}
+
 kero::SocketRouterService::SocketRouterService(
     const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context,
-              kServiceKindSocketRouter,
-              {kServiceKindActor, kServiceKindConfig}} {}
+    : Service{runner_context, {kServiceKindIdActor, kServiceKindIdConfig}} {}
 
 auto
 kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
@@ -25,27 +35,17 @@ kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
             .Take()));
   }
 
-  auto config = GetRunnerContext()
-                    .GetService(kServiceKindConfig.id)
-                    .Unwrap()
-                    .As<ConfigService>(kServiceKindConfig.id);
-  if (!config) {
-    return ResultT::Err(
-        Error::From(FlatJson{}
-                        .Set("message", std::string{"ConfigService not found"})
-                        .Take()));
-  }
-
   auto target_actor =
-      config.Unwrap().GetConfig().GetOrDefault("target_actor", std::string{});
-  if (target_actor.empty()) {
+      GetDependency<ConfigService>()->GetConfig().TryGet<std::string>(
+          "target_actor");
+  if (target_actor.IsNone()) {
     return ResultT::Err(Error::From(
         FlatJson{}
             .Set("message", std::string{"target_actor not found in config"})
             .Take()));
   }
 
-  target_actor_ = std::move(target_actor);
+  target_actor_ = target_actor.Unwrap();
 
   return OkVoid();
 }
@@ -62,10 +62,7 @@ kero::SocketRouterService::OnEvent(const std::string& event,
     return;
   }
 
-  GetRunnerContext()
-      .GetService(kServiceKindActor.id)
-      .Unwrap()
-      .As<ActorService>(kServiceKindActor.id)
-      .Unwrap()
-      .SendMail(std::string{target_actor_}, std::string{event}, data.Clone());
+  GetDependency<ActorService>()->SendMail(std::string{target_actor_},
+                                          std::string{event},
+                                          data.Clone());
 }

@@ -13,11 +13,11 @@
 #include "kero/log/core.h"
 #include "kero/log/log_builder.h"
 #include "kero/log/transport.h"
-#include "kero/service/config_service.h"
-#include "kero/service/io_event_loop_service.h"
-#include "kero/service/socket_pool_service.h"
-#include "kero/service/socket_router_service.h"
-#include "kero/service/tcp_server_service.h"
+#include "kero/middleware/config_service.h"
+#include "kero/middleware/io_event_loop_service.h"
+#include "kero/middleware/socket_pool_service.h"
+#include "kero/middleware/socket_router_service.h"
+#include "kero/middleware/tcp_server_service.h"
 #include "lobby_service.cc"
 
 /**

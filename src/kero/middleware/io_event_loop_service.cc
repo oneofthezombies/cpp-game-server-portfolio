@@ -9,7 +9,7 @@
 #include "kero/core/utils_linux.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/constants.h"
+#include "kero/middleware/constants.h"
 
 using namespace kero;
 
@@ -37,9 +37,19 @@ AddOptionsToEpollEvents(
 
 }  // namespace
 
+auto
+kero::IoEventLoopService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdIoEventLoop;
+}
+
+auto
+kero::IoEventLoopService::GetKindName() noexcept -> ServiceKindName {
+  return "io_event_loop";
+}
+
 kero::IoEventLoopService::IoEventLoopService(
     const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, kServiceKindIoEventLoop, {}} {}
+    : Service{runner_context, {}} {}
 
 auto
 kero::IoEventLoopService::OnCreate() noexcept -> Result<Void> {

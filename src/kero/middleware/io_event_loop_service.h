@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H
-#define KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H
+#ifndef KERO_MIDDLEWARE_IO_EVENT_LOOP_SERVICE_H
+#define KERO_MIDDLEWARE_IO_EVENT_LOOP_SERVICE_H
 
 #include "kero/core/utils_linux.h"
 #include "kero/engine/service.h"
@@ -45,6 +45,12 @@ class IoEventLoopService final : public Service {
   [[nodiscard]] auto
   ReadFromFd(const Fd::Value fd) noexcept -> Result<std::string>;
 
+  [[nodiscard]] static auto
+  GetKindId() noexcept -> ServiceKindId;
+
+  [[nodiscard]] static auto
+  GetKindName() noexcept -> ServiceKindName;
+
  private:
   auto
   OnUpdateEpollEvent(const struct ::epoll_event& event) noexcept
@@ -57,4 +63,4 @@ class IoEventLoopService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_IO_EVENT_LOOP_SERVICE_H
+#endif  // KERO_MIDDLEWARE_IO_EVENT_LOOP_SERVICE_H

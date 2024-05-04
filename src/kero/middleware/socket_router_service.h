@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_SOCKET_ROUTER_SERVICE_H
-#define KERO_SERVICE_SOCKET_ROUTER_SERVICE_H
+#ifndef KERO_MIDDLEWARE_SOCKET_ROUTER_SERVICE_H
+#define KERO_MIDDLEWARE_SOCKET_ROUTER_SERVICE_H
 
 #include "kero/engine/service.h"
 
@@ -19,10 +19,16 @@ class SocketRouterService final : public Service {
   OnEvent(const std::string& event,
           const FlatJson& data) noexcept -> void override;
 
+  [[nodiscard]] static auto
+  GetKindId() noexcept -> ServiceKindId;
+
+  [[nodiscard]] static auto
+  GetKindName() noexcept -> ServiceKindName;
+
  private:
   std::string target_actor_;
 };
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_SOCKET_ROUTER_SERVICE_H
+#endif  // KERO_MIDDLEWARE_SOCKET_ROUTER_SERVICE_H

@@ -1,5 +1,5 @@
-#ifndef KERO_SERVICE_SOCKET_POLL_SERVICE_H
-#define KERO_SERVICE_SOCKET_POLL_SERVICE_H
+#ifndef KERO_MIDDLEWARE_SOCKET_POLL_SERVICE_H
+#define KERO_MIDDLEWARE_SOCKET_POLL_SERVICE_H
 
 #include <unordered_set>
 
@@ -38,4 +38,4 @@ class SocketPoolService final : public Service {
 
 }  // namespace kero
 
-#endif  // KERO_SERVICE_SOCKET_POLL_SERVICE_H
+#endif  // KERO_MIDDLEWARE_SOCKET_POLL_SERVICE_H
