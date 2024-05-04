@@ -11,6 +11,7 @@
 #include "kero/core/args_scanner.h"
 #include "kero/core/common.h"
 #include "kero/core/error.h"
+#include "kero/core/flat_json.h"
 #include "kero/core/flat_json_parser.h"
 #include "kero/core/result.h"
 #include "kero/core/utils.h"
@@ -161,6 +162,103 @@ main(int argc, char **argv) noexcept -> int {
     return 1;
   }
 
+  std::unordered_map<std::string, std::function<Result<Void>(const FlatJson &)>>
+      event_handler_map;
+  event_handler_map["connect"] = [](const FlatJson &data) -> Result<Void> {
+    auto socket_id = data.TryGet<u64>("socket_id");
+    if (!socket_id) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Failed to get the socket id.").Take());
+    }
+
+    std::cout << "Connected to the server with socket_id: "
+              << socket_id.Unwrap() << std::endl;
+    return OkVoid();
+  };
+
+  event_handler_map["battle_start"] =
+      [sock](const FlatJson &data) -> Result<Void> {
+    const auto battle_id = data.TryGet<u64>("battle_id");
+    if (!battle_id) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Failed to get the battle id.").Take());
+    }
+
+    const auto opponent_socket_id = data.TryGet<u64>("opponent_socket_id");
+    if (!opponent_socket_id) {
+      return Result<Void>::Err(
+          FlatJson{}
+              .Set("message", "Failed to get the opponent socket id.")
+              .Take());
+    }
+
+    std::cout << "Battle started with battle id: " << battle_id.Unwrap()
+              << " and opponent socket id: " << opponent_socket_id.Unwrap()
+              << std::endl;
+
+    std::string move;
+    bool valid_move = false;
+    while (!valid_move) {
+      std::cout << "Please enter your move: ";
+      std::cout << "Available moves: rock, paper, scissors, lizard, spock"
+                << std::endl;
+      std::cin >> move;
+      if (move != "rock" && move != "paper" && move != "scissors" &&
+          move != "lizard" && move != "spock") {
+        std::cout << "Invalid move." << std::endl;
+        continue;
+      }
+
+      valid_move = true;
+    }
+
+    auto stringified_res =
+        FlatJsonStringifier{}.Stringify(FlatJson{}
+                                            .Set("kind", "battle_move")
+                                            .Set("move", std::move(move))
+                                            .Take());
+    if (stringified_res.IsErr()) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Failed to stringify the move.").Take());
+    }
+
+    const auto stringified = stringified_res.TakeOk();
+    auto count = write(sock, stringified.data(), stringified.size());
+    if (count == -1) {
+      return Result<Void>::Err(
+          FlatJson{}
+              .Set("message", "Failed to send the move to the server.")
+              .Take());
+    }
+
+    std::cout << "Move sent to the server. Waiting for the opponent's move."
+              << std::endl;
+    return OkVoid();
+  };
+
+  event_handler_map["battle_result"] =
+      [](const FlatJson &data) -> Result<Void> {
+    const auto result = data.TryGet<std::string>("result");
+    if (!result) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Failed to get the result.").Take());
+    }
+
+    std::cout << "Battle result: " << result.Unwrap() << std::endl;
+
+    if (result.Unwrap() == "win") {
+      std::cout << "You won the battle." << std::endl;
+    } else if (result.Unwrap() == "lose") {
+      std::cout << "You lost the battle." << std::endl;
+    } else if (result.Unwrap() == "draw") {
+      std::cout << "The battle is a draw." << std::endl;
+    } else {
+      std::cout << "Unknown battle result: " << result.Unwrap() << std::endl;
+    }
+
+    return OkVoid();
+  };
+
   std::string buffer(4096, '\0');
   while (true) {
     auto read_size = read(sock, buffer.data(), buffer.size());
@@ -184,95 +282,22 @@ main(int argc, char **argv) noexcept -> int {
       continue;
     }
 
-    auto event = message.Ok().TryGet<std::string>("event");
-    if (!event) {
+    auto event_opt = message.Ok().TryGet<std::string>("event");
+    if (!event_opt) {
       std::cout << "Failed to get the event of the message." << std::endl;
       continue;
     }
 
-    if (event.Unwrap() == "connect") {
-      auto socket_id = message.Ok().TryGet<u64>("socket_id");
-      if (!socket_id) {
-        std::cout << "Failed to get the socket id." << std::endl;
-        return 1;
-      }
+    const auto &event = event_opt.Unwrap();
 
-      std::cout << "Connected to the server with socket_id: "
-                << socket_id.Unwrap() << std::endl;
-    } else if (event.Unwrap() == "battle_start") {
-      const auto battle_id = message.Ok().TryGet<u64>("battle_id");
-      if (!battle_id) {
-        std::cout << "Failed to get the battle id." << std::endl;
-        return 1;
-      }
-
-      const auto opponent_socket_id =
-          message.Ok().TryGet<u64>("opponent_socket_id");
-      if (!opponent_socket_id) {
-        std::cout << "Failed to get the opponent socket id." << std::endl;
-        return 1;
-      }
-
-      std::cout << "Battle started with battle id: " << battle_id.Unwrap()
-                << " and opponent socket id: " << opponent_socket_id.Unwrap()
-                << std::endl;
-
-      std::string move;
-      bool valid_move = false;
-      while (!valid_move) {
-        std::cout << "Please enter your move: ";
-        std::cout << "Available moves: rock, paper, scissors, lizard, spock"
-                  << std::endl;
-        std::cin >> move;
-        if (move != "rock" && move != "paper" && move != "scissors" &&
-            move != "lizard" && move != "spock") {
-          std::cout << "Invalid move." << std::endl;
-          continue;
-        }
-
-        valid_move = true;
-      }
-
-      auto stringified =
-          FlatJsonStringifier{}.Stringify(FlatJson{}
-                                              .Set("kind", "battle_move")
-                                              .Set("move", std::move(move))
-                                              .Take());
-      if (stringified.IsErr()) {
-        std::cout << "Failed to stringify the move." << std::endl;
-        return 1;
-      }
-
-      const auto data = stringified.TakeOk();
-      auto count = write(sock, data.data(), data.size());
-      if (count == -1) {
-        std::cerr << "Failed to send the move to the server." << std::endl;
-        return 1;
-      }
-
-      std::cout << "Move sent to the server. Waiting for the opponent's move."
-                << std::endl;
-    } else if ("battle_result") {
-      const auto result = message.Ok().TryGet<std::string>("result");
-      if (!result) {
-        std::cout << "Failed to get the result." << std::endl;
-        return 1;
-      }
-
-      std::cout << "Battle result: " << result.Unwrap() << std::endl;
-
-      if (result.Unwrap() == "win") {
-        std::cout << "You won the battle." << std::endl;
-      } else if (result.Unwrap() == "lose") {
-        std::cout << "You lost the battle." << std::endl;
-      } else if (result.Unwrap() == "draw") {
-        std::cout << "The battle is a draw." << std::endl;
-      } else {
-        std::cout << "Unknown battle result: " << result.Unwrap() << std::endl;
-      }
-    } else {
-      std::cout << "Unknown message event: " << event.Unwrap() << std::endl;
+    auto found = event_handler_map.find(event);
+    if (found == event_handler_map.end()) {
+      std::cout << "Unknown event: " << event << std::endl;
       continue;
+    }
+
+    if (auto res = found->second(message.Ok()); res.IsErr()) {
+      std::cout << "Failed to handle the event: " << res.Err() << std::endl;
     }
   }
 
