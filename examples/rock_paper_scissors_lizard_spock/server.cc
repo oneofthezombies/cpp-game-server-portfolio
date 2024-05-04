@@ -50,10 +50,8 @@ main(int argc, char** argv) -> int {
           .AddServiceFactory(std::make_unique<ActorServiceFactory>(engine))
           .AddServiceFactory(
               std::make_unique<DefaultServiceFactory<IoEventLoopService>>())
-          .AddServiceFactory([](const Pin<RunnerContext> runner_context) {
-            return Result<Own<Service>>{
-                std::make_unique<MatchService>(runner_context)};
-          })
+          .AddServiceFactory(
+              std::make_unique<DefaultServiceFactory<MatchService>>())
           .BuildThreadRunner();
   if (match_runner.IsErr()) {
     log::Error("Failed to create match runner")
@@ -74,10 +72,8 @@ main(int argc, char** argv) -> int {
           .AddServiceFactory(std::make_unique<ActorServiceFactory>(engine))
           .AddServiceFactory(
               std::make_unique<DefaultServiceFactory<IoEventLoopService>>())
-          .AddServiceFactory([](const Pin<RunnerContext> runner_context) {
-            return Result<Own<Service>>{
-                std::make_unique<MatchService>(runner_context)};
-          })
+          .AddServiceFactory(
+              std::make_unique<DefaultServiceFactory<BattleService>>())
           .BuildThreadRunner();
 
   if (battle_runner.IsErr()) {
