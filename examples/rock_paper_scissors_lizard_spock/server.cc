@@ -1,23 +1,15 @@
-#include <span>
+#include <memory>
 
 #include "battle_service.cc"
-#include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
 #include "kero/engine/actor_service.h"
-#include "kero/engine/actor_system.h"
 #include "kero/engine/engine.h"
-#include "kero/engine/pin_system.h"
 #include "kero/engine/runner_builder.h"
 #include "kero/engine/signal_service.h"
 #include "kero/log/center.h"
 #include "kero/log/core.h"
-#include "kero/log/log_builder.h"
 #include "kero/log/transport.h"
 #include "kero/middleware/config_service.h"
-#include "kero/middleware/io_event_loop_service.h"
-#include "kero/middleware/socket_pool_service.h"
-#include "kero/middleware/socket_router_service.h"
-#include "kero/middleware/tcp_server_service.h"
 #include "lobby_service.cc"
 
 /**
@@ -33,8 +25,16 @@ main(int argc, char** argv) -> int {
   Center{}.AddTransport(std::move(transport));
   Defer defer_log_system{[] { Center{}.Shutdown(); }};
 
-  auto engine = Engine{};
-  // engine.CreateRunnerBuilder("main").Borrowed
+  auto engine = std::make_unique<Engine>();
+  auto main_runner =
+      engine->CreateRunnerBuilder("main")
+          .AddServiceFactory(std::make_unique<ConfigServiceFactory>(argc, argv))
+          .AddServiceFactory([](const Pin<RunnerContext> runner_context) {
+            return Result<Own<Service>>{
+                std::make_unique<SignalService>(runner_context)};
+          })
+          .AddServiceFactory(std::make_unique<ActorServiceFactory>(engine))
+          .BuildRunner();
 
   //   auto main =
   //       kero::Engine::Global()

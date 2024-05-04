@@ -113,3 +113,8 @@ kero::RunnerContext::InvokeEvent(
 
   return OkVoid();
 }
+
+auto
+kero::RunnerContext::GetName() const noexcept -> const std::string& {
+  return runner_name_;
+}

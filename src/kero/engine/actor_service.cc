@@ -1,6 +1,7 @@
 #include "actor_service.h"
 
 #include "kero/engine/constants.h"
+#include "kero/engine/engine.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 
@@ -65,4 +66,25 @@ kero::ActorService::BroadcastMail(std::string &&event,
                                   FlatJson &&body) noexcept -> void {
   mail_box_.tx.Send(
       Mail{std::string{name_}, "broadcast", std::move(event), std::move(body)});
+}
+
+kero::ActorServiceFactory::ActorServiceFactory(
+    const Own<Engine> &engine) noexcept
+    : engine_{engine} {}
+
+auto
+kero::ActorServiceFactory::Create(
+    const Pin<RunnerContext> runner_context) noexcept -> Result<Own<Service>> {
+  using ResultT = Result<Own<Service>>;
+
+  auto name = runner_context->GetName();
+  auto mail_box_res =
+      engine_->engine_context_->actor_system.CreateMailBox(name);
+  if (mail_box_res.IsErr()) {
+    return ResultT::Err(mail_box_res.TakeErr());
+  }
+
+  auto mail_box = mail_box_res.TakeOk();
+  return ResultT::Ok(Own<ActorService>{
+      new ActorService{runner_context, std::move(name), std::move(mail_box)}});
 }

@@ -4,10 +4,13 @@
 #include "kero/core/common.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_factory.h"
 #include "kero/engine/service_kind.h"
 #include "runner_context.h"
 
 namespace kero {
+
+class Engine;
 
 class ActorService final : public Service {
  public:
@@ -42,10 +45,22 @@ class ActorService final : public Service {
   MailBox mail_box_;
   std::string name_;
 
-  friend class ActorSystem;
+  friend class ActorServiceFactory;
 };
 
-using ActorServicePtr = Own<ActorService>;
+class ActorServiceFactory final : public ServiceFactory {
+ public:
+  explicit ActorServiceFactory(const Own<Engine> &engine) noexcept;
+  virtual ~ActorServiceFactory() noexcept override = default;
+  CLASS_KIND_MOVABLE(ActorServiceFactory);
+
+  [[nodiscard]] virtual auto
+  Create(const Pin<RunnerContext> runner_context) noexcept
+      -> Result<Own<Service>> override;
+
+ private:
+  Borrow<Engine> engine_;
+};
 
 }  // namespace kero
 

@@ -7,6 +7,7 @@
 namespace kero {
 
 class RunnerBuilder;
+class Service;
 
 class Engine {
  public:
@@ -19,6 +20,8 @@ class Engine {
 
  private:
   Own<EngineContext> engine_context_{};
+
+  friend class ActorServiceFactory;
 };
 
 }  // namespace kero

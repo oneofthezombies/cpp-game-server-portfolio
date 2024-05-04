@@ -177,10 +177,10 @@ class FlatJson final {
                std::source_location::current()) const noexcept -> void;
 
   [[nodiscard]] auto
-  IsSafeInteger(i64 value) const noexcept -> bool;
+  IsSafeInteger(const i64 value) const noexcept -> bool;
 
   [[nodiscard]] auto
-  IsSafeInteger(u64 value) const noexcept -> bool;
+  IsSafeInteger(const u64 value) const noexcept -> bool;
 
   Data data_;
 

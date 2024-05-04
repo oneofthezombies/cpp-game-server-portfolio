@@ -56,6 +56,17 @@ kero::FlatJson::LogError(std::string&& message, std::source_location&& location)
 }
 
 auto
+kero::FlatJson::IsSafeInteger(const i64 value) const noexcept -> bool {
+  return static_cast<i64>(kMinSafeInteger) <= value &&
+         value <= static_cast<i64>(kMaxSafeInteger);
+}
+
+auto
+kero::FlatJson::IsSafeInteger(const u64 value) const noexcept -> bool {
+  return value <= static_cast<u64>(kMaxSafeInteger);
+}
+
+auto
 kero::operator<<(std::ostream& os, const FlatJson& json) -> std::ostream& {
   os << "{";
   for (auto it = json.data_.begin(); it != json.data_.end(); ++it) {
