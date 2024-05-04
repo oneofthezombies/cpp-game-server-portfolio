@@ -38,5 +38,6 @@ kero::Engine::Stop() -> Result<Void> {
     return ResultT::Err(res.TakeErr());
   }
 
+  engine_context_->pin_system->DestroyAll();
   return OkVoid();
 }
