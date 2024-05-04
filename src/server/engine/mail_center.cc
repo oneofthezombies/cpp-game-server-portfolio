@@ -179,7 +179,7 @@ engine::MailCenter::RunThreadMain(MailCenter &mail_center,
 
 auto
 engine::MailCenter::Global() noexcept -> MailCenter & {
-  static Owned<MailCenter> instance{nullptr};
+  static Own<MailCenter> instance{nullptr};
   static std::once_flag flag;
   std::call_once(flag, [] {
     auto [tx, rx] = core::Channel<MailBody>::Builder{}.Build();

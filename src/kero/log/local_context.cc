@@ -9,11 +9,11 @@ using namespace kero;
 
 auto
 kero::LocalContext::Builder::Build() const noexcept
-    -> Result<Owned<LocalContext>> {
-  using ResultT = Result<Owned<LocalContext>>;
+    -> Result<Own<LocalContext>> {
+  using ResultT = Result<Own<LocalContext>>;
 
   auto thread_id = ThreadIdToString(std::this_thread::get_id());
-  auto [log_tx, log_rx] = spsc::Channel<Owned<kero::Log>>::Builder{}.Build();
+  auto [log_tx, log_rx] = spsc::Channel<Own<kero::Log>>::Builder{}.Build();
   if (!GetGlobalContext().AddLogRx(thread_id, std::move(log_rx))) {
     return ResultT::Err(Error::From(
         Json{}
@@ -22,11 +22,11 @@ kero::LocalContext::Builder::Build() const noexcept
             .Take()));
   }
 
-  return ResultT{Owned<LocalContext>{
+  return ResultT{Own<LocalContext>{
       new LocalContext{std::move(log_tx), std::move(thread_id)}}};
 }
 
-kero::LocalContext::LocalContext(spsc::Tx<Owned<kero::Log>>&& log_tx,
+kero::LocalContext::LocalContext(spsc::Tx<Own<kero::Log>>&& log_tx,
                                  std::string&& thread_id) noexcept
     : log_tx_{std::move(log_tx)}, thread_id_{std::move(thread_id)} {}
 
@@ -39,13 +39,13 @@ kero::LocalContext::~LocalContext() noexcept {
 }
 
 auto
-kero::LocalContext::SendLog(Owned<kero::Log>&& log) const noexcept -> void {
+kero::LocalContext::SendLog(Own<kero::Log>&& log) const noexcept -> void {
   log_tx_.Send(std::move(log));
 }
 
 auto
-kero::GetLocalContext() -> Owned<LocalContext>& {
-  thread_local Owned<LocalContext> local_context{nullptr};
+kero::GetLocalContext() -> Own<LocalContext>& {
+  thread_local Own<LocalContext> local_context{nullptr};
   thread_local std::once_flag flag{};
 
   std::call_once(flag, [&]() {

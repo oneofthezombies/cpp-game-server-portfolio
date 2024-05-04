@@ -23,8 +23,8 @@ ParseNumberString(const std::string_view token) noexcept -> Result<T> {
   if (ec != std::errc{}) {
     return ResultT::Err(
         Error::From(Json{}
-                        .Set<std::string>("kind", "errc")
-                        .Set("code", ec)
+                        .Set("kind", "errc")
+                        .Set("code", static_cast<i32>(ec))
                         .Set("message", std::make_error_code(ec).message())
                         .Take()));
   }

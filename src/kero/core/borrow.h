@@ -8,14 +8,14 @@
 namespace kero {
 
 template <typename T>
-class Borrowed final {
+class Borrow final {
  public:
-  explicit Borrowed(T* ptr) noexcept : ptr_{ptr} {
-    assert(ptr_ != nullptr && "Borrowed pointer must not be null");
+  explicit Borrow(const Own<T>& own) noexcept : ptr_{own.get()} {
+    assert(ptr_ != nullptr && "Borrow pointer must not be null");
   }
 
-  ~Borrowed() noexcept = default;
-  CLASS_KIND_COPYABLE(Borrowed);
+  ~Borrow() noexcept = default;
+  CLASS_KIND_COPYABLE(Borrow);
 
   [[nodiscard]] auto
   operator->() const noexcept -> T* {
@@ -23,7 +23,7 @@ class Borrowed final {
   }
 
   [[nodiscard]] auto
-  operator*() const noexcept -> T const& {
+  operator*() const noexcept -> T& {
     return *Get();
   }
 

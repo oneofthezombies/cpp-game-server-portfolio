@@ -6,7 +6,7 @@
 #include "kero/engine/actor_service.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/engine.h"
-#include "kero/engine/pin_object_system.h"
+#include "kero/engine/pin_system.h"
 #include "kero/engine/runner_builder.h"
 #include "kero/engine/signal_service.h"
 #include "kero/log/center.h"
@@ -20,6 +20,9 @@
 #include "kero/service/tcp_server_service.h"
 #include "lobby_service.cc"
 
+/**
+ * `using namespace kero` is used because it is an example program.
+ */
 using namespace kero;
 
 auto

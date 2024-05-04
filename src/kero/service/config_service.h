@@ -47,7 +47,7 @@ class ConfigServiceFactory : public ServiceFactory {
 
   [[nodiscard]] virtual auto
   Create(const Pin<RunnerContext> runner_context) noexcept
-      -> Result<Owned<Service>> override;
+      -> Result<Own<Service>> override;
 
  private:
   Args args_;

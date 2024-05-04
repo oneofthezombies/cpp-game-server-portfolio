@@ -42,9 +42,8 @@ kero::ConfigServiceFactory::ConfigServiceFactory(int argc, char** argv) noexcept
 
 auto
 kero::ConfigServiceFactory::Create(
-    const Pin<RunnerContext> runner_context) noexcept
-    -> Result<Owned<Service>> {
-  using ResultT = Result<Owned<Service>>;
+    const Pin<RunnerContext> runner_context) noexcept -> Result<Own<Service>> {
+  using ResultT = Result<Own<Service>>;
 
   Json config{};
   ArgsScanner scanner{args_};

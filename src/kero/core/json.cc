@@ -50,9 +50,9 @@ kero::Json::AsRaw() noexcept -> Data& {
 }
 
 auto
-kero::Json::Warn(std::string&& message,
-                 std::source_location&& location) const noexcept -> void {
-  log::Warn(std::move(message), std::move(location)).Log();
+kero::Json::LogError(std::string&& message,
+                     std::source_location&& location) const noexcept -> void {
+  log::Error(std::move(message), std::move(location)).Log();
 }
 
 auto

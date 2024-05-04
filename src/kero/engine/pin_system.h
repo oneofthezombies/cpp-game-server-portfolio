@@ -34,7 +34,7 @@ class PinSystem final {
 
   template <typename T>
   [[nodiscard]] auto
-  Create(Owned<PinDataFactory<T>>&& factory) noexcept
+  Create(Own<PinDataFactory<T>>&& factory) noexcept
       -> Result<CreatePinOutput<T>> {
     return Create<T>([factory = std::move(factory)]() -> Result<T*> {
       return factory->Create();

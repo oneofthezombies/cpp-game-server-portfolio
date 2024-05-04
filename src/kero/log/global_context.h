@@ -24,13 +24,13 @@ class GlobalContext final {
     CLASS_KIND_PINNABLE(Builder);
 
     auto
-    Build() const noexcept -> Owned<GlobalContext>;
+    Build() const noexcept -> Own<GlobalContext>;
   };
 
   struct SharedState final {
-    std::unordered_map<std::string, spsc::Rx<Owned<kero::Log>>> log_rx_map{};
-    std::deque<Owned<kero::Log>> orphaned_logs{};
-    std::vector<Owned<Transport>> transports{};
+    std::unordered_map<std::string, spsc::Rx<Own<kero::Log>>> log_rx_map{};
+    std::deque<Own<kero::Log>> orphaned_logs{};
+    std::vector<Own<Transport>> transports{};
     std::reference_wrapper<std::ostream> system_error_stream;
 
     SharedState(std::ostream& system_error_stream) noexcept;
@@ -49,7 +49,7 @@ class GlobalContext final {
 
   [[nodiscard]] auto
   AddLogRx(const std::string& thread_id,
-           spsc::Rx<Owned<kero::Log>>&& log_rx) noexcept -> bool;
+           spsc::Rx<Own<kero::Log>>&& log_rx) noexcept -> bool;
 
   [[nodiscard]] auto
   RemoveLogRx(const std::string& thread_id) noexcept -> bool;
@@ -58,22 +58,22 @@ class GlobalContext final {
   Shutdown(ShutdownConfig&& config) noexcept -> void;
 
   auto
-  AddTransport(Owned<Transport>&& transport) noexcept -> void;
+  AddTransport(Own<Transport>&& transport) noexcept -> void;
 
   [[nodiscard]] auto
-  TryPopLog() noexcept -> Option<Owned<kero::Log>>;
+  TryPopLog() noexcept -> Option<Own<kero::Log>>;
 
   auto
   HandleLog(const kero::Log& log) const noexcept -> void;
 
  private:
-  GlobalContext(mpsc::Tx<Owned<RunnerEvent>>&& runner_event_tx,
+  GlobalContext(mpsc::Tx<Own<RunnerEvent>>&& runner_event_tx,
                 std::thread&& runner_thread) noexcept;
 
   NullStream null_stream_{};
   SharedState shared_state_;
   mutable std::mutex shared_state_mutex_{};
-  mpsc::Tx<Owned<RunnerEvent>> runner_event_tx_;
+  mpsc::Tx<Own<RunnerEvent>> runner_event_tx_;
   std::thread runner_thread_;
 };
 
@@ -81,7 +81,7 @@ auto
 GetGlobalContext() -> GlobalContext&;
 
 auto
-RunOnThread(mpsc::Rx<Owned<RunnerEvent>>&& runner_event_rx) -> void;
+RunOnThread(mpsc::Rx<Own<RunnerEvent>>&& runner_event_rx) -> void;
 
 }  // namespace kero
 

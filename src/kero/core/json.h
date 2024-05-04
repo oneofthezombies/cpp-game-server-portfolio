@@ -13,22 +13,47 @@
 namespace kero {
 
 template <typename T>
-concept IsJsonValueType = std::disjunction_v<std::is_same<T, bool>,
-                                             std::is_same<T, double>,
-                                             std::is_same<T, std::string>>;
+concept IsJsonType = std::disjunction_v<std::is_same<T, bool>,
+                                        std::is_same<T, double>,
+                                        std::is_same<T, std::string>>;
 
 template <typename T>
-concept IsPrimitive = std::disjunction_v<std::is_same<T, bool>,
-                                         std::is_same<T, i8>,
-                                         std::is_same<T, i16>,
-                                         std::is_same<T, i32>,
-                                         std::is_same<T, i64>,
-                                         std::is_same<T, u8>,
-                                         std::is_same<T, u16>,
-                                         std::is_same<T, u32>,
-                                         std::is_same<T, u64>,
-                                         std::is_same<T, float>,
-                                         std::is_same<T, double>>;
+concept IsGetValueType = std::disjunction_v<std::is_same<T, bool>,
+                                            std::is_same<T, i8>,
+                                            std::is_same<T, i16>,
+                                            std::is_same<T, i32>,
+                                            std::is_same<T, i64>,
+                                            std::is_same<T, u8>,
+                                            std::is_same<T, u16>,
+                                            std::is_same<T, u32>,
+                                            std::is_same<T, u64>,
+                                            std::is_same<T, float>,
+                                            std::is_same<T, double>>;
+
+template <typename T>
+concept IsGetReferenceType = std::disjunction_v<std::is_same<T, const char*>,
+                                                std::is_same<T, std::string>>;
+
+template <typename T>
+concept IsSetValueType = std::disjunction_v<std::is_same<T, bool>,
+                                            std::is_same<T, i8>,
+                                            std::is_same<T, i16>,
+                                            std::is_same<T, i32>,
+                                            std::is_same<T, i64>,
+                                            std::is_same<T, u8>,
+                                            std::is_same<T, u16>,
+                                            std::is_same<T, u32>,
+                                            std::is_same<T, u64>,
+                                            std::is_same<T, float>,
+                                            std::is_same<T, double>,
+                                            std::is_same<T, const char*>,
+                                            std::is_same<T, std::string_view>>;
+
+template <typename T>
+concept IsSetConstRefType = std::disjunction_v<std::is_same<T, std::string>>;
+
+template <typename T>
+concept IsSetRValueType = std::disjunction_v<std::is_same<T, std::string>>;
 
 class Json final {
  public:
@@ -41,53 +66,44 @@ class Json final {
   CLASS_KIND_MOVABLE(Json);
 
   template <typename T>
-    requires(!IsPrimitive<T>)
+    requires IsGetValueType<T>
   [[nodiscard]] auto
-  TryGet(const std::string& key) const noexcept -> Option<T> {
-    static_assert(false, "Unsupported type for TryGet -> Option");
-  }
+  TryGet(const std::string& key) const noexcept -> Option<T>;
 
   template <typename T>
+    requires IsGetReferenceType<T>
   [[nodiscard]] auto
-  TryGet(const std::string& key) const noexcept -> OptionRef<const T&> {
-    static_assert(false, "Unsupported type for TryGet -> OptionRef");
-  }
+  TryGet(const std::string& key) const noexcept -> OptionRef<const T&>;
 
   template <typename T>
+    requires IsSetValueType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, const T value) noexcept -> Json& {
-    static_assert(false, "Unsupported type for Set (const T)");
-  }
+  Set(std::string&& key, const T value) noexcept -> Json&;
 
   template <typename T>
+    requires IsSetConstRefType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, const T& value) noexcept -> Json& {
-    static_assert(false, "Unsupported type for Set (const T&)");
-  }
+  Set(std::string&& key, const T& value) noexcept -> Json&;
 
   template <typename T>
+    requires IsSetRValueType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, T&& value) noexcept -> Json& {
-    static_assert(false, "Unsupported type for Set (T&&)");
-  }
+  Set(std::string&& key, T&& value) noexcept -> Json&;
 
   template <typename T>
+    requires IsSetValueType<T>
   [[nodiscard]] auto
-  TrySet(std::string&& key, const T value) noexcept -> bool {
-    static_assert(false, "Unsupported type for TrySet (const T)");
-  }
+  TrySet(std::string&& key, const T value) noexcept -> bool;
 
   template <typename T>
+    requires IsSetConstRefType<T>
   [[nodiscard]] auto
-  TrySet(std::string&& key, const T& value) noexcept -> bool {
-    static_assert(false, "Unsupported type for TrySet (const T&)");
-  }
+  TrySet(std::string&& key, const T& value) noexcept -> bool;
 
   template <typename T>
+    requires IsSetRValueType<T>
   [[nodiscard]] auto
-  TrySet(std::string&& key, T&& value) noexcept -> bool {
-    static_assert(false, "Unsupported type for TrySet (T&&)");
-  }
+  TrySet(std::string&& key, T&& value) noexcept -> bool;
 
   [[nodiscard]] auto
   Unset(const std::string& key) noexcept -> Json&;
@@ -115,7 +131,7 @@ class Json final {
 
  private:
   template <typename T>
-    requires IsJsonValueType<T>
+    requires IsJsonType<T>
   [[nodiscard]] auto
   TryGetImpl(const std::string& key) const noexcept -> OptionRef<const T&> {
     const auto found = data_.find(key);
@@ -132,13 +148,13 @@ class Json final {
   }
 
   template <typename T>
-    requires IsJsonValueType<T>
+    requires IsJsonType<T>
   [[nodiscard]] auto
   SetImpl(std::string&& key, T&& value) noexcept -> Json& {
     const auto [it, inserted] =
         data_.try_emplace(std::move(key), std::move(value));
     if (!inserted) {
-      Warn("Overwriting existing data key: " + key);
+      LogError("Overwriting existing data key: " + key);
       it->second = std::move(value);
     }
 
@@ -146,7 +162,7 @@ class Json final {
   }
 
   template <typename T>
-    requires IsJsonValueType<T>
+    requires IsJsonType<T>
   [[nodiscard]] auto
   TrySetImpl(std::string&& key, T&& value) noexcept -> bool {
     const auto [it, inserted] =
@@ -155,9 +171,9 @@ class Json final {
   }
 
   auto
-  Warn(std::string&& message,
-       std::source_location&& location =
-           std::source_location::current()) const noexcept -> void;
+  LogError(std::string&& message,
+           std::source_location&& location =
+               std::source_location::current()) const noexcept -> void;
 
   [[nodiscard]] auto
   IsSafeInteger(i64 value) const noexcept -> bool;
@@ -267,10 +283,8 @@ template <>
 inline auto
 kero::Json::Set<i64>(std::string&& key, const i64 value) noexcept -> Json& {
   if (!IsSafeInteger(value)) {
-    // log::Error("i64 value is too large for JSON")
-    //     .Data("key", key)
-    //     .Data("value", value)
-    //     .Log();
+    LogError("i64 value is too large for JSON. key: " + key +
+             ", value: " + std::to_string(value));
     return *this;
   }
 
@@ -299,10 +313,8 @@ template <>
 inline auto
 kero::Json::Set<u64>(std::string&& key, const u64 value) noexcept -> Json& {
   if (!IsSafeInteger(value)) {
-    // log::Error("u64 value is too large for JSON")
-    //     .Data("key", key)
-    //     .Data("value", value)
-    //     .Log();
+    LogError("u64 value is too large for JSON. key: " + key +
+             ", value: " + std::to_string(value));
     return *this;
   }
 
@@ -314,10 +326,18 @@ inline auto
 kero::Json::Set<const char*>(std::string&& key, const char* value) noexcept
     -> Json& {
   if (value == nullptr) {
-    // log::Error("Cannot set null char* value in JSON").Data("key", key).Log();
+    LogError("Cannot set null char* value in JSON. key: " + key);
     return *this;
   }
 
+  return SetImpl<std::string>(std::move(key), std::string{value});
+}
+
+template <>
+inline auto
+kero::Json::Set<std::string_view>(std::string&& key,
+                                  const std::string_view value) noexcept
+    -> Json& {
   return SetImpl<std::string>(std::move(key), std::string{value});
 }
 
@@ -405,6 +425,14 @@ kero::Json::TrySet<const char*>(std::string&& key, const char* value) noexcept
     return false;
   }
 
+  return TrySetImpl<std::string>(std::move(key), std::string{value});
+}
+
+template <>
+inline auto
+kero::Json::TrySet<std::string_view>(std::string&& key,
+                                     const std::string_view value) noexcept
+    -> bool {
   return TrySetImpl<std::string>(std::move(key), std::string{value});
 }
 

@@ -18,7 +18,7 @@ class ServiceFactory {
 
   [[nodiscard]] virtual auto
   Create(const Pin<RunnerContext> runner_context) noexcept
-      -> Result<Owned<Service>> = 0;
+      -> Result<Own<Service>> = 0;
 };
 
 }  // namespace kero

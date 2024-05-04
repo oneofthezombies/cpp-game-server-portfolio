@@ -1,23 +1,19 @@
 #ifndef KERO_ENGINE_SERVICE_KIND_H
 #define KERO_ENGINE_SERVICE_KIND_H
 
-#include <string>
-
 #include "kero/core/common.h"
 
 namespace kero {
 
 class Service;
 
+using ServiceKindId = i64;
+using ServiceKindName = std::string_view;
+
 template <typename T>
-concept IsServiceKind = std::is_base_of_v<Service, T>;
-
-struct ServiceKind {
-  using Id = i64;
-  using Name = std::string;
-
-  Id id{};
-  Name name{};
+concept IsServiceKind = std::is_base_of_v<Service, T> && requires {
+  { T::GetKindId() } -> std::same_as<ServiceKindId>;
+  { T::GetKindName() } -> std::same_as<ServiceKindName>;
 };
 
 }  // namespace kero

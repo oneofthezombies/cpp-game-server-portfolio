@@ -43,16 +43,8 @@ kero::SignalService::OnUpdate() noexcept -> void {
     return;
   }
 
-  auto actor = GetRunnerContext()
-                   .GetService(kServiceKindActor.id)
-                   .Unwrap()
-                   .As<ActorService>(kServiceKindActor.id);
-  if (!actor) {
-    log::Error("Failed to get ActorService").Log();
-    return;
-  }
-
-  actor.Unwrap().SendMail("all", EventShutdown::kEvent, Json{});
+  auto actor = GetDependency<ActorService>();
+  actor->SendMail("all", EventShutdown::kEvent, Json{});
 }
 
 auto

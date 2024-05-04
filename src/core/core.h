@@ -44,7 +44,7 @@ auto
 DebugErrorDetails(std::ostream &os, const ErrorDetails &details) -> void;
 
 struct Error;
-using ErrorCause = Owned<Error>;
+using ErrorCause = Own<Error>;
 
 struct Error final {
   ErrorCode code;

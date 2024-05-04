@@ -1,10 +1,12 @@
 #include "service_map.h"
 
 #include "kero/core/json.h"
+#include "kero/core/option.h"
 #include "kero/core/result.h"
 #include "kero/core/utils.h"
 #include "kero/engine/service.h"
 #include "kero/engine/service_traverser.h"
+#include "service_read_only_map.h"
 
 using namespace kero;
 
@@ -12,10 +14,13 @@ auto
 kero::ServiceMap::InvokeCreate() noexcept {
   using ResultT = Result<Void>;
 
-  ServiceTraverser traverser{service_map_};
-  auto res = traverser.Traverse([](Service& service) {
+  ServiceTraverser traverser{id_to_service_map_};
+  auto res = traverser.Traverse([this](Service& service) {
     using ResultT = Result<Void>;
 
+    const auto& dependency_declarations = service.GetDependencyDeclarations();
+    auto dependency_map = CreateReadOnly(dependency_declarations);
+    service.dependency_map_ = std::move(dependency_map);
     if (auto res = service.OnCreate(); res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
@@ -32,26 +37,36 @@ kero::ServiceMap::InvokeCreate() noexcept {
 
 auto
 kero::ServiceMap::InvokeUpdate() noexcept {
-  for (auto& [_, service] : service_map_) {
-    service->OnUpdate();
+  using ResultT = Result<Void>;
+
+  ServiceTraverser traverser{id_to_service_map_};
+  auto res = traverser.Traverse([](Service& service) {
+    service.OnUpdate();
+
+    return OkVoid();
+  });
+
+  if (res.IsErr()) {
+    return ResultT::Err(res.TakeErr());
   }
+
+  return OkVoid();
 }
 
 auto
 kero::ServiceMap::InvokeDestroy() noexcept {
-  for (auto& [_, service] : service_map_) {
+  for (auto& [_, service] : id_to_service_map_) {
     service->OnDestroy();
   }
-  service_map_.clear();
-  service_kind_id_map_.clear();
+  id_to_service_map_.clear();
+  name_to_id_map_.clear();
 }
 
 auto
-kero::ServiceMap::AddService(Owned<Service>&& service) noexcept
-    -> Result<Void> {
+kero::ServiceMap::AddService(Own<Service>&& service) noexcept -> Result<Void> {
   const auto kind = service->GetKind();
-  auto found = service_map_.find(kind.id);
-  if (found != service_map_.end()) {
+  auto found = id_to_service_map_.find(kind.id);
+  if (found != id_to_service_map_.end()) {
     return Result<Void>::Err(Json{}
                                  .Set("message", "service already exists")
                                  .Set("kind_id", static_cast<double>(kind.id))
@@ -59,8 +74,8 @@ kero::ServiceMap::AddService(Owned<Service>&& service) noexcept
                                  .Take());
   }
 
-  auto found_id = service_kind_id_map_.find(kind.name);
-  if (found_id != service_kind_id_map_.end()) {
+  auto found_id = name_to_id_map_.find(kind.name);
+  if (found_id != name_to_id_map_.end()) {
     return Result<Void>::Err(Json{}
                                  .Set("message", "service already exists")
                                  .Set("kind_id", static_cast<double>(kind.id))
@@ -68,8 +83,8 @@ kero::ServiceMap::AddService(Owned<Service>&& service) noexcept
                                  .Take());
   }
 
-  service_map_.emplace(kind.id, std::move(service));
-  service_kind_id_map_.emplace(kind.name, kind.id);
+  id_to_service_map_.emplace(kind.id, std::move(service));
+  name_to_id_map_.emplace(kind.name, kind.id);
   return Result<Void>::Ok(Void{});
 }
 
@@ -82,8 +97,8 @@ kero::ServiceMap::GetService(const ServiceKind& kind) const noexcept
 auto
 kero::ServiceMap::GetService(const ServiceKind::Id service_kind_id)
     const noexcept -> OptionRef<Service&> {
-  auto it = service_map_.find(service_kind_id);
-  if (it == service_map_.end()) {
+  auto it = id_to_service_map_.find(service_kind_id);
+  if (it == id_to_service_map_.end()) {
     return None;
   }
 
@@ -93,8 +108,8 @@ kero::ServiceMap::GetService(const ServiceKind::Id service_kind_id)
 auto
 kero::ServiceMap::GetService(const ServiceKind::Name& service_kind_name)
     const noexcept -> OptionRef<Service&> {
-  auto it = service_kind_id_map_.find(service_kind_name);
-  if (it == service_kind_id_map_.end()) {
+  auto it = name_to_id_map_.find(service_kind_name);
+  if (it == name_to_id_map_.end()) {
     return None;
   }
 
@@ -104,11 +119,34 @@ kero::ServiceMap::GetService(const ServiceKind::Name& service_kind_name)
 auto
 kero::ServiceMap::HasService(
     const ServiceKind::Id service_kind_id) const noexcept -> bool {
-  return service_map_.contains(service_kind_id);
+  return id_to_service_map_.contains(service_kind_id);
 }
 
 auto
 kero::ServiceMap::HasService(
     const ServiceKind::Name service_kind_name) const noexcept -> bool {
-  return service_kind_id_map_.contains(service_kind_name);
+  return name_to_id_map_.contains(service_kind_name);
+}
+
+auto
+kero::ServiceMap::CreateReadOnly(
+    const Service::DependencyDeclarations& dependency_declarations) noexcept
+    -> ServiceReadOnlyMap {
+  ServiceReadOnlyMap::IdToServiceMap id_to_service_map;
+  NameToIdMap name_to_id_map;
+  for (auto& [id, service] : id_to_service_map_) {
+    auto found = std::find_if(
+        dependency_declarations.begin(),
+        dependency_declarations.end(),
+        [id](const ServiceKind& declaration) { return declaration.id == id; });
+    if (found == dependency_declarations.end()) {
+      continue;
+    }
+
+    id_to_service_map.emplace(id, service);
+    name_to_id_map.emplace(service->GetKind().name, id);
+  }
+
+  return ServiceReadOnlyMap{std::move(id_to_service_map),
+                            std::move(name_to_id_map)};
 }

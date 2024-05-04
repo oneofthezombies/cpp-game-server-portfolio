@@ -30,7 +30,7 @@ struct Void final {
 };
 
 template <typename T>
-using Owned = std::unique_ptr<T>;
+using Own = std::unique_ptr<T>;
 
 using i8 = int8_t;
 using i16 = int16_t;

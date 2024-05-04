@@ -7,14 +7,14 @@
 #include "kero/core/option.h"
 #include "kero/core/result.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_read_only_map.h"
 
 namespace kero {
 
 class ServiceMap {
  public:
-  using ServiceMapRaw = std::unordered_map<ServiceKind::Id, Owned<Service>>;
-  using ServiceKindIdMapRaw =
-      std::unordered_map<ServiceKind::Name, ServiceKind::Id>;
+  using IdToServiceMap = std::unordered_map<ServiceKindId, Own<Service>>;
+  using NameToIdMap = std::unordered_map<ServiceKindName, ServiceKindId>;
 
   explicit ServiceMap() noexcept = default;
   ~ServiceMap() noexcept = default;
@@ -30,28 +30,30 @@ class ServiceMap {
   InvokeDestroy() noexcept;
 
   [[nodiscard]] auto
-  AddService(Owned<Service>&& service) noexcept -> Result<Void>;
+  AddService(Own<Service>&& service) noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  GetService(const ServiceKind& kind) const noexcept -> OptionRef<Service&>;
-
-  [[nodiscard]] auto
-  GetService(const ServiceKind::Id service_kind_id) const noexcept
+  GetService(const ServiceKindId service_kind_id) const noexcept
       -> OptionRef<Service&>;
 
   [[nodiscard]] auto
-  GetService(const ServiceKind::Name& service_kind_name) const noexcept
+  GetService(const ServiceKindName service_kind_name) const noexcept
       -> OptionRef<Service&>;
 
   [[nodiscard]] auto
-  HasService(const ServiceKind::Id service_kind_id) const noexcept -> bool;
+  HasService(const ServiceKindId service_kind_id) const noexcept -> bool;
 
   [[nodiscard]] auto
-  HasService(const ServiceKind::Name service_kind_name) const noexcept -> bool;
+  HasService(const ServiceKindName service_kind_name) const noexcept -> bool;
+
+  [[nodiscard]] auto
+  CreateReadOnly(
+      const Service::DependencyDeclarations& dependency_declarations) noexcept
+      -> ServiceReadOnlyMap;
 
  private:
-  ServiceMapRaw service_map_;
-  ServiceKindIdMapRaw service_kind_id_map_;
+  IdToServiceMap id_to_service_map_;
+  NameToIdMap name_to_id_map_;
 
   friend class ServiceTraverser;
 };

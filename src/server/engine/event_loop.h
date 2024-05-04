@@ -40,7 +40,7 @@ class EventLoopHandler {
       -> Result<Void> = 0;
 };
 
-using EventLoopHandlerPtr = Owned<EventLoopHandler>;
+using EventLoopHandlerPtr = Own<EventLoopHandler>;
 
 struct EventLoopAddOptions {
   bool in{false};
@@ -99,7 +99,7 @@ class EventLoop {
   core::MessageId next_message_id_{1};
 };
 
-using EventLoopPtr = Owned<EventLoop>;
+using EventLoopPtr = Own<EventLoop>;
 
 }  // namespace engine
 

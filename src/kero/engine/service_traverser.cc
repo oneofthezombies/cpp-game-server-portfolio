@@ -5,8 +5,8 @@
 using namespace kero;
 
 kero::ServiceTraverser::ServiceTraverser(
-    const ServiceMap::ServiceMapRaw& service_map) noexcept
-    : service_map_{service_map} {}
+    const ServiceMap::IdToServiceMap& id_to_service_map) noexcept
+    : id_to_service_map_{id_to_service_map} {}
 
 auto
 kero::ServiceTraverser::Traverse(const OnVisit& on_visit) noexcept
@@ -16,7 +16,7 @@ kero::ServiceTraverser::Traverse(const OnVisit& on_visit) noexcept
   visit_map_.clear();
   traversal_stack_.clear();
 
-  for (const auto& [_, service] : service_map_) {
+  for (const auto& [_, service] : id_to_service_map_) {
     auto result = TraverseRecursive(service->GetKind(), on_visit);
     if (result.IsErr()) {
       return ResultT::Err(result.TakeErr());
@@ -27,7 +27,7 @@ kero::ServiceTraverser::Traverse(const OnVisit& on_visit) noexcept
 }
 
 auto
-kero::ServiceTraverser::TraverseRecursive(const ServiceKind& service_kind,
+kero::ServiceTraverser::TraverseRecursive(const ServiceKindId service_kind_id,
                                           const OnVisit& on_visit) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
@@ -39,8 +39,8 @@ kero::ServiceTraverser::TraverseRecursive(const ServiceKind& service_kind,
   visit_map_.emplace(service_kind.id, service_kind.name);
   traversal_stack_.push_back(service_kind.id);
 
-  const auto service_it = service_map_.find(service_kind.id);
-  if (service_it == service_map_.end()) {
+  const auto service_it = id_to_service_map_.find(service_kind.id);
+  if (service_it == id_to_service_map_.end()) {
     return ResultT::Err(
         Json{}
             .Set("message", "service not found in service map")
@@ -49,8 +49,8 @@ kero::ServiceTraverser::TraverseRecursive(const ServiceKind& service_kind,
   }
 
   auto& service = *service_it->second;
-  const auto& dependencies = service.GetDependencies();
-  for (const auto& dependency : dependencies) {
+  const auto& dependency_declarations = service.GetDependencyDeclarations();
+  for (const auto& dependency : dependency_declarations) {
     auto visit_it = visit_map_.find(dependency.id);
     if (visit_it != visit_map_.end()) {
       auto found = std::find(traversal_stack_.begin(),

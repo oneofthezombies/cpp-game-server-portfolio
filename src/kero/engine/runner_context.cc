@@ -5,24 +5,6 @@
 using namespace kero;
 
 auto
-kero::RunnerContext::GetService(const ServiceKind& service_kind) const noexcept
-    -> OptionRef<Service&> {
-  return service_map_.GetService(service_kind);
-}
-
-auto
-kero::RunnerContext::GetService(const ServiceKind::Id service_kind_id)
-    const noexcept -> OptionRef<Service&> {
-  return service_map_.GetService(service_kind_id);
-}
-
-auto
-kero::RunnerContext::GetService(const ServiceKind::Name& service_kind_name)
-    const noexcept -> OptionRef<Service&> {
-  return service_map_.GetService(service_kind_name);
-}
-
-auto
 kero::RunnerContext::SubscribeEvent(const std::string& event,
                                     const ServiceKind& kind) noexcept
     -> Result<Void> {

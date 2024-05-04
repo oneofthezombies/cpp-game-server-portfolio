@@ -18,7 +18,7 @@ class Engine {
   CreateRunnerBuilder(std::string&& runner_name) -> RunnerBuilder;
 
  private:
-  EngineContext engine_context_{};
+  Own<EngineContext> engine_context_{};
 };
 
 }  // namespace kero

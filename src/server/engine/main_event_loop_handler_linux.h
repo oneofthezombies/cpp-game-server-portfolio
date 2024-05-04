@@ -37,7 +37,7 @@ class MainEventLoopHandlerLinux final : public EventLoopHandler {
       -> Result<Void> override;
 
  private:
-  Owned<FileDescriptorLinux> server_fd_;
+  Own<FileDescriptorLinux> server_fd_;
   std::string primary_event_loop_name_;
 };
 

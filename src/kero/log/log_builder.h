@@ -42,7 +42,7 @@ class LogBuilder final {
   Log() noexcept -> Result<Void>;
 
  private:
-  Owned<kero::Log> log_;
+  Own<kero::Log> log_;
 };
 
 [[nodiscard]] auto

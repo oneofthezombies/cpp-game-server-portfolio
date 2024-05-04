@@ -4,6 +4,7 @@
 #include "kero/core/common.h"
 #include "kero/engine/actor_system.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_kind.h"
 #include "runner_context.h"
 
 namespace kero {
@@ -24,6 +25,12 @@ class ActorService final : public Service {
   auto
   SendMail(std::string &&to, std::string &&event, Json &&body) noexcept -> void;
 
+  [[nodiscard]] static auto
+  GetKindId() noexcept -> ServiceKind::Id;
+
+  [[nodiscard]] static auto
+  GetKindName() noexcept -> ServiceKind::Name;
+
  private:
   explicit ActorService(const Pin<RunnerContext> runner_context,
                         std::string &&name,
@@ -35,7 +42,7 @@ class ActorService final : public Service {
   friend class ActorSystem;
 };
 
-using ActorServicePtr = Owned<ActorService>;
+using ActorServicePtr = Own<ActorService>;
 
 }  // namespace kero
 

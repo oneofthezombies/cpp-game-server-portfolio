@@ -5,26 +5,49 @@
 
 using namespace kero;
 
-kero::Service::Service(const Pin<RunnerContext> runner_context,
-                       const ServiceKind& kind,
-                       Dependencies&& dependencies) noexcept
+kero::Service::Service(
+    const Pin<RunnerContext> runner_context,
+    DependencyDeclarations&& dependency_declarations) noexcept
     : runner_context_{runner_context},
-      kind_{kind},
-      dependencies_{std::move(dependencies)} {}
+      dependency_declarations_{std::move(dependency_declarations)} {}
 
 auto
-kero::Service::GetKind() const noexcept -> const ServiceKind& {
-  return kind_;
+kero::Service::GetKindId() const noexcept -> ServiceKindId {
+  return Service::GetKindId();
 }
 
 auto
-kero::Service::GetDependencies() const noexcept -> const Dependencies& {
-  return dependencies_;
+kero::Service::GetKindName() const noexcept -> ServiceKindName {
+  return Service::GetKindName();
+}
+
+auto
+kero::Service::GetDependencyDeclarations() const noexcept
+    -> const DependencyDeclarations& {
+  return dependency_declarations_;
 }
 
 auto
 kero::Service::GetRunnerContext() noexcept -> RunnerContext& {
   return *runner_context_;
+}
+
+auto
+kero::Service::GetDependency(const ServiceKind& kind) noexcept
+    -> Borrow<Service> {
+  return GetDependency(kind.id);
+}
+
+auto
+kero::Service::GetDependency(const ServiceKind::Id kind_id) noexcept
+    -> Borrow<Service> {
+  return dependency_map_.GetService(kind_id);
+}
+
+auto
+kero::Service::GetDependency(const ServiceKind::Name& kind_name) noexcept
+    -> Borrow<Service> {
+  return dependency_map_.GetService(kind_name);
 }
 
 auto
@@ -53,8 +76,8 @@ kero::Service::UnsubscribeEvent(const std::string& event) -> Result<Void> {
 }
 
 auto
-kero::Service::InvokeEvent(const std::string& event,
-                           const Json& data) noexcept -> Result<Void> {
+kero::Service::InvokeEvent(const std::string& event, const Json& data) noexcept
+    -> Result<Void> {
   return runner_context_->InvokeEvent(event, data);
 }
 
@@ -74,7 +97,7 @@ kero::Service::OnUpdate() noexcept -> void {
 }
 
 auto
-kero::Service::OnEvent(const std::string& event,
-                       const Json& data) noexcept -> void {
+kero::Service::OnEvent(const std::string& event, const Json& data) noexcept
+    -> void {
   // noop
 }

@@ -87,7 +87,7 @@ class ThreadActorSystem {
   ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<Json> &&rx) -> void;
 
   Pin<ActorSystem> actor_system_;
-  Owned<spsc::Tx<Json>> tx_;
+  Own<spsc::Tx<Json>> tx_;
   std::thread thread_;
 };
 

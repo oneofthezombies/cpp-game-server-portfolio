@@ -12,8 +12,8 @@
 using namespace kero;
 
 kero::TcpServerService::TcpServerService(
-    RunnerContextPtr&& runner_context) noexcept
-    : Service{std::move(runner_context),
+    const Pin<RunnerContext> runner_context) noexcept
+    : Service{runner_context,
               kServiceKindTcpServer,
               {kServiceKindConfig, kServiceKindIoEventLoop}} {}
 

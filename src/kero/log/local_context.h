@@ -18,25 +18,25 @@ class LocalContext final {
     CLASS_KIND_PINNABLE(Builder);
 
     auto
-    Build() const noexcept -> Result<Owned<LocalContext>>;
+    Build() const noexcept -> Result<Own<LocalContext>>;
   };
 
   ~LocalContext() noexcept;
   CLASS_KIND_MOVABLE(LocalContext);
 
   auto
-  SendLog(Owned<kero::Log>&& log) const noexcept -> void;
+  SendLog(Own<kero::Log>&& log) const noexcept -> void;
 
  private:
-  LocalContext(spsc::Tx<Owned<kero::Log>>&& log_tx,
+  LocalContext(spsc::Tx<Own<kero::Log>>&& log_tx,
                std::string&& thread_id) noexcept;
 
-  spsc::Tx<Owned<kero::Log>> log_tx_;
+  spsc::Tx<Own<kero::Log>> log_tx_;
   std::string thread_id_;
 };
 
 auto
-GetLocalContext() -> Owned<LocalContext>&;
+GetLocalContext() -> Own<LocalContext>&;
 
 }  // namespace kero
 

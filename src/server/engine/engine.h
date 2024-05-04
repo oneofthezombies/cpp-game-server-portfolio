@@ -19,7 +19,7 @@ class EngineImplRawDeleter final {
   operator()(void *impl_raw) const noexcept;
 };
 
-using EngineImplPtr = Owned<void, EngineImplRawDeleter>;
+using EngineImplPtr = Own<void, EngineImplRawDeleter>;
 
 class Engine final {
  public:

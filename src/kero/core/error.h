@@ -9,7 +9,7 @@ namespace kero {
 
 struct Error final {
   using Code = i32;
-  using Cause = Owned<Error>;
+  using Cause = Own<Error>;
 
   enum : i32 {
     kFailed = 1,

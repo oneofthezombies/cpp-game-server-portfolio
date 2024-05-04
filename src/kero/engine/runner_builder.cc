@@ -4,13 +4,13 @@
 
 using namespace kero;
 
-kero::RunnerBuilder::RunnerBuilder(const Borrowed<EngineContext> engine_context,
+kero::RunnerBuilder::RunnerBuilder(const Borrow<EngineContext> engine_context,
                                    std::string&& runner_name) noexcept
     : engine_context_{engine_context}, runner_name_{std::move(runner_name)} {}
 
 auto
 kero::RunnerBuilder::AddServiceFactory(
-    Owned<ServiceFactory>&& service_factory) noexcept -> RunnerBuilder& {
+    Own<ServiceFactory>&& service_factory) noexcept -> RunnerBuilder& {
   service_factories_.push_back(std::move(service_factory));
   return *this;
 }

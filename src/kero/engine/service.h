@@ -3,11 +3,13 @@
 
 #include <string>
 
+#include "kero/core/borrow.h"
 #include "kero/core/common.h"
 #include "kero/core/json.h"
 #include "kero/core/result.h"
 #include "kero/engine/pin.h"
 #include "kero/engine/service_kind.h"
+#include "kero/engine/service_read_only_map.h"
 
 namespace kero {
 
@@ -15,60 +17,36 @@ class RunnerContext;
 
 class Service {
  public:
-  using Dependencies = std::vector<ServiceKind>;
+  using DependencyDeclarations = std::vector<ServiceKindId>;
 
   explicit Service(const Pin<RunnerContext> runner_context,
-                   const ServiceKind& kind,
-                   Dependencies&& dependencies) noexcept;
+                   DependencyDeclarations&& dependency_declarations) noexcept;
 
   virtual ~Service() noexcept = default;
   CLASS_KIND_MOVABLE(Service);
 
   [[nodiscard]] auto
-  GetKind() const noexcept -> const ServiceKind&;
+  GetKindId() const noexcept -> ServiceKindId;
 
   [[nodiscard]] auto
-  GetDependencies() const noexcept -> const Dependencies&;
+  GetKindName() const noexcept -> ServiceKindName;
+
+  [[nodiscard]] auto
+  GetDependencyDeclarations() const noexcept -> const DependencyDeclarations&;
 
   [[nodiscard]] auto
   GetRunnerContext() noexcept -> RunnerContext&;
 
-  /**
-   * Check equality of the service kind id
-   */
   [[nodiscard]] auto
-  Is(const ServiceKind& kind) const noexcept -> bool;
+  GetDependency(const ServiceKindId kind_id) noexcept -> Borrow<Service>;
 
   [[nodiscard]] auto
-  Is(const ServiceKind::Id kind_id) const noexcept -> bool;
-
-  [[nodiscard]] auto
-  Is(const ServiceKind::Name& kind_name) const noexcept -> bool;
+  GetDependency(const ServiceKindName kind_name) noexcept -> Borrow<Service>;
 
   template <IsServiceKind T>
   [[nodiscard]] auto
-  As(const ServiceKind& kind) noexcept -> OptionRef<T&> {
-    return As<T>(kind.id);
-  }
-
-  template <IsServiceKind T>
-  [[nodiscard]] auto
-  As(const ServiceKind::Id kind_id) noexcept -> OptionRef<T&> {
-    if (!Is(kind_id)) {
-      return None;
-    }
-
-    return *static_cast<T*>(this);
-  }
-
-  template <IsServiceKind T>
-  [[nodiscard]] auto
-  As(const ServiceKind::Name& kind_name) noexcept -> OptionRef<T&> {
-    if (!Is(kind_name)) {
-      return None;
-    }
-
-    return *static_cast<T*>(this);
+  GetDependency() noexcept -> Borrow<T> {
+    return GetDependency(T::GetKind());
   }
 
   [[nodiscard]] auto
@@ -78,8 +56,8 @@ class Service {
   UnsubscribeEvent(const std::string& event) -> Result<Void>;
 
   auto
-  InvokeEvent(const std::string& event,
-              const Json& data) noexcept -> Result<Void>;
+  InvokeEvent(const std::string& event, const Json& data) noexcept
+      -> Result<Void>;
 
   /**
    * Default implementation of the `OnCreate` method is noop.
@@ -106,32 +84,13 @@ class Service {
   OnEvent(const std::string& event, const Json& data) noexcept -> void;
 
  private:
-  ServiceKind kind_;
-  Dependencies dependencies_;
+  ServiceReadOnlyMap dependency_map_{};
+  DependencyDeclarations dependency_declarations_;
   Pin<RunnerContext> runner_context_;
+
+  friend class ServiceMap;
 };
 
 }  // namespace kero
-
-namespace std {
-
-template <>
-struct hash<kero::ServiceKind> {
-  [[nodiscard]] auto
-  operator()(const kero::ServiceKind& kind) const noexcept -> size_t {
-    return std::hash<kero::ServiceKind::Id>{}(kind.id);
-  }
-};
-
-template <>
-struct equal_to<kero::ServiceKind> {
-  [[nodiscard]] auto
-  operator()(const kero::ServiceKind& lhs,
-             const kero::ServiceKind& rhs) const noexcept -> bool {
-    return lhs.id == rhs.id;
-  }
-};
-
-}  // namespace std
 
 #endif  // KERO_ENGINE_SERVICE_H
