@@ -19,3 +19,19 @@ auto
 kero::Defer::Cancel() noexcept -> void {
   fn_ = nullptr;
 }
+
+kero::StackDefer::~StackDefer() noexcept {
+  for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
+    (*it)();
+  }
+}
+
+auto
+kero::StackDefer::Push(Fn &&fn) noexcept -> void {
+  stack_.push_back(std::move(fn));
+}
+
+auto
+kero::StackDefer::Cancel() noexcept -> void {
+  stack_.clear();
+}

@@ -20,7 +20,7 @@
 using namespace kero;
 
 auto
-Run(int argc, char** argv) -> Result<Void>;
+RunEngine(int argc, char** argv, Own<Engine>& engine) -> Result<Void>;
 auto
 BuildMainRunner(int argc,
                 char** argv,
@@ -28,7 +28,8 @@ BuildMainRunner(int argc,
 auto
 BuildMatchRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>>;
 auto
-BuildBattleRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>>;
+BuildBattleRunner(Own<Engine>& engine,
+                  const i32 index) -> Result<Pin<ThreadRunner>>;
 
 auto
 main(int argc, char** argv) -> int {
@@ -37,29 +38,33 @@ main(int argc, char** argv) -> int {
   transport->SetLevel(Level::kDebug);
   Center{}.AddTransport(std::move(transport));
 
-  auto run_res = Run(argc, argv);
-  if (run_res.IsErr()) {
-    log::Error("Failed to run").Data("error", run_res.TakeErr()).Log();
+  auto engine = std::make_unique<Engine>();
+  auto run_engine_res = RunEngine(argc, argv, engine);
+  if (run_engine_res.IsErr()) {
+    log::Error("Failed to run engine")
+        .Data("error", run_engine_res.TakeErr())
+        .Log();
   }
 
   Center{}.Shutdown();
-  return run_res.IsOk() ? 0 : 1;
+  return run_engine_res.IsOk() ? 0 : 1;
 }
 
 auto
-Run(int argc, char** argv) -> Result<Void> {
+RunEngine(int argc, char** argv, Own<Engine>& engine) -> Result<Void> {
   using ResultT = Result<Void>;
 
-  auto engine = std::make_unique<Engine>();
+  StackDefer defer;
+
   if (auto res = engine->Start(); res.IsErr()) {
     return ResultT::Err(res.TakeErr());
   }
 
-  Defer stop_engine{[&engine] {
+  defer.Push([&engine] {
     if (auto res = engine->Stop(); res.IsErr()) {
       log::Error("Failed to stop engine").Data("error", res.TakeErr()).Log();
     }
-  }};
+  });
 
   auto match_runner_res = BuildMatchRunner(engine);
   if (match_runner_res.IsErr()) {
@@ -71,23 +76,37 @@ Run(int argc, char** argv) -> Result<Void> {
     return ResultT::Err(res.TakeErr());
   }
 
-  Defer stop_match_runner{[match_runner] {
+  defer.Push([match_runner] {
     if (auto res = match_runner->Stop(); res.IsErr()) {
       log::Error("Failed to stop match runner")
           .Data("error", res.TakeErr())
           .Log();
     }
-  }};
+  });
 
-  auto battle_runner_res = BuildBattleRunner(engine);
+  const auto core_count = std::thread::hardware_concurrency();
 
-  if (battle_runner_res.IsErr()) {
-    return ResultT::Err(battle_runner_res.TakeErr());
-  }
+  // minimum thread count is 3 (main io, logging, actor system).
+  const auto battle_count = core_count - 3 > 0 ? core_count : 1;
 
-  auto battle_runner = battle_runner_res.Ok();
-  if (auto res = battle_runner->Start(); res.IsErr()) {
-    return ResultT::Err(res.TakeErr());
+  for (i32 i = 0; i < battle_count; ++i) {
+    auto battle_runner_res = BuildBattleRunner(engine, i);
+    if (battle_runner_res.IsErr()) {
+      return ResultT::Err(battle_runner_res.TakeErr());
+    }
+
+    auto battle_runner = battle_runner_res.Ok();
+    if (auto res = battle_runner->Start(); res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    defer.Push([battle_runner] {
+      if (auto res = battle_runner->Stop(); res.IsErr()) {
+        log::Error("Failed to stop battle runner")
+            .Data("error", res.TakeErr())
+            .Log();
+      }
+    });
   }
 
   auto main_runner_res = BuildMainRunner(argc, argv, engine);
@@ -153,11 +172,12 @@ BuildMatchRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>> {
 }
 
 auto
-BuildBattleRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>> {
+BuildBattleRunner(Own<Engine>& engine,
+                  const i32 index) -> Result<Pin<ThreadRunner>> {
   using ResultT = Result<Pin<ThreadRunner>>;
 
   auto res =
-      engine->CreateRunnerBuilder("battle")
+      engine->CreateRunnerBuilder("battle:" + std::to_string(index))
           .AddServiceFactory(std::make_unique<ActorServiceFactory>(engine))
           .AddServiceFactory(
               std::make_unique<DefaultServiceFactory<IoEventLoopService>>())

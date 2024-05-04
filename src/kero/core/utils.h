@@ -45,6 +45,24 @@ class Defer final {
   std::function<void()> fn_;
 };
 
+class StackDefer final {
+ public:
+  using Fn = std::function<void()>;
+
+  explicit StackDefer() noexcept = default;
+  ~StackDefer() noexcept;
+  KERO_CLASS_KIND_PINNABLE(StackDefer);
+
+  auto
+  Push(Fn &&fn) noexcept -> void;
+
+  auto
+  Cancel() noexcept -> void;
+
+ private:
+  std::vector<Fn> stack_;
+};
+
 }  // namespace kero
 
 #endif  // KERO_CORE_UTILS_H
