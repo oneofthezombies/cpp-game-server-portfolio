@@ -74,7 +74,7 @@ class ActorSystem final {
 
 class ThreadActorSystem {
  public:
-  explicit ThreadActorSystem(const Borrow<ActorSystem> actor_system) noexcept;
+  explicit ThreadActorSystem(Own<ActorSystem> &&actor_system) noexcept;
   ~ThreadActorSystem() noexcept = default;
 
   [[nodiscard]] auto
@@ -83,12 +83,15 @@ class ThreadActorSystem {
   [[nodiscard]] auto
   Stop() noexcept -> Result<Void>;
 
+  [[nodiscard]] auto
+  GetActorSystem() const noexcept -> Borrow<ActorSystem>;
+
  private:
   static auto
   ThreadMain(const Borrow<ActorSystem> actor_system,
              spsc::Rx<FlatJson> &&rx) -> void;
 
-  Borrow<ActorSystem> actor_system_;
+  Own<ActorSystem> actor_system_;
   Own<spsc::Tx<FlatJson>> tx_;
   std::thread thread_;
 };

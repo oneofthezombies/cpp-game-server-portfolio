@@ -32,6 +32,12 @@ struct Void final {
 template <typename T>
 using Own = std::unique_ptr<T>;
 
+template <typename T>
+using Share = std::shared_ptr<T>;
+
+template <typename T>
+using Weak = std::weak_ptr<T>;
+
 using i8 = int8_t;
 using i16 = int16_t;
 using i32 = int32_t;

@@ -158,8 +158,8 @@ kero::ActorSystem::Run(spsc::Rx<FlatJson> &&rx) -> Result<Void> {
 }
 
 kero::ThreadActorSystem::ThreadActorSystem(
-    const Borrow<ActorSystem> actor_system) noexcept
-    : actor_system_{actor_system} {}
+    Own<ActorSystem> &&actor_system) noexcept
+    : actor_system_{std::move(actor_system)} {}
 
 auto
 kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
@@ -176,7 +176,7 @@ kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
   auto [tx, rx] = spsc::Channel<FlatJson>::Builder{}.Build();
   tx_ = std::make_unique<spsc::Tx<FlatJson>>(std::move(tx));
 
-  thread_ = std::thread{ThreadMain, actor_system_, std::move(rx)};
+  thread_ = std::thread{ThreadMain, Borrow{actor_system_}, std::move(rx)};
   return OkVoid();
 }
 
@@ -193,6 +193,12 @@ kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
   tx_->Send(FlatJson{}.Set(std::string{kShutdown}, true).Take());
   thread_.join();
   return OkVoid();
+}
+
+auto
+kero::ThreadActorSystem::GetActorSystem() const noexcept
+    -> Borrow<ActorSystem> {
+  return Borrow{actor_system_};
 }
 
 auto

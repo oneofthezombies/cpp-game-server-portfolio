@@ -20,16 +20,16 @@
 using namespace kero;
 
 auto
-RunEngine(int argc, char** argv, Own<Engine>& engine) -> Result<Void>;
+Run(int argc, char** argv) -> Result<Void>;
 auto
 BuildMainRunner(int argc,
                 char** argv,
-                Own<Engine>& engine) -> Result<Pin<Runner>>;
+                const Share<Engine> engine) -> Result<Own<Runner>>;
 auto
-BuildMatchRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>>;
+BuildMatchRunner(const Share<Engine> engine) -> Result<Share<ThreadRunner>>;
 auto
-BuildBattleRunner(Own<Engine>& engine,
-                  const i32 index) -> Result<Pin<ThreadRunner>>;
+BuildBattleRunner(const Share<Engine> engine,
+                  const i32 index) -> Result<Share<ThreadRunner>>;
 
 auto
 main(int argc, char** argv) -> int {
@@ -38,29 +38,26 @@ main(int argc, char** argv) -> int {
   transport->SetLevel(Level::kDebug);
   Center{}.AddTransport(std::move(transport));
 
-  auto engine = std::make_unique<Engine>();
-  auto run_engine_res = RunEngine(argc, argv, engine);
-  if (run_engine_res.IsErr()) {
-    log::Error("Failed to run engine")
-        .Data("error", run_engine_res.TakeErr())
-        .Log();
+  auto run_res = Run(argc, argv);
+  if (run_res.IsErr()) {
+    log::Error("Failed to run engine").Data("error", run_res.TakeErr()).Log();
   }
 
   Center{}.Shutdown();
-  return run_engine_res.IsOk() ? 0 : 1;
+  return run_res.IsOk() ? 0 : 1;
 }
 
 auto
-RunEngine(int argc, char** argv, Own<Engine>& engine) -> Result<Void> {
+Run(int argc, char** argv) -> Result<Void> {
   using ResultT = Result<Void>;
 
   StackDefer defer;
-
+  auto engine = std::make_shared<Engine>();
   if (auto res = engine->Start(); res.IsErr()) {
     return ResultT::Err(res.TakeErr());
   }
 
-  defer.Push([&engine] {
+  defer.Push([engine] {
     if (auto res = engine->Stop(); res.IsErr()) {
       log::Error("Failed to stop engine").Data("error", res.TakeErr()).Log();
     }
@@ -114,7 +111,7 @@ RunEngine(int argc, char** argv, Own<Engine>& engine) -> Result<Void> {
     return ResultT::Err(main_runner_res.TakeErr());
   }
 
-  auto main_runner = main_runner_res.Ok();
+  auto main_runner = main_runner_res.TakeOk();
   if (auto res = main_runner->Run(); res.IsErr()) {
     return ResultT::Err(res.TakeErr());
   }
@@ -125,8 +122,8 @@ RunEngine(int argc, char** argv, Own<Engine>& engine) -> Result<Void> {
 auto
 BuildMainRunner(int argc,
                 char** argv,
-                Own<Engine>& engine) -> Result<Pin<Runner>> {
-  using ResultT = Result<Pin<Runner>>;
+                const Share<Engine> engine) -> Result<Own<Runner>> {
+  using ResultT = Result<Own<Runner>>;
 
   auto res =
       engine->CreateRunnerBuilder("main")
@@ -138,7 +135,7 @@ BuildMainRunner(int argc,
               std::make_unique<DefaultServiceFactory<IoEventLoopService>>())
           .AddServiceFactory(
               std::make_unique<DefaultServiceFactory<TcpServerService>>())
-          .AddServiceFactory([](const Pin<RunnerContext> runner_context) {
+          .AddServiceFactory([](const Borrow<RunnerContext> runner_context) {
             return Result<Own<Service>>{
                 std::make_unique<SocketRouterService>(runner_context, "match")};
           })
@@ -152,8 +149,8 @@ BuildMainRunner(int argc,
 }
 
 auto
-BuildMatchRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>> {
-  using ResultT = Result<Pin<ThreadRunner>>;
+BuildMatchRunner(const Share<Engine> engine) -> Result<Share<ThreadRunner>> {
+  using ResultT = Result<Share<ThreadRunner>>;
 
   auto res =
       engine->CreateRunnerBuilder("match")
@@ -172,9 +169,9 @@ BuildMatchRunner(Own<Engine>& engine) -> Result<Pin<ThreadRunner>> {
 }
 
 auto
-BuildBattleRunner(Own<Engine>& engine,
-                  const i32 index) -> Result<Pin<ThreadRunner>> {
-  using ResultT = Result<Pin<ThreadRunner>>;
+BuildBattleRunner(const Share<Engine> engine,
+                  const i32 index) -> Result<Share<ThreadRunner>> {
+  using ResultT = Result<Share<ThreadRunner>>;
 
   auto res =
       engine->CreateRunnerBuilder("battle:" + std::to_string(index))

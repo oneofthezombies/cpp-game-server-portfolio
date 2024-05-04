@@ -10,7 +10,7 @@ namespace kero {
 
 class SignalService final : public Service {
  public:
-  explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;
+  explicit SignalService(const Borrow<RunnerContext> runner_context) noexcept;
   virtual ~SignalService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(SignalService);
   KERO_SERVICE_KIND(kServiceKindId_Signal, "signal");

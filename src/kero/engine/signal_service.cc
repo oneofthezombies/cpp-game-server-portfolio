@@ -12,7 +12,7 @@
 using namespace kero;
 
 kero::SignalService::SignalService(
-    const Pin<RunnerContext> runner_context) noexcept
+    const Borrow<RunnerContext> runner_context) noexcept
     : Service{runner_context, {kServiceKindId_Actor}} {}
 
 auto

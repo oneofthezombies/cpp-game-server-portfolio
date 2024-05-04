@@ -9,7 +9,7 @@
 using namespace kero;
 
 kero::SocketRouterService::SocketRouterService(
-    const Pin<RunnerContext> runner_context, std::string&& target) noexcept
+    const Borrow<RunnerContext> runner_context, std::string&& target) noexcept
     : Service{runner_context, {kServiceKindId_Actor}},
       target_{std::move(target)} {}
 

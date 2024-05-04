@@ -19,7 +19,8 @@ class IoEventLoopService final : public Service {
     bool edge_trigger{false};
   };
 
-  explicit IoEventLoopService(const Pin<RunnerContext> runner_context) noexcept;
+  explicit IoEventLoopService(
+      const Borrow<RunnerContext> runner_context) noexcept;
   virtual ~IoEventLoopService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(IoEventLoopService);
   KERO_SERVICE_KIND(kServiceKindId_IoEventLoop, "io_event_loop");

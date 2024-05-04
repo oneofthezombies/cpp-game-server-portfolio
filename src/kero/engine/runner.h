@@ -12,7 +12,7 @@ namespace kero {
 
 class Runner {
  public:
-  explicit Runner(const Pin<RunnerContext> runner_context) noexcept;
+  explicit Runner(Own<RunnerContext>&& runner_context) noexcept;
   ~Runner() noexcept = default;
   KERO_CLASS_KIND_PINNABLE(Runner);
 
@@ -20,12 +20,12 @@ class Runner {
   Run() noexcept -> Result<Void>;
 
  private:
-  Pin<RunnerContext> runner_context_;
+  Own<RunnerContext> runner_context_;
 };
 
 class ThreadRunner {
  public:
-  explicit ThreadRunner(Pin<Runner> runner) noexcept;
+  explicit ThreadRunner(Own<Runner>&& runner) noexcept;
   ~ThreadRunner() noexcept = default;
   KERO_CLASS_KIND_MOVABLE(ThreadRunner);
 
@@ -37,10 +37,10 @@ class ThreadRunner {
 
  private:
   static void
-  ThreadMain(Pin<Runner> runner) noexcept;
+  ThreadMain(const Borrow<Runner> runner) noexcept;
 
   std::thread thread_;
-  Pin<Runner> runner_;
+  Own<Runner> runner_;
 };
 
 }  // namespace kero

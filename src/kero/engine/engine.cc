@@ -1,16 +1,13 @@
 #include "engine.h"
 
 #include "kero/core/borrow.h"
+#include "kero/core/utils.h"
 #include "kero/engine/runner_builder.h"
 
 using namespace kero;
 
-kero::Engine::Engine() noexcept : engine_context_{} {
-  engine_context_->pin_system = std::make_unique<PinSystem>();
-  engine_context_->actor_system = std::make_unique<ActorSystem>();
-  engine_context_->thread_actor_system = std::make_unique<ThreadActorSystem>(
-      Borrow{engine_context_->actor_system});
-}
+kero::Engine::Engine() noexcept
+    : engine_context_{std::make_unique<EngineContext>()} {}
 
 auto
 kero::Engine::CreateRunnerBuilder(std::string&& runner_name) -> RunnerBuilder {
@@ -38,6 +35,5 @@ kero::Engine::Stop() -> Result<Void> {
     return ResultT::Err(res.TakeErr());
   }
 
-  engine_context_->pin_system->DestroyAll();
   return OkVoid();
 }

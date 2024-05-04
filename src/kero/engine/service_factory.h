@@ -1,10 +1,11 @@
 #ifndef KERO_ENGINE_SERVICE_FACTORY_H
 #define KERO_ENGINE_SERVICE_FACTORY_H
 
+#include "kero/core/borrow.h"
 #include "kero/core/common.h"
 #include "kero/core/result.h"
 #include "kero/engine/pin.h"
-#include "service_kind.h"
+#include "kero/engine/service_kind.h"
 
 namespace kero {
 
@@ -18,12 +19,12 @@ class ServiceFactory {
   KERO_CLASS_KIND_MOVABLE(ServiceFactory);
 
   [[nodiscard]] virtual auto
-  Create(const Pin<RunnerContext> runner_context) noexcept
+  Create(const Borrow<RunnerContext> runner_context) noexcept
       -> Result<Own<Service>> = 0;
 };
 
 using ServiceFactoryFn =
-    std::function<Result<Own<Service>>(const Pin<RunnerContext>)>;
+    std::function<Result<Own<Service>>(const Borrow<RunnerContext>)>;
 
 class ServiceFactoryFnImpl final : public ServiceFactory {
  public:
@@ -33,7 +34,7 @@ class ServiceFactoryFnImpl final : public ServiceFactory {
   KERO_CLASS_KIND_MOVABLE(ServiceFactoryFnImpl);
 
   [[nodiscard]] virtual auto
-  Create(const Pin<RunnerContext> runner_context) noexcept
+  Create(const Borrow<RunnerContext> runner_context) noexcept
       -> Result<Own<Service>> override;
 
  private:
@@ -48,7 +49,7 @@ class DefaultServiceFactory final : public ServiceFactory {
   KERO_CLASS_KIND_MOVABLE(DefaultServiceFactory);
 
   [[nodiscard]] virtual auto
-  Create(const Pin<RunnerContext> runner_context) noexcept
+  Create(const Borrow<RunnerContext> runner_context) noexcept
       -> Result<Own<Service>> override {
     return Result<Own<Service>>::Ok(std::make_unique<T>(runner_context));
   };

@@ -6,7 +6,7 @@
 using namespace kero;
 
 kero::Service::Service(
-    const Pin<RunnerContext> runner_context,
+    const Borrow<RunnerContext> runner_context,
     DependencyDeclarations&& dependency_declarations) noexcept
     : runner_context_{runner_context},
       dependency_declarations_{std::move(dependency_declarations)} {}

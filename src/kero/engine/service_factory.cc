@@ -10,6 +10,7 @@ kero::ServiceFactoryFnImpl::ServiceFactoryFnImpl(
 
 auto
 kero::ServiceFactoryFnImpl::Create(
-    const Pin<RunnerContext> runner_context) noexcept -> Result<Own<Service>> {
+    const Borrow<RunnerContext> runner_context) noexcept
+    -> Result<Own<Service>> {
   return fn_(runner_context);
 }

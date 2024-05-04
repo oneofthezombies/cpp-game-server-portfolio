@@ -34,7 +34,7 @@ class ActorService final : public Service {
   BroadcastMail(std::string &&event, FlatJson &&body) noexcept -> void;
 
  private:
-  explicit ActorService(const Pin<RunnerContext> runner_context,
+  explicit ActorService(const Borrow<RunnerContext> runner_context,
                         std::string &&name,
                         MailBox &&mail_box) noexcept;
 
@@ -46,16 +46,16 @@ class ActorService final : public Service {
 
 class ActorServiceFactory final : public ServiceFactory {
  public:
-  explicit ActorServiceFactory(const Own<Engine> &engine) noexcept;
+  explicit ActorServiceFactory(const Share<Engine> engine) noexcept;
   virtual ~ActorServiceFactory() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(ActorServiceFactory);
 
   [[nodiscard]] virtual auto
-  Create(const Pin<RunnerContext> runner_context) noexcept
+  Create(const Borrow<RunnerContext> runner_context) noexcept
       -> Result<Own<Service>> override;
 
  private:
-  Borrow<Engine> engine_;
+  Share<Engine> engine_;
 };
 
 }  // namespace kero

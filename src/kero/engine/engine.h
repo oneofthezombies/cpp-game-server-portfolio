@@ -25,7 +25,7 @@ class Engine {
   Stop() -> Result<Void>;
 
  private:
-  Own<EngineContext> engine_context_{};
+  Own<EngineContext> engine_context_;
 
   friend class ActorServiceFactory;
 };

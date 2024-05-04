@@ -9,7 +9,8 @@ namespace kero {
 
 class TcpServerService final : public Service {
  public:
-  explicit TcpServerService(const Pin<RunnerContext> runner_context) noexcept;
+  explicit TcpServerService(
+      const Borrow<RunnerContext> runner_context) noexcept;
   virtual ~TcpServerService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(TcpServerService);
   KERO_SERVICE_KIND(kServiceKindId_TcpServer, "tcp_server");

@@ -4,6 +4,9 @@
 
 using namespace kero;
 
+kero::RunnerContext::RunnerContext(std::string&& runner_name) noexcept
+    : runner_name_{std::move(runner_name)} {}
+
 auto
 kero::RunnerContext::SubscribeEvent(
     const std::string& event,

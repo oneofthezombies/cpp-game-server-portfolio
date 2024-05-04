@@ -16,7 +16,7 @@ class RunnerContext {
   using EventHandlerMap = std::unordered_map<std::string /* event */,
                                              std::unordered_set<ServiceKindId>>;
 
-  explicit RunnerContext() noexcept = default;
+  explicit RunnerContext(std::string&& runner_name) noexcept;
   ~RunnerContext() noexcept = default;
   KERO_CLASS_KIND_PINNABLE(RunnerContext);
 

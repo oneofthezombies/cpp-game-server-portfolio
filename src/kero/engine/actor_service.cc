@@ -6,7 +6,7 @@
 
 using namespace kero;
 
-kero::ActorService::ActorService(const Pin<RunnerContext> runner_context,
+kero::ActorService::ActorService(const Borrow<RunnerContext> runner_context,
                                  std::string &&name,
                                  MailBox &&mail_box) noexcept
     : Service{runner_context, {}},
@@ -57,17 +57,19 @@ kero::ActorService::BroadcastMail(std::string &&event,
 }
 
 kero::ActorServiceFactory::ActorServiceFactory(
-    const Own<Engine> &engine) noexcept
+    const Share<Engine> engine) noexcept
     : engine_{engine} {}
 
 auto
 kero::ActorServiceFactory::Create(
-    const Pin<RunnerContext> runner_context) noexcept -> Result<Own<Service>> {
+    const Borrow<RunnerContext> runner_context) noexcept
+    -> Result<Own<Service>> {
   using ResultT = Result<Own<Service>>;
 
   auto name = runner_context->GetName();
   auto mail_box_res =
-      engine_->engine_context_->actor_system->CreateMailBox(name);
+      engine_->engine_context_->thread_actor_system->GetActorSystem()
+          ->CreateMailBox(name);
   if (mail_box_res.IsErr()) {
     return ResultT::Err(mail_box_res.TakeErr());
   }

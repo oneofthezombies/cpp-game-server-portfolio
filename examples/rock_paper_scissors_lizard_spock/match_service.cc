@@ -13,7 +13,7 @@ using namespace kero;
 
 class MatchService final : public SocketPoolService<MatchService> {
  public:
-  explicit MatchService(const Pin<RunnerContext> runner_context) noexcept
+  explicit MatchService(const Borrow<RunnerContext> runner_context) noexcept
       : SocketPoolService{runner_context, {kServiceKindId_Actor}} {
     RegisterEventHandler(EventSocketOpen::kEvent, OnSocketOpen);
     RegisterEventHandler(EventSocketClose::kEvent, OnSocketClose);

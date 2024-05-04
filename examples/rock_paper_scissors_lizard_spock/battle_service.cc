@@ -19,7 +19,7 @@ struct BattleState {
 
 class BattleService final : public SocketPoolService<BattleService> {
  public:
-  explicit BattleService(const Pin<RunnerContext> runner_context) noexcept
+  explicit BattleService(const Borrow<RunnerContext> runner_context) noexcept
       : SocketPoolService{runner_context, {}} {
     RegisterEventHandler(EventSocketOpen::kEvent, OnSocketOpen);
     RegisterEventHandler(EventSocketClose::kEvent, OnSocketClose);

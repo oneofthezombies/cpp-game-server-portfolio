@@ -77,8 +77,7 @@ template <typename T>
   requires std::movable<T>
 class Tx final {
  public:
-  explicit Tx(const std::shared_ptr<Queue<T>> &queue) noexcept
-      : queue_{queue} {}
+  explicit Tx(const Share<Queue<T>> &queue) noexcept : queue_{queue} {}
   ~Tx() noexcept = default;
   KERO_CLASS_KIND_MOVABLE(Tx);
 
@@ -88,15 +87,14 @@ class Tx final {
   }
 
  private:
-  std::shared_ptr<Queue<T>> queue_;
+  Share<Queue<T>> queue_;
 };
 
 template <typename T>
   requires std::movable<T>
 class Rx final {
  public:
-  explicit Rx(const std::shared_ptr<Queue<T>> &queue) noexcept
-      : queue_{queue} {}
+  explicit Rx(const Share<Queue<T>> &queue) noexcept : queue_{queue} {}
   ~Rx() noexcept = default;
   KERO_CLASS_KIND_MOVABLE(Rx);
 
@@ -111,7 +109,7 @@ class Rx final {
   }
 
  private:
-  std::shared_ptr<Queue<T>> queue_;
+  Share<Queue<T>> queue_;
 };
 
 template <typename T>

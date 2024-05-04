@@ -8,7 +8,7 @@ namespace kero {
 
 class SocketRouterService final : public Service {
  public:
-  explicit SocketRouterService(const Pin<RunnerContext> runner_context,
+  explicit SocketRouterService(const Borrow<RunnerContext> runner_context,
                                std::string&& target) noexcept;
   virtual ~SocketRouterService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(SocketRouterService);

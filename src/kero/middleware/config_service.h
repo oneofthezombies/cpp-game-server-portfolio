@@ -11,7 +11,7 @@ namespace kero {
 
 class ConfigService final : public Service {
  public:
-  explicit ConfigService(const Pin<RunnerContext> runner_context,
+  explicit ConfigService(const Borrow<RunnerContext> runner_context,
                          FlatJson&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(ConfigService);
@@ -42,7 +42,7 @@ class ConfigServiceFactory : public ServiceFactory {
   virtual ~ConfigServiceFactory() noexcept override = default;
 
   [[nodiscard]] virtual auto
-  Create(const Pin<RunnerContext> runner_context) noexcept
+  Create(const Borrow<RunnerContext> runner_context) noexcept
       -> Result<Own<Service>> override;
 
  private:

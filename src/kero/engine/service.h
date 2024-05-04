@@ -19,7 +19,7 @@ class Service {
  public:
   using DependencyDeclarations = std::vector<ServiceKindId>;
 
-  explicit Service(const Pin<RunnerContext> runner_context,
+  explicit Service(const Borrow<RunnerContext> runner_context,
                    DependencyDeclarations&& dependency_declarations) noexcept;
 
   virtual ~Service() noexcept = default;
@@ -85,7 +85,7 @@ class Service {
 
  private:
   ServiceReadOnlyMap dependency_map_{};
-  Pin<RunnerContext> runner_context_;
+  Borrow<RunnerContext> runner_context_;
 
   friend class ServiceMap;
 };

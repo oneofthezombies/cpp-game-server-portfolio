@@ -19,7 +19,7 @@ class SocketPoolService : public Service {
   using EventHandler = std::function<Result<Void>(T*, const FlatJson&)>;
 
   explicit SocketPoolService(
-      const Pin<RunnerContext> runner_context,
+      const Borrow<RunnerContext> runner_context,
       DependencyDeclarations&& dependency_declarations) noexcept
       : Service{runner_context, {kServiceKindId_IoEventLoop}} {
     for (const auto dependency : dependency_declarations) {

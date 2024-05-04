@@ -1,5 +1,7 @@
 #include "runner.h"
 
+#include "kero/core/borrow.h"
+#include "kero/core/utils.h"
 #include "kero/engine/common.h"
 #include "kero/engine/runner_builder.h"
 #include "kero/engine/runner_context.h"
@@ -10,8 +12,8 @@
 
 using namespace kero;
 
-kero::Runner::Runner(const Pin<RunnerContext> runner_context) noexcept
-    : runner_context_{runner_context} {}
+kero::Runner::Runner(Own<RunnerContext>&& runner_context) noexcept
+    : runner_context_{std::move(runner_context)} {}
 
 auto
 kero::Runner::Run() noexcept -> Result<Void> {
@@ -43,8 +45,8 @@ kero::Runner::Run() noexcept -> Result<Void> {
   return OkVoid();
 }
 
-kero::ThreadRunner::ThreadRunner(Pin<Runner> runner) noexcept
-    : runner_{runner} {}
+kero::ThreadRunner::ThreadRunner(Own<Runner>&& runner) noexcept
+    : runner_{std::move(runner)} {}
 
 auto
 kero::ThreadRunner::Start() -> Result<Void> {
@@ -53,7 +55,7 @@ kero::ThreadRunner::Start() -> Result<Void> {
         FlatJson{}.Set("message", "thread already started").Take());
   }
 
-  thread_ = std::thread{ThreadMain, runner_};
+  thread_ = std::thread{ThreadMain, Borrow{runner_}};
   return OkVoid();
 }
 
@@ -69,7 +71,7 @@ kero::ThreadRunner::Stop() -> Result<Void> {
 }
 
 auto
-kero::ThreadRunner::ThreadMain(Pin<Runner> runner) noexcept -> void {
+kero::ThreadRunner::ThreadMain(const Borrow<Runner> runner) noexcept -> void {
   if (auto res = runner->Run()) {
     log::Info("Runner finished").Log();
   } else {

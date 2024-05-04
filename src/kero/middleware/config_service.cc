@@ -6,7 +6,7 @@
 
 using namespace kero;
 
-kero::ConfigService::ConfigService(const Pin<RunnerContext> runner_context,
+kero::ConfigService::ConfigService(const Borrow<RunnerContext> runner_context,
                                    FlatJson&& config) noexcept
     : Service{runner_context, {}}, config_{std::move(config)} {}
 
@@ -34,7 +34,8 @@ kero::ConfigServiceFactory::ConfigServiceFactory(int argc, char** argv) noexcept
 
 auto
 kero::ConfigServiceFactory::Create(
-    const Pin<RunnerContext> runner_context) noexcept -> Result<Own<Service>> {
+    const Borrow<RunnerContext> runner_context) noexcept
+    -> Result<Own<Service>> {
   using ResultT = Result<Own<Service>>;
 
   FlatJson config{};

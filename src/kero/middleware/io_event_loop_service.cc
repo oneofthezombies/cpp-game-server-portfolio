@@ -38,7 +38,7 @@ AddOptionsToEpollEvents(
 }  // namespace
 
 kero::IoEventLoopService::IoEventLoopService(
-    const Pin<RunnerContext> runner_context) noexcept
+    const Borrow<RunnerContext> runner_context) noexcept
     : Service{runner_context, {}} {}
 
 auto
