@@ -18,6 +18,12 @@ class Engine {
   [[nodiscard]] auto
   CreateRunnerBuilder(std::string&& runner_name) -> RunnerBuilder;
 
+  [[nodiscard]] auto
+  Start() -> Result<Void>;
+
+  [[nodiscard]] auto
+  Stop() -> Result<Void>;
+
  private:
   Own<EngineContext> engine_context_{};
 

@@ -67,7 +67,7 @@ kero::ActorServiceFactory::Create(
 
   auto name = runner_context->GetName();
   auto mail_box_res =
-      engine_->engine_context_->actor_system.CreateMailBox(name);
+      engine_->engine_context_->actor_system->CreateMailBox(name);
   if (mail_box_res.IsErr()) {
     return ResultT::Err(mail_box_res.TakeErr());
   }

@@ -4,6 +4,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include "kero/core/borrow.h"
 #include "kero/core/common.h"
 #include "kero/core/flat_json.h"
 #include "kero/core/result.h"
@@ -73,7 +74,7 @@ class ActorSystem final {
 
 class ThreadActorSystem {
  public:
-  explicit ThreadActorSystem(const Pin<ActorSystem> actor_system) noexcept;
+  explicit ThreadActorSystem(const Borrow<ActorSystem> actor_system) noexcept;
   ~ThreadActorSystem() noexcept = default;
 
   [[nodiscard]] auto
@@ -84,9 +85,10 @@ class ThreadActorSystem {
 
  private:
   static auto
-  ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<FlatJson> &&rx) -> void;
+  ThreadMain(const Borrow<ActorSystem> actor_system,
+             spsc::Rx<FlatJson> &&rx) -> void;
 
-  Pin<ActorSystem> actor_system_;
+  Borrow<ActorSystem> actor_system_;
   Own<spsc::Tx<FlatJson>> tx_;
   std::thread thread_;
 };

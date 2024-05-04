@@ -28,7 +28,7 @@ kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
   using ResultT = Result<Pin<Runner>>;
 
   auto runner_context_output_res =
-      engine_context_->pin_system.Create<RunnerContext>(
+      engine_context_->pin_system->Create<RunnerContext>(
           []() -> Result<RunnerContext*> {
             return Result<RunnerContext*>::Ok(new RunnerContext{});
           });
@@ -56,7 +56,7 @@ kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
   }
 
   auto runner_output_res =
-      engine_context_->pin_system.Create<Runner>([runner_context]() {
+      engine_context_->pin_system->Create<Runner>([runner_context]() {
         return Result<Runner*>::Ok(new Runner{runner_context});
       });
   if (runner_output_res.IsErr()) {
@@ -80,7 +80,7 @@ kero::RunnerBuilder::BuildThreadRunner() noexcept -> Result<Pin<ThreadRunner>> {
 
   auto runner = runner_res.TakeOk();
   auto thread_runner_output_res =
-      engine_context_->pin_system.Create<ThreadRunner>([runner]() {
+      engine_context_->pin_system->Create<ThreadRunner>([runner]() {
         return Result<ThreadRunner*>::Ok(new ThreadRunner{runner});
       });
   if (thread_runner_output_res.IsErr()) {

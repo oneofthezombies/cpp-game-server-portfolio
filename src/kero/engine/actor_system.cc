@@ -158,7 +158,7 @@ kero::ActorSystem::Run(spsc::Rx<FlatJson> &&rx) -> Result<Void> {
 }
 
 kero::ThreadActorSystem::ThreadActorSystem(
-    const Pin<ActorSystem> actor_system) noexcept
+    const Borrow<ActorSystem> actor_system) noexcept
     : actor_system_{actor_system} {}
 
 auto
@@ -196,7 +196,7 @@ kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
 }
 
 auto
-kero::ThreadActorSystem::ThreadMain(const Pin<ActorSystem> actor_system,
+kero::ThreadActorSystem::ThreadMain(const Borrow<ActorSystem> actor_system,
                                     spsc::Rx<FlatJson> &&rx) -> void {
   if (auto res = actor_system->Run(std::move(rx))) {
     log::Info("Actor system finished").Log();

@@ -7,8 +7,9 @@
 namespace kero {
 
 struct EngineContext {
-  PinSystem pin_system{};
-  ActorSystem actor_system{};
+  Own<PinSystem> pin_system;
+  Own<ActorSystem> actor_system;
+  Own<ThreadActorSystem> thread_actor_system;
 };
 
 }  // namespace kero
