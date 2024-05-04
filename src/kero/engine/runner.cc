@@ -4,6 +4,7 @@
 #include "kero/engine/runner_builder.h"
 #include "kero/engine/runner_context.h"
 #include "kero/engine/service.h"
+#include "kero/engine/service_map.h"
 #include "kero/engine/signal_service.h"
 #include "kero/log/log_builder.h"
 
@@ -16,7 +17,7 @@ auto
 kero::Runner::Run() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (auto res = CreateServices(); res.IsErr()) {
+  if (auto res = runner_context_->service_map_.InvokeCreate(); res.IsErr()) {
     return ResultT::Err(res.TakeErr());
   }
 

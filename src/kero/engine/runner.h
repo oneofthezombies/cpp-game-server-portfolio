@@ -20,18 +20,6 @@ class Runner {
   Run() noexcept -> Result<Void>;
 
  private:
-  [[nodiscard]] auto
-  ResolveDependencies() noexcept -> Result<Void>;
-
-  [[nodiscard]] auto
-  CreateServices() noexcept -> Result<Void>;
-
-  auto
-  DestroyServices() noexcept -> void;
-
-  auto
-  UpdateServices() noexcept -> void;
-
   Pin<RunnerContext> runner_context_;
 };
 
