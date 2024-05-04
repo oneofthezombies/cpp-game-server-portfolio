@@ -7,6 +7,7 @@
 #include "kero/core/common.h"
 #include "kero/core/flat_json.h"
 #include "kero/core/result.h"
+#include "kero/engine/common.h"
 #include "kero/engine/pin.h"
 #include "kero/engine/service_kind.h"
 #include "kero/engine/service_read_only_map.h"
@@ -24,6 +25,9 @@ class Service {
 
   virtual ~Service() noexcept = default;
   CLASS_KIND_MOVABLE(Service);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_Service;
+  static constexpr ServiceKindName kKindName = "service";
 
   [[nodiscard]] auto
   GetKindId() const noexcept -> ServiceKindId;

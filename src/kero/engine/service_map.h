@@ -44,7 +44,7 @@ class ServiceMap {
   template <IsServiceKind T>
   [[nodiscard]] auto
   GetService() const noexcept -> Option<Borrow<T>> {
-    const auto service_kind_id = T::GetKindId();
+    const auto service_kind_id = T::kKindId;
     auto it = id_to_service_map_.find(service_kind_id);
     if (it == id_to_service_map_.end()) {
       return None;

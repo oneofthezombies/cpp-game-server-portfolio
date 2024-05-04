@@ -13,12 +13,12 @@ kero::Service::Service(
 
 auto
 kero::Service::GetKindId() const noexcept -> ServiceKindId {
-  return Service::kKindId;
+  return kKindId;
 }
 
 auto
 kero::Service::GetKindName() const noexcept -> ServiceKindName {
-  return Service::GetKindName();
+  return kKindName;
 }
 
 auto

@@ -13,6 +13,7 @@ enum ErrorCode : Error::Code {
 enum : ServiceKindId {
   kServiceKindId_EngineBegin = 0,
 
+  kServiceKindId_Service,
   kServiceKindId_Actor,
   kServiceKindId_Signal,
 
