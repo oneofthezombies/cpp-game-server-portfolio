@@ -27,11 +27,11 @@ OnSignal(int signal) -> void {
       (*signal_mail_box_ptr)
           .tx.Send(Mail{"signal",
                         "all",
-                        core::JsonParser{}.Set("__shutdown", "").Take()});
+                        core::FlatJsonParser{}.Set("__shutdown", "").Take()});
     }
   }
 
-  core::JsonParser{}
+  core::FlatJsonParser{}
       .Set("message", "signal_received")
       .Set("signal", signal)
       .LogLn();
@@ -79,7 +79,7 @@ engine::EngineLinux::Run() noexcept -> Result<Void> {
     if (signal(SIGINT, OnSignal) == SIG_ERR) {
       return ResultT{
           Error::From(kLinuxSignalSetFailed,
-                      core::JsonParser{}
+                      core::FlatJsonParser{}
                           .Set("linux_error", core::LinuxError::FromErrno())
                           .IntoMap())};
     }
@@ -95,7 +95,7 @@ engine::EngineLinux::Run() noexcept -> Result<Void> {
     if (signal(SIGINT, SIG_DFL) == SIG_ERR) {
       return ResultT{
           Error::From(kLinuxSignalResetFailed,
-                      core::JsonParser{}
+                      core::FlatJsonParser{}
                           .Set("linux_error", core::LinuxError::FromErrno())
                           .IntoMap())};
     }
@@ -113,8 +113,9 @@ engine::EngineLinux::RegisterEventLoop(std::string &&name,
 
   if (auto it = event_loop_threads_.find(name);
       it != event_loop_threads_.end()) {
-    return ResultT{Error::From(kEngineEventLoopAlreadyExists,
-                               core::JsonParser{}.Set("name", name).IntoMap())};
+    return ResultT{
+        Error::From(kEngineEventLoopAlreadyExists,
+                    core::FlatJsonParser{}.Set("name", name).IntoMap())};
   }
 
   auto event_loop_res =
@@ -140,7 +141,7 @@ engine::EngineLinux::EventLoopThreadMain(EventLoopPtr &&event_loop) noexcept
   assert(event_loop != nullptr && "event_loop must not be nullptr");
 
   if (auto res = event_loop->Run(); res.IsErr()) {
-    core::JsonParser{}
+    core::FlatJsonParser{}
         .Set("message", "event loop thread run failed")
         .Set("name", event_loop->GetName())
         .Set("error", res.Err())

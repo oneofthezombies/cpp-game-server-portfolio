@@ -49,7 +49,7 @@ kero::IoEventLoopService::OnCreate() noexcept -> Result<Void> {
   if (!Fd::IsValid(epoll_fd)) {
     return ResultT::Err(
         Error::From(Errno::FromErrno()
-                        .IntoJson()
+                        .IntoFlatJson()
                         .Set("message", std::string{"Failed to create epoll"})
                         .Take()));
   }
@@ -114,7 +114,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
         0) {
       return ResultT::Err(Error::From(
           Errno::FromErrno()
-              .IntoJson()
+              .IntoFlatJson()
               .Set("message", std::string{"Failed to get socket error"})
               .Set("fd", static_cast<double>(event.data.fd))
               .Take()));
@@ -122,7 +122,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
 
     if (code == 0) {
       return ResultT::Err(
-          Error::From(Json{}
+          Error::From(FlatJson{}
                           .Set("message", std::string{"Socket error is zero"})
                           .Set("fd", static_cast<double>(event.data.fd))
                           .Take()));
@@ -131,7 +131,7 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
     const auto description = std::string_view{strerror(code)};
     if (auto res = GetRunnerContext().InvokeEvent(
             EventSocketError::kEvent,
-            Json{}
+            FlatJson{}
                 .Set(EventSocketError::kFd, static_cast<double>(event.data.fd))
                 .Set(EventSocketError::kErrorCode, static_cast<double>(code))
                 .Set(EventSocketError::kErrorDescription,
@@ -145,8 +145,8 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   if (event.events & EPOLLHUP) {
     if (auto res = GetRunnerContext().InvokeEvent(
             EventSocketClose::kEvent,
-            Json{}.Set(EventSocketClose::kFd,
-                       static_cast<double>(event.data.fd)))) {
+            FlatJson{}.Set(EventSocketClose::kFd,
+                           static_cast<double>(event.data.fd)))) {
       log::Error("Failed to invoke socket close event")
           .Data("error", res.TakeErr())
           .Log();
@@ -160,8 +160,8 @@ kero::IoEventLoopService::OnUpdateEpollEvent(
   if (event.events & EPOLLIN) {
     if (auto res = GetRunnerContext().InvokeEvent(
             EventSocketRead::kEvent,
-            Json{}.Set(EventSocketRead::kFd,
-                       static_cast<double>(event.data.fd)))) {
+            FlatJson{}.Set(EventSocketRead::kFd,
+                           static_cast<double>(event.data.fd)))) {
       log::Error("Failed to invoke socket read event")
           .Data("error", res.TakeErr())
           .Log();
@@ -186,7 +186,7 @@ kero::IoEventLoopService::AddFd(const Fd::Value fd, const AddOptions options)
   if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &ev) == -1) {
     return ResultT::Err(Error::From(
         Errno::FromErrno()
-            .IntoJson()
+            .IntoFlatJson()
             .Set("message", std::string{"Failed to add fd to epoll"})
             .Set("fd", static_cast<double>(fd))
             .Take()));
@@ -207,7 +207,7 @@ kero::IoEventLoopService::RemoveFd(const Fd::Value fd) const noexcept
   if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, nullptr) == -1) {
     return ResultT::Err(Error::From(
         Errno::FromErrno()
-            .IntoJson()
+            .IntoFlatJson()
             .Set("message", std::string{"Failed to remove fd from epoll"})
             .Set("fd", static_cast<double>(fd))
             .Take()));
@@ -234,7 +234,7 @@ kero::IoEventLoopService::WriteToFd(const Fd::Value fd,
 
       return ResultT::Err(Error::From(
           Errno::FromErrno()
-              .IntoJson()
+              .IntoFlatJson()
               .Set("message", std::string{"Failed to send data to fd"})
               .Set("fd", static_cast<double>(fd))
               .Set("data", std::string{data_ptr, data_size})
@@ -267,7 +267,7 @@ kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
 
       return ResultT::Err(Error::From(
           Errno::FromErrno()
-              .IntoJson()
+              .IntoFlatJson()
               .Set("message", std::string{"Failed to read data from fd"})
               .Set("fd", static_cast<double>(fd))
               .Take()));
@@ -276,14 +276,14 @@ kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
     if (read == 0) {
       if (auto res = GetRunnerContext().InvokeEvent(
               EventSocketClose::kEvent,
-              Json{}.Set(EventSocketClose::kFd, static_cast<double>(fd)))) {
+              FlatJson{}.Set(EventSocketClose::kFd, static_cast<double>(fd)))) {
         log::Error("Failed to invoke socket close event")
             .Data("error", res.TakeErr())
             .Log();
       }
       return ResultT::Err(
           Error::From(kSocketClosed,
-                      Json{}.Set("fd", static_cast<double>(fd)).Take()));
+                      FlatJson{}.Set("fd", static_cast<double>(fd)).Take()));
     }
 
     total_read += read;

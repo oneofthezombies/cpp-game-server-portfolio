@@ -8,6 +8,7 @@
 #include "kero/core/result.h"
 #include "kero/engine/service.h"
 #include "kero/engine/service_read_only_map.h"
+#include "service_kind.h"
 
 namespace kero {
 
@@ -34,11 +35,24 @@ class ServiceMap {
 
   [[nodiscard]] auto
   GetService(const ServiceKindId service_kind_id) const noexcept
-      -> OptionRef<Service&>;
+      -> Option<Borrow<Service>>;
 
   [[nodiscard]] auto
   GetService(const ServiceKindName service_kind_name) const noexcept
-      -> OptionRef<Service&>;
+      -> Option<Borrow<Service>>;
+
+  template <IsServiceKind T>
+  [[nodiscard]] auto
+  GetService() const noexcept -> Option<Borrow<T>> {
+    const auto service_kind_id = T::GetKindId();
+    auto it = id_to_service_map_.find(service_kind_id);
+    if (it == id_to_service_map_.end()) {
+      return None;
+    }
+
+    auto& ptr = it->second;
+    return Option<Borrow<T>>::Some(Borrow<T>{static_cast<T*>(ptr.get())});
+  }
 
   [[nodiscard]] auto
   HasService(const ServiceKindId service_kind_id) const noexcept -> bool;
@@ -47,9 +61,13 @@ class ServiceMap {
   HasService(const ServiceKindName service_kind_name) const noexcept -> bool;
 
   [[nodiscard]] auto
+  FindNameById(const ServiceKindId service_kind_id) const noexcept
+      -> Result<ServiceKindName>;
+
+  [[nodiscard]] auto
   CreateReadOnly(
       const Service::DependencyDeclarations& dependency_declarations) noexcept
-      -> ServiceReadOnlyMap;
+      -> Result<ServiceReadOnlyMap>;
 
  private:
   IdToServiceMap id_to_service_map_;

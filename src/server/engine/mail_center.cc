@@ -22,8 +22,8 @@ engine::Mail::Clone() const noexcept -> Mail {
 }
 
 auto
-engine::operator<<(std::ostream &os, const Mail &mail) noexcept
-    -> std::ostream & {
+engine::operator<<(std::ostream &os,
+                   const Mail &mail) noexcept -> std::ostream & {
   os << "Mail{";
   os << "from=" << mail.from;
   os << ", ";
@@ -41,7 +41,7 @@ engine::MailCenter::MailCenter(core::Tx<MailBody> &&run_tx) noexcept
 
 auto
 engine::MailCenter::Shutdown() noexcept -> void {
-  run_tx_.Send(core::JsonParser{}.Set("shutdown", "").Take());
+  run_tx_.Send(core::FlatJsonParser{}.Set("shutdown", "").Take());
   run_thread_.join();
 }
 
@@ -58,7 +58,7 @@ engine::MailCenter::Create(std::string &&name) noexcept -> Result<MailBox> {
     if (const auto it = mail_boxes_.find(name); it != mail_boxes_.end()) {
       return ResultT{
           Error::From(kMailBoxAlreadyExists,
-                      core::JsonParser{}.Set("name", name).IntoMap())};
+                      core::FlatJsonParser{}.Set("name", name).IntoMap())};
     }
 
     auto [from_peer_tx, to_office_rx] = core::Channel<Mail>::Builder{}.Build();
@@ -81,8 +81,9 @@ engine::MailCenter::Delete(std::string &&name) noexcept -> Result<Void> {
 
   std::lock_guard lock{mutex_};
   if (const auto it = mail_boxes_.find(name); it == mail_boxes_.end()) {
-    return ResultT{Error::From(kMailBoxNotFound,
-                               core::JsonParser{}.Set("name", name).IntoMap())};
+    return ResultT{
+        Error::From(kMailBoxNotFound,
+                    core::FlatJsonParser{}.Set("name", name).IntoMap())};
   }
 
   mail_boxes_.erase(name);
@@ -95,19 +96,22 @@ engine::MailCenter::ValidateName(const std::string_view name) const noexcept
   using ResultT = Result<Void>;
 
   if (name.empty()) {
-    return ResultT{Error::From(kMailBoxNameEmpty,
-                               core::JsonParser{}.Set("name", name).IntoMap())};
+    return ResultT{
+        Error::From(kMailBoxNameEmpty,
+                    core::FlatJsonParser{}.Set("name", name).IntoMap())};
   }
 
   if (name.size() > 64) {
-    return ResultT{Error::From(kMailBoxNameTooLong,
-                               core::JsonParser{}.Set("name", name).IntoMap())};
+    return ResultT{
+        Error::From(kMailBoxNameTooLong,
+                    core::FlatJsonParser{}.Set("name", name).IntoMap())};
   }
 
   // "all" is reserved for broadcast
   if (name == "all") {
-    return ResultT{Error::From(kMailBoxNameAllReserved,
-                               core::JsonParser{}.Set("name", name).IntoMap())};
+    return ResultT{
+        Error::From(kMailBoxNameAllReserved,
+                    core::FlatJsonParser{}.Set("name", name).IntoMap())};
   }
 
   return ResultT{Void{}};
@@ -120,7 +124,7 @@ engine::MailCenter::RunOnThread(core::Rx<MailBody> &&run_rx) noexcept -> void {
     if (run_event) {
       if (auto shutdown_res = run_event->Get("shutdown");
           shutdown_res.IsErr()) {
-        core::JsonParser{}
+        core::FlatJsonParser{}
             .Set("message", "MailCenter shutdown failed")
             .Set("error", shutdown_res.Err())
             .LogLn();
@@ -151,7 +155,7 @@ engine::MailCenter::RunOnThread(core::Rx<MailBody> &&run_rx) noexcept -> void {
         // unicast
         const auto to = mail_boxes_.find(mail->to);
         if (to == mail_boxes_.end()) {
-          core::JsonParser{}
+          core::FlatJsonParser{}
               .Set("message", "MailBox not found")
               .Set("to", mail->to)
               .LogLn();
@@ -171,9 +175,8 @@ engine::MailCenter::StartRunThread(core::Rx<MailBody> &&run_rx) noexcept
 }
 
 auto
-engine::MailCenter::RunThreadMain(MailCenter &mail_center,
-                                  core::Rx<MailBody> &&run_rx) noexcept
-    -> void {
+engine::MailCenter::RunThreadMain(
+    MailCenter &mail_center, core::Rx<MailBody> &&run_rx) noexcept -> void {
   mail_center.RunOnThread(std::move(run_rx));
 }
 

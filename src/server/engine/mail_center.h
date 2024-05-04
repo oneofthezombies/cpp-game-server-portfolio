@@ -11,7 +11,7 @@
 
 namespace engine {
 
-using MailBody = core::JsonParser;
+using MailBody = core::FlatJsonParser;
 
 struct Mail final {
   std::string from;
@@ -72,8 +72,8 @@ class MailCenter final {
   StartRunThread(core::Rx<MailBody> &&run_rx) noexcept -> void;
 
   static auto
-  RunThreadMain(MailCenter &mail_center, core::Rx<MailBody> &&run_rx) noexcept
-      -> void;
+  RunThreadMain(MailCenter &mail_center,
+                core::Rx<MailBody> &&run_rx) noexcept -> void;
 
   std::unordered_map<std::string, MailBox> mail_boxes_;
   std::mutex mutex_;

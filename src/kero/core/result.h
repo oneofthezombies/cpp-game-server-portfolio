@@ -73,7 +73,7 @@ class Result {
 
   static auto
   Err(const Error::Code code,
-      Json&& details,
+      FlatJson&& details,
       Error&& cause,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
@@ -85,7 +85,7 @@ class Result {
 
   static auto
   Err(const Error::Code code,
-      Json&& details,
+      FlatJson&& details,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
     return Result<T>::From(
@@ -102,7 +102,7 @@ class Result {
   }
 
   static auto
-  Err(Json&& details,
+  Err(FlatJson&& details,
       Error&& cause,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
@@ -118,7 +118,7 @@ class Result {
   }
 
   static auto
-  Err(Json&& details,
+  Err(FlatJson&& details,
       std::source_location&& location =
           std::source_location::current()) noexcept -> Result<T> {
     return Result<T>::From(

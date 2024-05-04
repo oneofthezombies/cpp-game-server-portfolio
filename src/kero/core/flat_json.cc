@@ -1,4 +1,4 @@
-#include "json.h"
+#include "flat_json.h"
 
 #include <ostream>
 
@@ -6,32 +6,32 @@
 
 using namespace kero;
 
-kero::Json::Json(Data&& data) noexcept : data_{std::move(data)} {}
+kero::FlatJson::FlatJson(Data&& data) noexcept : data_{std::move(data)} {}
 
 auto
-kero::Json::Unset(const std::string& key) noexcept -> Json& {
+kero::FlatJson::Unset(const std::string& key) noexcept -> FlatJson& {
   data_.erase(key);
   return *this;
 }
 
 auto
-kero::Json::TryUnset(const std::string& key) noexcept -> bool {
+kero::FlatJson::TryUnset(const std::string& key) noexcept -> bool {
   return data_.erase(key) > 0;
 }
 
 auto
-kero::Json::Has(const std::string& key) const noexcept -> bool {
+kero::FlatJson::Has(const std::string& key) const noexcept -> bool {
   return data_.find(key) != data_.end();
 }
 
 auto
-kero::Json::Take() noexcept -> Json {
+kero::FlatJson::Take() noexcept -> FlatJson {
   return std::move(*this);
 }
 
 auto
-kero::Json::Clone() const noexcept -> Json {
-  Json clone;
+kero::FlatJson::Clone() const noexcept -> FlatJson {
+  FlatJson clone;
   for (const auto& [key, value] : data_) {
     clone.data_.try_emplace(key, value);
   }
@@ -40,23 +40,23 @@ kero::Json::Clone() const noexcept -> Json {
 }
 
 auto
-kero::Json::AsRaw() const noexcept -> const Data& {
+kero::FlatJson::AsRaw() const noexcept -> const Data& {
   return data_;
 }
 
 auto
-kero::Json::AsRaw() noexcept -> Data& {
+kero::FlatJson::AsRaw() noexcept -> Data& {
   return data_;
 }
 
 auto
-kero::Json::LogError(std::string&& message,
-                     std::source_location&& location) const noexcept -> void {
+kero::FlatJson::LogError(std::string&& message, std::source_location&& location)
+    const noexcept -> void {
   log::Error(std::move(message), std::move(location)).Log();
 }
 
 auto
-kero::operator<<(std::ostream& os, const Json& json) -> std::ostream& {
+kero::operator<<(std::ostream& os, const FlatJson& json) -> std::ostream& {
   os << "{";
   for (auto it = json.data_.begin(); it != json.data_.end(); ++it) {
     os << it->first << ": ";

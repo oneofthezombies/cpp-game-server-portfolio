@@ -3,7 +3,7 @@
 using namespace kero;
 
 kero::Error::Error(const Code code,
-                   Json &&details,
+                   FlatJson &&details,
                    std::source_location &&location,
                    Cause &&cause) noexcept
     : code{code},
@@ -18,7 +18,7 @@ kero::Error::Take() noexcept -> Error {
 
 auto
 kero::Error::From(const Code code,
-                  Json &&details,
+                  FlatJson &&details,
                   Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{code,
@@ -29,7 +29,7 @@ kero::Error::From(const Code code,
 
 auto
 kero::Error::From(const Code code,
-                  Json &&details,
+                  FlatJson &&details,
                   std::source_location &&location) noexcept -> Error {
   return Error{code, std::move(details), std::move(location), nullptr};
 }
@@ -39,13 +39,13 @@ kero::Error::From(const Code code,
                   Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{code,
-               Json{},
+               FlatJson{},
                std::move(location),
                std::make_unique<Error>(std::move(cause))};
 }
 
 auto
-kero::Error::From(Json &&details,
+kero::Error::From(FlatJson &&details,
                   Error &&cause,
                   std::source_location &&location) noexcept -> Error {
   return Error{kFailed,
@@ -55,22 +55,22 @@ kero::Error::From(Json &&details,
 }
 
 auto
-kero::Error::From(const Code code, std::source_location &&location) noexcept
-    -> Error {
-  return Error{code, Json{}, std::move(location), nullptr};
+kero::Error::From(const Code code,
+                  std::source_location &&location) noexcept -> Error {
+  return Error{code, FlatJson{}, std::move(location), nullptr};
 }
 
 auto
-kero::Error::From(Json &&details, std::source_location &&location) noexcept
-    -> Error {
+kero::Error::From(FlatJson &&details,
+                  std::source_location &&location) noexcept -> Error {
   return Error{kFailed, std::move(details), std::move(location), nullptr};
 }
 
 auto
-kero::Error::From(Error &&cause, std::source_location &&location) noexcept
-    -> Error {
+kero::Error::From(Error &&cause,
+                  std::source_location &&location) noexcept -> Error {
   return Error{kPropagated,
-               Json{},
+               FlatJson{},
                std::move(location),
                std::make_unique<Error>(std::move(cause))};
 }

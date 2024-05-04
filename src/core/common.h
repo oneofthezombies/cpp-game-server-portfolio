@@ -14,7 +14,7 @@ enum Symbol : i32 {
 
   kErrorPropagated,
 
-  kJsonParserKeyNotFound,
+  kFlatJsonParserKeyNotFound,
 
   // Add symbols before kEnd
   kCommonEnd

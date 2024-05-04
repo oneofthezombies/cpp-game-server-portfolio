@@ -7,8 +7,6 @@
 
 namespace kero {
 
-static const ServiceKind kServiceKindSignal = {1, "signal"};
-
 class SignalService final : public Service {
  public:
   explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;
@@ -26,6 +24,12 @@ class SignalService final : public Service {
 
   [[nodiscard]] auto
   IsInterrupted() const noexcept -> bool;
+
+  [[nodiscard]] static auto
+  GetKindId() noexcept -> ServiceKindId;
+
+  [[nodiscard]] static auto
+  GetKindName() noexcept -> ServiceKindName;
 
  private:
   static auto

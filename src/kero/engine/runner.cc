@@ -20,15 +20,12 @@ kero::Runner::Run() noexcept -> Result<Void> {
     return ResultT::Err(res.TakeErr());
   }
 
-  auto signal_service = runner_context_->GetService(kServiceKindSignal);
+  auto signal_service =
+      runner_context_->service_map_.GetService<SignalService>();
   auto is_interrupted = false;
   while (!is_interrupted) {
     if (signal_service) {
-      auto signal =
-          signal_service.Unwrap().As<SignalService>(kServiceKindSignal.id);
-      if (signal) {
-        is_interrupted = signal.Unwrap().IsInterrupted();
-      }
+      is_interrupted = signal_service.Unwrap()->IsInterrupted();
     }
 
     UpdateServices();
@@ -50,7 +47,7 @@ auto
 kero::ThreadRunner::Start() -> Result<Void> {
   if (thread_.joinable()) {
     return Result<Void>::Err(
-        Json{}.Set("message", "thread already started").Take());
+        FlatJson{}.Set("message", "thread already started").Take());
   }
 
   thread_ = std::thread{ThreadMain, runner_};
@@ -61,7 +58,7 @@ auto
 kero::ThreadRunner::Stop() -> Result<Void> {
   if (!thread_.joinable()) {
     return Result<Void>::Err(
-        Json{}.Set("message", "thread not started").Take());
+        FlatJson{}.Set("message", "thread not started").Take());
   }
 
   thread_.join();

@@ -18,7 +18,7 @@ kero::log::LogBuilder::Log() noexcept -> Result<Void> {
 
   if (!log_) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message", std::string{"Log already consumed, cannot log."})
             .Take()));
   }
@@ -28,7 +28,7 @@ kero::log::LogBuilder::Log() noexcept -> Result<Void> {
     return OkVoid();
   } else {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message",
                  std::string{"Failed to get LocalContext, cannot log."})
             .Take()));
@@ -36,25 +36,25 @@ kero::log::LogBuilder::Log() noexcept -> Result<Void> {
 }
 
 auto
-kero::log::Debug(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Debug(std::string&& message,
+                 std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kDebug};
 }
 
 auto
-kero::log::Info(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Info(std::string&& message,
+                std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kInfo};
 }
 
 auto
-kero::log::Warn(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Warn(std::string&& message,
+                std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kWarn};
 }
 
 auto
-kero::log::Error(std::string&& message, std::source_location&& location)
-    -> LogBuilder {
+kero::log::Error(std::string&& message,
+                 std::source_location&& location) -> LogBuilder {
   return LogBuilder{std::move(message), std::move(location), Level::kError};
 }

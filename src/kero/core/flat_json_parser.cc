@@ -1,19 +1,18 @@
-#include "json_parser.h"
-
-#include <variant>
+#include "flat_json_parser.h"
 
 using namespace kero;
 
 auto
-kero::JsonParser::Stringify(const Json &json) noexcept -> Result<std::string> {
+kero::FlatJsonParser::Stringify(const FlatJson& json) noexcept
+    -> Result<std::string> {
   using ResultT = Result<std::string>;
 
   std::string str;
   str += "{";
 
   for (auto it = json.AsRaw().begin(); it != json.AsRaw().end(); ++it) {
-    const auto &key = it->first;
-    const auto &value = it->second;
+    const auto& key = it->first;
+    const auto& value = it->second;
 
     str += "\"";
     str += key;
@@ -59,7 +58,7 @@ kero::JsonParser::Stringify(const Json &json) noexcept -> Result<std::string> {
       }
       str += "\"";
     } else {
-      return ResultT::Err(Error::From(Json{}
+      return ResultT::Err(Error::From(FlatJson{}
                                           .Set("kind", "stringify")
                                           .Set("message", "unsupported value")
                                           .Set("key", key)
@@ -76,33 +75,34 @@ kero::JsonParser::Stringify(const Json &json) noexcept -> Result<std::string> {
 }
 
 auto
-kero::JsonParser::Parse(const std::string_view tiny_json_str,
-                        ParseOptions &&options) noexcept -> Result<Json> {
+kero::FlatJsonParser::Parse(const std::string_view tiny_json_str,
+                            ParseOptions&& options) noexcept
+    -> Result<FlatJson> {
   tiny_json_str_ = tiny_json_str;
   cursor_ = 0;
   options_ = std::move(options);
 
   auto res = ParseObject();
   if (res.IsErr()) {
-    return Result<Json>::Err(Error::From(res.TakeErr()));
+    return Result<FlatJson>::Err(Error::From(res.TakeErr()));
   }
 
   Trim();
   if (cursor_ < tiny_json_str_.size()) {
-    return Result<Json>::Err(
-        Error::From(Json{}
+    return Result<FlatJson>::Err(
+        Error::From(FlatJson{}
                         .Set("kind", "parse")
                         .Set("message", "trailing characters")
                         .Set("cursor", cursor_)
                         .Take()));
   }
 
-  return Result<Json>::Ok(res.TakeOk());
+  return Result<FlatJson>::Ok(res.TakeOk());
 }
 
 auto
-kero::JsonParser::ParseObject() noexcept -> Result<Json> {
-  using ResultT = Result<Json>;
+kero::FlatJsonParser::ParseObject() noexcept -> Result<FlatJson> {
+  using ResultT = Result<FlatJson>;
 
   Trim();
   auto current = Current();
@@ -111,7 +111,7 @@ kero::JsonParser::ParseObject() noexcept -> Result<Json> {
   }
 
   if (current.Ok() != '{') {
-    return ResultT::Err(Error::From(Json{}
+    return ResultT::Err(Error::From(FlatJson{}
                                         .Set("kind", "object")
                                         .Set("message", "invalid object")
                                         .Set("cursor", cursor_)
@@ -122,7 +122,7 @@ kero::JsonParser::ParseObject() noexcept -> Result<Json> {
     return ResultT::Err(Error::From(res.TakeErr()));
   }
 
-  Json::Data data;
+  FlatJson::Data data;
   while (true) {
     Trim();
     current = Current();
@@ -161,11 +161,11 @@ kero::JsonParser::ParseObject() noexcept -> Result<Json> {
     data.emplace(std::move(key.TakeOk()), std::move(value.TakeOk()));
   }
 
-  return ResultT::Ok(Json{std::move(data)});
+  return ResultT::Ok(FlatJson{std::move(data)});
 }
 
 auto
-kero::JsonParser::ParseKey() noexcept -> Result<std::string> {
+kero::FlatJsonParser::ParseKey() noexcept -> Result<std::string> {
   using ResultT = Result<std::string>;
 
   auto key = ParseString();
@@ -177,8 +177,8 @@ kero::JsonParser::ParseKey() noexcept -> Result<std::string> {
 }
 
 auto
-kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
-  using ResultT = Result<Json::ValueStorage>;
+kero::FlatJsonParser::ParseValue() noexcept -> Result<FlatJson::ValueStorage> {
+  using ResultT = Result<FlatJson::ValueStorage>;
 
   Trim();
   auto current = Current();
@@ -191,7 +191,7 @@ kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
       if (auto res = ParseString(); res.IsErr()) {
         return ResultT::Err(Error::From(res.TakeErr()));
       } else {
-        return ResultT::Ok(Json::ValueStorage{res.TakeOk()});
+        return ResultT::Ok(FlatJson::ValueStorage{res.TakeOk()});
       }
     }
     case '-':
@@ -202,7 +202,7 @@ kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
       if (auto res = ParseNumber(); res.IsErr()) {
         return ResultT::Err(Error::From(res.TakeErr()));
       } else {
-        return ResultT::Ok(Json::ValueStorage{res.TakeOk()});
+        return ResultT::Ok(FlatJson::ValueStorage{res.TakeOk()});
       }
     }
     case 't':
@@ -210,11 +210,11 @@ kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
       if (auto res = ParseBool(); res.IsErr()) {
         return ResultT::Err(Error::From(res.TakeErr()));
       } else {
-        return ResultT::Ok(Json::ValueStorage{res.TakeOk()});
+        return ResultT::Ok(FlatJson::ValueStorage{res.TakeOk()});
       }
     }
     default: {
-      return ResultT::Err(Error::From(Json{}
+      return ResultT::Err(Error::From(FlatJson{}
                                           .Set("kind", "value")
                                           .Set("message", "invalid value")
                                           .Set("cursor", cursor_)
@@ -222,7 +222,7 @@ kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
     }
   }
 
-  return ResultT::Err(Error::From(Json{}
+  return ResultT::Err(Error::From(FlatJson{}
                                       .Set("kind", "value")
                                       .Set("message", "invalid value")
                                       .Set("cursor", cursor_)
@@ -230,7 +230,7 @@ kero::JsonParser::ParseValue() noexcept -> Result<Json::ValueStorage> {
 }
 
 auto
-kero::JsonParser::ParseString() noexcept -> Result<std::string> {
+kero::FlatJsonParser::ParseString() noexcept -> Result<std::string> {
   using ResultT = Result<std::string>;
 
   Trim();
@@ -240,7 +240,7 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
   }
 
   if (current.Ok() != '"') {
-    return ResultT::Err(Error::From(Json{}
+    return ResultT::Err(Error::From(FlatJson{}
                                         .Set("kind", "string")
                                         .Set("message", "invalid string")
                                         .Set("cursor", cursor_)
@@ -300,7 +300,7 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
           break;
         }
         default:
-          return ResultT::Err(Error::From(Json{}
+          return ResultT::Err(Error::From(FlatJson{}
                                               .Set("kind", "string")
                                               .Set("message", "invalid escape")
                                               .Set("cursor", cursor_)
@@ -320,7 +320,7 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
     }
 
     if (current.Ok() == '\0') {
-      return ResultT::Err(Error::From(Json{}
+      return ResultT::Err(Error::From(FlatJson{}
                                           .Set("kind", "string")
                                           .Set("message", "unterminated string")
                                           .Set("cursor", cursor_)
@@ -340,7 +340,7 @@ kero::JsonParser::ParseString() noexcept -> Result<std::string> {
 }
 
 auto
-kero::JsonParser::ParseNumber() noexcept -> Result<double> {
+kero::FlatJsonParser::ParseNumber() noexcept -> Result<double> {
   using ResultT = Result<double>;
 
   Trim();
@@ -379,7 +379,7 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
       }
     }
   } else {
-    return ResultT::Err(Error::From(Json{}
+    return ResultT::Err(Error::From(FlatJson{}
                                         .Set("kind", "number")
                                         .Set("message", "invalid number")
                                         .Set("cursor", cursor_)
@@ -398,7 +398,7 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
     }
 
     if (!isdigit(current.Ok())) {
-      return ResultT::Err(Error::From(Json{}
+      return ResultT::Err(Error::From(FlatJson{}
                                           .Set("kind", "number")
                                           .Set("message", "invalid number")
                                           .Set("cursor", cursor_)
@@ -441,7 +441,7 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
     }
 
     if (!isdigit(current.Ok())) {
-      return ResultT::Err(Error::From(Json{}
+      return ResultT::Err(Error::From(FlatJson{}
                                           .Set("kind", "number")
                                           .Set("message", "invalid number")
                                           .Set("cursor", cursor_)
@@ -464,7 +464,7 @@ kero::JsonParser::ParseNumber() noexcept -> Result<double> {
 }
 
 auto
-kero::JsonParser::ParseBool() noexcept -> Result<bool> {
+kero::FlatJsonParser::ParseBool() noexcept -> Result<bool> {
   using ResultT = Result<bool>;
 
   Trim();
@@ -485,7 +485,7 @@ kero::JsonParser::ParseBool() noexcept -> Result<bool> {
     return ResultT::Ok(false);
   }
 
-  return ResultT::Err(Error::From(Json{}
+  return ResultT::Err(Error::From(FlatJson{}
                                       .Set("kind", "bool")
                                       .Set("message", "invalid bool")
                                       .Set("cursor", cursor_)
@@ -493,11 +493,11 @@ kero::JsonParser::ParseBool() noexcept -> Result<bool> {
 }
 
 auto
-kero::JsonParser::Current() const noexcept -> Result<char> {
+kero::FlatJsonParser::Current() const noexcept -> Result<char> {
   using ResultT = Result<char>;
 
   if (cursor_ >= tiny_json_str_.size()) {
-    return ResultT::Err(Error::From(Json{}
+    return ResultT::Err(Error::From(FlatJson{}
                                         .Set("kind", "current")
                                         .Set("message", "current out of range")
                                         .Set("cursor", cursor_)
@@ -509,27 +509,26 @@ kero::JsonParser::Current() const noexcept -> Result<char> {
 }
 
 auto
-kero::JsonParser::Consume(const char c) noexcept -> Result<bool> {
+kero::FlatJsonParser::Consume(const char c) noexcept -> Result<bool> {
   using ResultT = Result<bool>;
 
   if (cursor_ >= tiny_json_str_.size()) {
-    return ResultT::Err(
-        Error::From(Json{}
-                        .Set("kind", std::string{"consume"})
-                        .Set("message", std::string{"consume out of range"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Take()));
+    return ResultT::Err(Error::From(FlatJson{}
+                                        .Set("kind", "consume")
+                                        .Set("message", "consume out of range")
+                                        .Set("cursor", cursor_)
+                                        .Take()));
   }
 
-  if (tiny_json_str_[cursor_] != c) {
-    return ResultT::Err(
-        Error::From(Json{}
-                        .Set("kind", std::string{"consume"})
-                        .Set("message", std::string{"consume mismatch"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Set("expected", std::string{c})
-                        .Set("actual", std::string{tiny_json_str_[cursor_]})
-                        .Take()));
+  const auto actual = tiny_json_str_[cursor_];
+  if (actual != c) {
+    return ResultT::Err(Error::From(FlatJson{}
+                                        .Set("kind", "consume")
+                                        .Set("message", "consume mismatch")
+                                        .Set("cursor", cursor_)
+                                        .Set("expected", c)
+                                        .Set("actual", actual)
+                                        .Take()));
   }
 
   ++cursor_;
@@ -537,17 +536,16 @@ kero::JsonParser::Consume(const char c) noexcept -> Result<bool> {
 }
 
 auto
-kero::JsonParser::Advance(const size_t n) noexcept -> Result<bool> {
+kero::FlatJsonParser::Advance(const size_t n) noexcept -> Result<bool> {
   using ResultT = Result<bool>;
 
   if (cursor_ + n > tiny_json_str_.size()) {
-    return ResultT::Err(
-        Error::From(Json{}
-                        .Set("kind", std::string{"advance"})
-                        .Set("message", std::string{"advance out of range"})
-                        .Set("cursor", static_cast<double>(cursor_))
-                        .Set("n", static_cast<double>(n))
-                        .Take()));
+    return ResultT::Err(Error::From(FlatJson{}
+                                        .Set("kind", "advance")
+                                        .Set("message", "advance out of range")
+                                        .Set("cursor", cursor_)
+                                        .Set("n", n)
+                                        .Take()));
   }
 
   cursor_ += n;
@@ -555,7 +553,7 @@ kero::JsonParser::Advance(const size_t n) noexcept -> Result<bool> {
 }
 
 auto
-kero::JsonParser::Trim() noexcept -> void {
+kero::FlatJsonParser::Trim() noexcept -> void {
   while (cursor_ < tiny_json_str_.size() &&
          isspace(static_cast<int>(tiny_json_str_[cursor_]))) {
     ++cursor_;

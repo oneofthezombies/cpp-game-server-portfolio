@@ -26,8 +26,10 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
                           .Unwrap()
                           .As<ConfigService>(kServiceKindConfig.id);
   if (!config) {
-    return ResultT::Err(Error::From(
-        Json{}.Set("message", std::string{"ConfigService not found"}).Take()));
+    return ResultT::Err(
+        Error::From(FlatJson{}
+                        .Set("message", std::string{"ConfigService not found"})
+                        .Take()));
   }
 
   const auto io_event_loop =
@@ -37,14 +39,14 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
           .As<IoEventLoopService>(kServiceKindIoEventLoop.id);
   if (!io_event_loop) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message", std::string{"IoEventLoopService not found"})
             .Take()));
   }
 
   if (!SubscribeEvent(EventSocketRead::kEvent)) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message",
                  std::string{"Failed to subscribe to socket read event"})
             .Take()));
@@ -52,15 +54,17 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
 
   const auto port = config.Unwrap().GetConfig().GetOrDefault<double>("port", 0);
   if (port == 0) {
-    return ResultT::Err(Error::From(
-        Json{}.Set("message", std::string{"port not found in config"}).Take()));
+    return ResultT::Err(
+        Error::From(FlatJson{}
+                        .Set("message", std::string{"port not found in config"})
+                        .Take()));
   }
 
   auto server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (!Fd::IsValid(server_fd)) {
     return ResultT::Err(Error::From(
         Errno::FromErrno()
-            .IntoJson()
+            .IntoFlatJson()
             .Set("message", std::string{"Failed to create server socket"})
             .Take()));
   }
@@ -70,7 +74,7 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
       0) {
     return ResultT::Err(Error::From(
         Errno::FromErrno()
-            .IntoJson()
+            .IntoFlatJson()
             .Set("message", std::string{"Failed to set socket reuse option"})
             .Take()));
   }
@@ -87,7 +91,7 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
       0) {
     return ResultT::Err(Error::From(
         Errno::FromErrno()
-            .IntoJson()
+            .IntoFlatJson()
             .Set("message", std::string{"Failed to bind server socket"})
             .Set("port", static_cast<double>(port))
             .Take()));
@@ -96,7 +100,7 @@ kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
   if (listen(server_fd, SOMAXCONN) < 0) {
     return ResultT::Err(Error::From(
         Errno::FromErrno()
-            .IntoJson()
+            .IntoFlatJson()
             .Set("message", std::string{"Failed to listen on server"})
             .Take()));
   }
@@ -126,7 +130,7 @@ kero::TcpServerService::OnDestroy() noexcept -> void {
 
 auto
 kero::TcpServerService::OnEvent(const std::string& event,
-                                const Json& data) noexcept -> void {
+                                const FlatJson& data) noexcept -> void {
   if (event == EventSocketRead::kEvent) {
     const auto fd = data.GetOrDefault<double>(EventSocketRead::kFd, -1);
     if (fd == server_fd_) {
@@ -162,7 +166,7 @@ kero::TcpServerService::OnEvent(const std::string& event,
 
       if (auto res = GetRunnerContext().InvokeEvent(
               EventSocketOpen::kEvent,
-              Json{}.Set(EventSocketOpen::kFd, client_fd).Take())) {
+              FlatJson{}.Set(EventSocketOpen::kFd, client_fd).Take())) {
         log::Error("Failed to invoke socket open event")
             .Data("error", res.TakeErr())
             .Log();

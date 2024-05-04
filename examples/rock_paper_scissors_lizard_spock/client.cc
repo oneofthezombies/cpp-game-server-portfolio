@@ -91,7 +91,7 @@
 //       if (result.IsErr()) {
 //         return ResultT::Err(Error::From(
 //             kPortParsingFailed,
-//             kero::Json{}.Set("token", std::string{next_token}).Take()));
+//             kero::FlatJson{}.Set("token", std::string{next_token}).Take()));
 //       }
 
 //       config.port = result.Ok();
@@ -102,7 +102,8 @@
 
 //     return ResultT::Err(
 //         Error::From(kUnknownArgument,
-//                     kero::Json{}.Set("token", std::string{token}).Take()));
+//                     kero::FlatJson{}.Set("token",
+//                     std::string{token}).Take()));
 //   }
 
 //   if (config.ip.empty()) {
@@ -180,7 +181,7 @@
 //     "bytes)"
 //               << std::endl;
 
-//     const auto message = kero::JsonParser{}.Parse(buffer.substr(0,
+//     const auto message = kero::FlatJsonParser{}.Parse(buffer.substr(0,
 //     read_size)); if (message.IsErr()) {
 //       std::cout << "Failed to parse the message." << message.Err() <<
 //       std::endl; continue;
@@ -236,7 +237,7 @@
 //       }
 
 //       auto stringified =
-//           kero::TinyJson::Stringify(kero::Dict{}
+//           kero::TinyFlatJson::Stringify(kero::Dict{}
 //                                         .Set("kind",
 //                                         std::string{"battle_move"})
 //                                         .Set("move", std::move(move))

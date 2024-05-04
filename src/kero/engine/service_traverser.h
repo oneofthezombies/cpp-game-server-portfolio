@@ -2,6 +2,7 @@
 #define KERO_ENGINE_SERVICE_TRAVERSER_H
 
 #include <functional>
+#include <unordered_set>
 
 #include "kero/core/common.h"
 #include "kero/core/result.h"
@@ -13,16 +14,10 @@ namespace kero {
 class ServiceTraverser {
  public:
   using OnVisit = std::function<Result<Void>(Service& service)>;
-
-  /**
-   * The "kind_id" is the key and the "kind_name" is the value.
-   * If "kind_id" exists, it means visited. Otherwise, it means not visited.
-   */
-  using VisitMap = std::unordered_map<ServiceKindId, ServiceKindName>;
+  using VisitSet = std::unordered_set<ServiceKindId>;
   using TraversalStack = std::vector<ServiceKindId>;
 
-  explicit ServiceTraverser(
-      const ServiceMap::IdToServiceMap& id_to_service_map) noexcept;
+  explicit ServiceTraverser(const ServiceMap& service_map) noexcept;
   ~ServiceTraverser() noexcept = default;
   CLASS_KIND_PINNABLE(ServiceTraverser);
 
@@ -34,8 +29,8 @@ class ServiceTraverser {
   TraverseRecursive(const ServiceKindId service_kind_id,
                     const OnVisit& on_visit) noexcept -> Result<Void>;
 
-  const ServiceMap::IdToServiceMap& id_to_service_map_;
-  VisitMap visit_map_;
+  const ServiceMap& service_map_;
+  VisitSet visit_set_;
   TraversalStack traversal_stack_;
 };
 

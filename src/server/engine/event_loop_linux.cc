@@ -16,15 +16,15 @@ using namespace engine;
 
 auto
 engine::EventLoopLinux::Builder::Build(
-    std::string &&name, EventLoopHandlerPtr &&handler) const noexcept
-    -> Result<EventLoopPtr> {
+    std::string &&name,
+    EventLoopHandlerPtr &&handler) const noexcept -> Result<EventLoopPtr> {
   using ResultT = Result<EventLoopPtr>;
 
   auto epoll_fd = FileDescriptorLinux{epoll_create1(0)};
   if (!epoll_fd.IsValid()) {
     return ResultT{
         Error::From(kEventLoopLinuxEpollCreate1Failed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -76,7 +76,7 @@ engine::EventLoopLinux::Add(const SocketId socket_id,
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_ADD, fd, &ev) == -1) {
     return ResultT{
         Error::From(kEventLoopLinuxEpollCtlAddFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -98,7 +98,7 @@ engine::EventLoopLinux::Remove(const SocketId socket_id) const noexcept
   if (epoll_ctl(epoll_fd_.AsRaw(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
     return ResultT{
         Error::From(kEventLoopLinuxEpollCtlDeleteFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -129,7 +129,7 @@ engine::EventLoopLinux::Write(const SocketId socket_id,
 
       return ResultT{
           Error::From(kEventLoopLinuxWriteFailed,
-                      core::JsonParser{}
+                      core::FlatJsonParser{}
                           .Set("linux_error", core::LinuxError::FromErrno())
                           .Set("fd", fd)
                           .IntoMap())};
@@ -137,8 +137,9 @@ engine::EventLoopLinux::Write(const SocketId socket_id,
       written += count;
 
       if (count == 0) {
-        return ResultT{Error::From(kEventLoopLinuxWriteClosed,
-                                   core::JsonParser{}.Set("fd", fd).IntoMap())};
+        return ResultT{
+            Error::From(kEventLoopLinuxWriteClosed,
+                        core::FlatJsonParser{}.Set("fd", fd).IntoMap())};
       }
     }
   }
@@ -163,7 +164,7 @@ engine::EventLoopLinux::Read(const SocketId socket_id) const noexcept
     if (count == -1) {
       const auto errno_value = errno;
       if (errno_value == EAGAIN || errno_value == EWOULDBLOCK) {
-        core::JsonParser{}
+        core::FlatJsonParser{}
             .Set("message", "read would block")
             .Set("fd", fd)
             .Set("socket_id", socket_id)
@@ -174,7 +175,7 @@ engine::EventLoopLinux::Read(const SocketId socket_id) const noexcept
 
       return ResultT{
           Error::From(kEventLoopLinuxReadFailed,
-                      core::JsonParser{}
+                      core::FlatJsonParser{}
                           .Set("linux_error", core::LinuxError::FromErrno())
                           .Set("fd", fd)
                           .Set("socket_id", socket_id)
@@ -183,8 +184,9 @@ engine::EventLoopLinux::Read(const SocketId socket_id) const noexcept
     }
 
     if (count == 0) {
-      return ResultT{Error::From(kEventLoopLinuxReadClosed,
-                                 core::JsonParser{}.Set("fd", fd).IntoMap())};
+      return ResultT{
+          Error::From(kEventLoopLinuxReadClosed,
+                      core::FlatJsonParser{}.Set("fd", fd).IntoMap())};
     }
 
     return ResultT{buffer.substr(0, count)};
@@ -218,7 +220,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
       return ResultT{
           Error::From(kEventLoopLinuxEpollWaitFailed,
-                      core::JsonParser{}
+                      core::FlatJsonParser{}
                           .Set("linux_error", core::LinuxError::FromErrno())
                           .IntoMap())};
     }
@@ -239,7 +241,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
             0) {
           return ResultT{
               Error::From(kEventLoopLinuxGetSocketOptionFailed,
-                          core::JsonParser{}
+                          core::FlatJsonParser{}
                               .Set("linux_error", core::LinuxError::FromErrno())
                               .Set("fd", event.data.fd)
                               .Set("socket_id", socket_id)
@@ -248,7 +250,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
 
         if (code == 0) {
           return ResultT{Error::From(kEventLoopLinuxSocketErrorZero,
-                                     core::JsonParser{}
+                                     core::FlatJsonParser{}
                                          .Set("fd", event.data.fd)
                                          .Set("socket_id", socket_id)
                                          .IntoMap())};
@@ -266,7 +268,7 @@ engine::EventLoopLinux::Run() noexcept -> Result<Void> {
         const auto fd = event.data.fd;
         core::Defer defer{[fd] {
           if (auto res = FileDescriptorLinux::Close(fd); res.IsErr()) {
-            core::JsonParser{}
+            core::FlatJsonParser{}
                 .Set("message", "file descriptor close failed")
                 .Set("error", res.Err())
                 .LogLn();

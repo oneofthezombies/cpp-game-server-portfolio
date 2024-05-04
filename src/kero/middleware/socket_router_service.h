@@ -16,7 +16,8 @@ class SocketRouterService final : public Service {
   OnCreate() noexcept -> Result<Void> override;
 
   virtual auto
-  OnEvent(const std::string& event, const Json& data) noexcept -> void override;
+  OnEvent(const std::string& event,
+          const FlatJson& data) noexcept -> void override;
 
  private:
   std::string target_actor_;

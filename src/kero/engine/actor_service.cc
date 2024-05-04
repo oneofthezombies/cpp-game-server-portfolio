@@ -1,14 +1,25 @@
 #include "actor_service.h"
 
+#include "kero/engine/constants.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 
 using namespace kero;
 
+auto
+kero::ActorService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdActor;
+}
+
+auto
+kero::ActorService::GetKindName() noexcept -> ServiceKindName {
+  return "actor";
+}
+
 kero::ActorService::ActorService(const Pin<RunnerContext> runner_context,
                                  std::string &&name,
                                  MailBox &&mail_box) noexcept
-    : Service{runner_context, kServiceKindActor, {}},
+    : Service{runner_context, {}},
       mail_box_{std::move(mail_box)},
       name_{std::move(name)} {}
 
@@ -42,9 +53,16 @@ kero::ActorService::GetName() const noexcept -> const std::string & {
 auto
 kero::ActorService::SendMail(std::string &&to,
                              std::string &&event,
-                             Json &&body) noexcept -> void {
+                             FlatJson &&body) noexcept -> void {
   mail_box_.tx.Send(Mail{std::string{name_},
                          std::move(to),
                          std::move(event),
                          std::move(body)});
+}
+
+auto
+kero::ActorService::BroadcastMail(std::string &&event,
+                                  FlatJson &&body) noexcept -> void {
+  mail_box_.tx.Send(
+      Mail{std::string{name_}, "broadcast", std::move(event), std::move(body)});
 }

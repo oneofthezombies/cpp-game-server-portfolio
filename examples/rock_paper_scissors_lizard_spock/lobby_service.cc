@@ -1,4 +1,4 @@
-// #include "kero/core/json.h"
+// #include "kero/core/flat_json.h"
 // #include "kero/engine/runner_context.h"
 // #include "kero/log/log_builder.h"
 // #include "kero/service/constants.h"
@@ -76,7 +76,7 @@
 //             .Unwrap();
 
 //     auto stringified =
-//         TinyJson::Stringify(Dict{}
+//         TinyFlatJson::Stringify(Dict{}
 //                                 .Set("kind", "connect")
 //                                 .Set("socket_id",
 //                                 std::to_string(fd.Unwrap())) .Take());

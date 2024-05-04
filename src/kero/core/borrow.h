@@ -14,6 +14,10 @@ class Borrow final {
     assert(ptr_ != nullptr && "Borrow pointer must not be null");
   }
 
+  explicit Borrow(T* ptr) noexcept : ptr_{ptr} {
+    assert(ptr_ != nullptr && "Borrow pointer must not be null");
+  }
+
   ~Borrow() noexcept = default;
   CLASS_KIND_COPYABLE(Borrow);
 

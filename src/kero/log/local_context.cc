@@ -16,7 +16,7 @@ kero::LocalContext::Builder::Build() const noexcept
   auto [log_tx, log_rx] = spsc::Channel<Own<kero::Log>>::Builder{}.Build();
   if (!GetGlobalContext().AddLogRx(thread_id, std::move(log_rx))) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message",
                  std::string{"Failed to add log rx, thread_id already exists."})
             .Take()));

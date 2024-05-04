@@ -27,8 +27,11 @@ class ServiceReadOnlyMap {
 
   template <IsServiceKind T>
   [[nodiscard]] auto
-  GetService() const noexcept -> Borrow<Service> {
-    return GetService(T::GetKindId());
+  GetService() const noexcept -> Borrow<T> {
+    const auto service_kind_id = T::GetKindId();
+    auto it = id_to_service_map_.find(service_kind_id);
+    auto& ptr = it->second;
+    return Borrow<T>{static_cast<T*>(ptr.Get())};
   }
 
  private:

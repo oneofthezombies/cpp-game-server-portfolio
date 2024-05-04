@@ -4,14 +4,23 @@
 #include "kero/core/utils.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/io_event_loop_service.h"
+#include "kero/middleware/io_event_loop_service.h"
 
 using namespace kero;
 
+auto
+kero::SocketPoolService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdSocketPool;
+}
+
+auto
+kero::SocketPoolService::GetKindName() noexcept -> ServiceKindName {
+  return "socket_pool";
+}
+
 kero::SocketPoolService::SocketPoolService(
     const Pin<RunnerContext> runner_context) noexcept
-    : Service{
-          runner_context, kServiceKindSocketPool, {kServiceKindIoEventLoop}} {}
+    : Service{runner_context, {kServiceKindIdIoEventLoop}} {}
 
 auto
 kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
@@ -19,7 +28,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
 
   if (!SubscribeEvent(EventSocketOpen::kEvent)) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message",
                  std::string{"Failed to subscribe to socket open event"})
             .Take()));
@@ -27,7 +36,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
 
   if (!SubscribeEvent(EventSocketClose::kEvent)) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message",
                  std::string{"Failed to subscribe to socket close event"})
             .Take()));
@@ -38,7 +47,7 @@ kero::SocketPoolService::OnCreate() noexcept -> Result<Void> {
 
 auto
 kero::SocketPoolService::OnEvent(const std::string& event,
-                                 const Json& data) noexcept -> void {
+                                 const FlatJson& data) noexcept -> void {
   if (event == EventSocketOpen::kEvent) {
     OnSocketOpen(data);
   } else if (event == EventSocketClose::kEvent) {
@@ -49,8 +58,8 @@ kero::SocketPoolService::OnEvent(const std::string& event,
 }
 
 auto
-kero::SocketPoolService::OnSocketOpen(const Json& data) noexcept -> void {
-  auto fd_opt = data.TryGetAsI64(EventSocketOpen::kFd);
+kero::SocketPoolService::OnSocketOpen(const FlatJson& data) noexcept -> void {
+  auto fd_opt = data.TryGet<u64>(EventSocketOpen::kFd);
   if (fd_opt.IsNone()) {
     log::Error("Failed to get fd from event data").Log();
     return;
@@ -76,11 +85,11 @@ kero::SocketPoolService::OnSocketOpen(const Json& data) noexcept -> void {
   sockets_.insert(fd);
 
   InvokeEvent(EventSocketRegister::kEvent,
-              Json{}.Set(EventSocketRegister::kFd, fd).Take());
+              FlatJson{}.Set(EventSocketRegister::kFd, fd).Take());
 }
 
 auto
-kero::SocketPoolService::OnSocketClose(const Json& data) noexcept -> void {
+kero::SocketPoolService::OnSocketClose(const FlatJson& data) noexcept -> void {
   auto fd = data.GetOrDefaultAsI64(EventSocketClose::kFd, -1);
   if (fd == -1) {
     log::Error("Failed to get fd from event data").Log();
@@ -102,5 +111,5 @@ kero::SocketPoolService::OnSocketClose(const Json& data) noexcept -> void {
   }
 
   InvokeEvent(EventSocketUnregister::kEvent,
-              Json{}.Set(EventSocketUnregister::kFd, fd).Take());
+              FlatJson{}.Set(EventSocketUnregister::kFd, fd).Take());
 }

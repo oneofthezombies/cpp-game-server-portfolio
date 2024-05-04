@@ -30,8 +30,8 @@ class RunnerContext {
       -> Result<Void>;
 
   [[nodiscard]] auto
-  InvokeEvent(const std::string& event, const Json& data) noexcept
-      -> Result<Void>;
+  InvokeEvent(const std::string& event,
+              const FlatJson& data) noexcept -> Result<Void>;
 
  private:
   ServiceMap service_map_;

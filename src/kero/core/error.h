@@ -3,7 +3,7 @@
 
 #include <source_location>
 
-#include "kero/core/json.h"
+#include "kero/core/flat_json.h"
 
 namespace kero {
 
@@ -17,12 +17,12 @@ struct Error final {
   };
 
   Code code;
-  Json details;
+  FlatJson details;
   std::source_location location;
   Cause cause;
 
   explicit Error(const Code code,
-                 Json &&details,
+                 FlatJson &&details,
                  std::source_location &&location,
                  Cause &&cause) noexcept;
 
@@ -34,14 +34,14 @@ struct Error final {
 
   [[nodiscard]] static auto
   From(const Code code,
-       Json &&details,
+       FlatJson &&details,
        Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
   From(const Code code,
-       Json &&details,
+       FlatJson &&details,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 
@@ -52,7 +52,7 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(Json &&details,
+  From(FlatJson &&details,
        Error &&cause,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
@@ -63,7 +63,7 @@ struct Error final {
            std::source_location::current()) noexcept -> Error;
 
   [[nodiscard]] static auto
-  From(Json &&details,
+  From(FlatJson &&details,
        std::source_location &&location =
            std::source_location::current()) noexcept -> Error;
 

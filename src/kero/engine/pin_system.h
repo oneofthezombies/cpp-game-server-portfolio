@@ -55,7 +55,7 @@ class PinSystem final {
     auto pin_data = factory_res.TakeOk();
     if (pin_data == nullptr) {
       return ResultT::Err(
-          Json{}.Set("message", "factory must not return nullptr").Take());
+          FlatJson{}.Set("message", "factory must not return nullptr").Take());
     }
 
     Defer delete_pin_data{[pin_data] { delete pin_data; }};
@@ -66,7 +66,7 @@ class PinSystem final {
       auto found = pin_map_.find(pin_data_raw);
       if (found != pin_map_.end()) {
         return ResultT::Err(Error::From(
-            Json{}
+            FlatJson{}
                 .Set("message", "factory returned duplicate pin data")
                 .Take()));
       }

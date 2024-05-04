@@ -11,27 +11,27 @@ namespace kero {
 class ConfigService final : public Service {
  public:
   explicit ConfigService(const Pin<RunnerContext> runner_context,
-                         Json&& config) noexcept;
+                         FlatJson&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
   CLASS_KIND_MOVABLE(ConfigService);
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;
 
-  virtual auto
-  OnDestroy() noexcept -> void override;
-
-  virtual auto
-  OnUpdate() noexcept -> void override;
+  [[nodiscard]] auto
+  GetConfig() const noexcept -> const FlatJson&;
 
   [[nodiscard]] auto
-  GetConfig() const noexcept -> const Json&;
+  GetConfig() noexcept -> FlatJson&;
 
-  [[nodiscard]] auto
-  GetConfig() noexcept -> Json&;
+  [[nodiscard]] static auto
+  GetKindId() noexcept -> ServiceKindId;
+
+  [[nodiscard]] static auto
+  GetKindName() noexcept -> ServiceKindName;
 
  private:
-  Json config_;
+  FlatJson config_;
 };
 
 class ConfigServiceFactory : public ServiceFactory {

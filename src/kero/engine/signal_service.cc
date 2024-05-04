@@ -11,9 +11,19 @@
 
 using namespace kero;
 
+auto
+kero::SignalService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdSignal;
+}
+
+auto
+kero::SignalService::GetKindName() noexcept -> ServiceKindName {
+  return "signal";
+}
+
 kero::SignalService::SignalService(
     const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, kServiceKindSignal, {kServiceKindActor}} {}
+    : Service{runner_context, {kServiceKindIdActor}} {}
 
 auto
 kero::SignalService::OnCreate() noexcept -> Result<Void> {
@@ -22,7 +32,7 @@ kero::SignalService::OnCreate() noexcept -> Result<Void> {
   interrupted_ = false;
 
   if (signal(SIGINT, OnSignal) == SIG_ERR) {
-    return ResultT::Err(Errno::FromErrno().IntoJson());
+    return ResultT::Err(Errno::FromErrno().IntoFlatJson());
   }
 
   return OkVoid();
@@ -44,7 +54,7 @@ kero::SignalService::OnUpdate() noexcept -> void {
   }
 
   auto actor = GetDependency<ActorService>();
-  actor->SendMail("all", EventShutdown::kEvent, Json{});
+  actor->BroadcastMail(EventShutdown::kEvent, FlatJson{});
 }
 
 auto

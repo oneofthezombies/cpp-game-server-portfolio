@@ -19,16 +19,15 @@ engine::MainEventLoopHandlerLinux::MainEventLoopHandlerLinux(
       primary_event_loop_name_{std::move(primary_event_loop_name)} {}
 
 auto
-engine::MainEventLoopHandlerLinux::OnInit(EventLoop &event_loop,
-                                          const Config &config) noexcept
-    -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnInit(
+    EventLoop &event_loop, const Config &config) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   auto server_fd_raw = socket(AF_INET, SOCK_STREAM, 0);
   if (!FileDescriptorLinux::IsValid(server_fd_raw)) {
     return ResultT{
         Error::From(kMainEventLoopHandlerLinuxServerSocketFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -41,7 +40,7 @@ engine::MainEventLoopHandlerLinux::OnInit(EventLoop &event_loop,
                  sizeof(reuse)) < 0) {
     return ResultT{
         Error::From(kMainEventLoopHandlerLinuxServerSocketSetOptFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -61,7 +60,7 @@ engine::MainEventLoopHandlerLinux::OnInit(EventLoop &event_loop,
            sizeof(server_addr)) < 0) {
     return ResultT{
         Error::From(kMainEventLoopHandlerLinuxServerSocketBindFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -69,7 +68,7 @@ engine::MainEventLoopHandlerLinux::OnInit(EventLoop &event_loop,
   if (listen(server_fd.AsRaw(), SOMAXCONN) < 0) {
     return ResultT{
         Error::From(kMainEventLoopHandlerLinuxServerSocketListenFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -83,9 +82,8 @@ engine::MainEventLoopHandlerLinux::OnInit(EventLoop &event_loop,
 }
 
 auto
-engine::MainEventLoopHandlerLinux::OnMail(EventLoop &event_loop,
-                                          const Mail &mail) noexcept
-    -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnMail(
+    EventLoop &event_loop, const Mail &mail) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   // noop
@@ -94,9 +92,8 @@ engine::MainEventLoopHandlerLinux::OnMail(EventLoop &event_loop,
 }
 
 auto
-engine::MainEventLoopHandlerLinux::OnSocketIn(EventLoop &event_loop,
-                                              const SocketId socket_id) noexcept
-    -> Result<Void> {
+engine::MainEventLoopHandlerLinux::OnSocketIn(
+    EventLoop &event_loop, const SocketId socket_id) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
   assert(server_fd_ != nullptr && "server_fd must not be nullptr");
@@ -109,7 +106,7 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(EventLoop &event_loop,
   const auto server_fd = server_fd_res.Ok();
   if (server_fd != server_fd_->AsRaw()) {
     return ResultT{Error::From(kMainEventLoopHandlerLinuxUnexpectedSocketId,
-                               core::JsonParser{}
+                               core::FlatJsonParser{}
                                    .Set("socket_id", socket_id)
                                    .Set("server_fd", server_fd)
                                    .IntoMap())};
@@ -122,7 +119,7 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(EventLoop &event_loop,
   if (!FileDescriptorLinux::IsValid(client_fd)) {
     return ResultT{
         Error::From(kMainEventLoopHandlerLinuxServerSocketAcceptFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .IntoMap())};
   }
@@ -139,7 +136,7 @@ engine::MainEventLoopHandlerLinux::OnSocketIn(EventLoop &event_loop,
 
   const auto client_socket_id = client_socket_id_res.Ok();
   event_loop.SendMail(std::string{primary_event_loop_name_},
-                      std::move(core::JsonParser{}
+                      std::move(core::FlatJsonParser{}
                                     .Set("kind", "connect")
                                     .Set("socket_id", client_socket_id)));
   return ResultT{Void{}};
@@ -158,7 +155,7 @@ engine::MainEventLoopHandlerLinux::OnSocketHangUp(
   }
 
   const auto fd = fd_res.Ok();
-  core::JsonParser{}
+  core::FlatJsonParser{}
       .Set("message", "socket hang up")
       .Set("name", event_loop.GetName())
       .Set("socket_id", socket_id)
@@ -183,7 +180,7 @@ engine::MainEventLoopHandlerLinux::OnSocketError(
   }
 
   const auto fd = fd_res.Ok();
-  core::JsonParser{}
+  core::FlatJsonParser{}
       .Set("message", "socket error")
       .Set("name", event_loop.GetName())
       .Set("socket_id", socket_id)

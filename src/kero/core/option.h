@@ -101,6 +101,14 @@ class Option final {
    * Unwraps the option, if it is `None` this will cause a crash.
    */
   [[nodiscard]] auto
+  Unwrap() const noexcept -> const T& {
+    return std::get<T>(data_);
+  }
+
+  /**
+   * Unwraps the option, if it is `None` this will cause a crash.
+   */
+  [[nodiscard]] auto
   TakeUnwrap() noexcept -> T {
     return std::move(std::get<T>(data_));
   }

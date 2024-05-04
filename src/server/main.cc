@@ -40,39 +40,39 @@ main(int argc, char **argv) noexcept -> int {
         // noop
         break;
       case kPortArgNotFound:
-        core::JsonParser{}
+        core::FlatJsonParser{}
             .Set("message", "port argument not found")
             .Set("error", error)
             .LogLn();
         break;
       case kPortValueNotFound:
-        core::JsonParser{}
+        core::FlatJsonParser{}
             .Set("message", "port value not found")
             .Set("error", error)
             .LogLn();
         break;
       case kPortParsingFailed:
-        core::JsonParser{}
+        core::FlatJsonParser{}
             .Set("message", "port parsing failed")
             .Set("error", error)
             .LogLn();
         break;
       case kUnknownArgument:
-        core::JsonParser{}
+        core::FlatJsonParser{}
             .Set("message", "unknown argument")
             .Set("error", error)
             .LogLn();
         break;
     }
 
-    core::JsonParser{}.Set("usage", "server [--port <port>]").LogLn();
+    core::FlatJsonParser{}.Set("usage", "server [--port <port>]").LogLn();
     return 1;
   }
 
   auto config = std::move(config_res.Ok());
   config.primary_event_loop_name = "lobby";
   if (auto res = config.Validate(); res.IsErr()) {
-    core::JsonParser{}
+    core::FlatJsonParser{}
         .Set("message", "config validation failed")
         .Set("error", res.Err())
         .LogLn();
@@ -81,7 +81,7 @@ main(int argc, char **argv) noexcept -> int {
 
   auto engine_res = engine::Engine::Builder{}.Build(std::move(config));
   if (engine_res.IsErr()) {
-    core::JsonParser{}
+    core::FlatJsonParser{}
         .Set("message", "engine build failed")
         .Set("error", engine_res.Err())
         .LogLn();
@@ -97,7 +97,7 @@ main(int argc, char **argv) noexcept -> int {
     if (auto res =
             engine.RegisterEventLoop(std::string{name}, std::move(handler));
         res.IsErr()) {
-      core::JsonParser{}
+      core::FlatJsonParser{}
           .Set("message", "register event loop handler failed")
           .Set("error", res.Err())
           .LogLn();
@@ -141,7 +141,7 @@ ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
       if (result.IsErr()) {
         return ResultT{Error::From(
             kPortParsingFailed,
-            core::JsonParser{}.Set("error", result.Err()).IntoMap())};
+            core::FlatJsonParser{}.Set("error", result.Err()).IntoMap())};
       }
 
       config.port = result.Ok();
@@ -151,7 +151,7 @@ ParseArgs(core::Args &&args) noexcept -> Result<engine::Config> {
 
     return ResultT{
         Error::From(kUnknownArgument,
-                    core::JsonParser{}.Set("token", token).IntoMap())};
+                    core::FlatJsonParser{}.Set("token", token).IntoMap())};
   }
 
   if (config.port == engine::Config::kUndefinedPort) {

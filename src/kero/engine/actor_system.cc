@@ -10,7 +10,7 @@ static const std::string kShutdown = "shutdown";
 kero::Mail::Mail(std::string &&from,
                  std::string &&to,
                  std::string &&event,
-                 Json &&body) noexcept
+                 FlatJson &&body) noexcept
     : from{std::move(from)},
       to{std::move(to)},
       event{std::move(event)},
@@ -40,7 +40,7 @@ kero::ActorSystem::CreateMailBox(const std::string &name) noexcept
 
   std::lock_guard lock{mutex_};
   if (mail_box_map_.find(name) != mail_box_map_.end()) {
-    return ResultT::Err(Json{}
+    return ResultT::Err(FlatJson{}
                             .Set("message", "mailbox name already exists")
                             .Set("name", name)
                             .Take());
@@ -66,7 +66,7 @@ kero::ActorSystem::DestroyMailBox(const std::string &name) noexcept
 
   std::lock_guard lock{mutex_};
   if (mail_box_map_.find(name) == mail_box_map_.end()) {
-    return ResultT::Err(Json{}
+    return ResultT::Err(FlatJson{}
                             .Set("message", "mailbox name not found")
                             .Set("name", name)
                             .Take());
@@ -82,27 +82,27 @@ kero::ActorSystem::ValidateName(const std::string &name) const noexcept
   using ResultT = Result<Void>;
 
   if (name.empty()) {
-    return ResultT::Err(Json{}.Set("message", "name is empty").Take());
+    return ResultT::Err(FlatJson{}.Set("message", "name is empty").Take());
   }
 
   if (name.size() > kMaxNameLength) {
-    return ResultT::Err(
-        Json{}
-            .Set("message", "name is too long")
-            .Set("max_length", static_cast<double>(kMaxNameLength))
-            .Set("length", static_cast<double>(name.size()))
-            .Take());
+    return ResultT::Err(FlatJson{}
+                            .Set("message", "name is too long")
+                            .Set("max_length", kMaxNameLength)
+                            .Set("length", name.size())
+                            .Take());
   }
 
-  if (name == "all") {
-    return ResultT::Err(Json{}.Set("message", "name is reserved").Take());
+  if (name == "broadcast") {
+    return ResultT::Err(
+        FlatJson{}.Set("message", "broadcast is reserved").Take());
   }
 
   return OkVoid();
 }
 
 auto
-kero::ActorSystem::Run(spsc::Rx<Json> &&rx) -> Result<Void> {
+kero::ActorSystem::Run(spsc::Rx<FlatJson> &&rx) -> Result<Void> {
   while (true) {
     if (auto message = rx.TryReceive()) {
       if (message.TakeUnwrap().Has(kShutdown)) {
@@ -120,9 +120,12 @@ kero::ActorSystem::Run(spsc::Rx<Json> &&rx) -> Result<Void> {
 
         auto [from, to, event, body] = mail.TakeUnwrap();
 
-        // broadcast
-        if (to == "all") {
+        if (to == "broadcast") {
           for (auto &[name, other_mail_box] : mail_box_map_) {
+            if (name == from) {
+              continue;
+            }
+
             other_mail_box.tx.Send(Mail{std::string{from},
                                         std::string{name},
                                         std::string{event},
@@ -161,15 +164,17 @@ kero::ThreadActorSystem::ThreadActorSystem(
 auto
 kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
   if (thread_.joinable()) {
-    return Error::From(Json{}.Set("message", "thread already started").Take());
+    return Error::From(
+        FlatJson{}.Set("message", "thread already started").Take());
   }
 
   if (tx_ != nullptr) {
-    return Error::From(Json{}.Set("message", "tx already initialized").Take());
+    return Error::From(
+        FlatJson{}.Set("message", "tx already initialized").Take());
   }
 
-  auto [tx, rx] = spsc::Channel<Json>::Builder{}.Build();
-  tx_ = std::make_unique<spsc::Tx<Json>>(std::move(tx));
+  auto [tx, rx] = spsc::Channel<FlatJson>::Builder{}.Build();
+  tx_ = std::make_unique<spsc::Tx<FlatJson>>(std::move(tx));
 
   thread_ = std::thread{ThreadMain, actor_system_, std::move(rx)};
   return OkVoid();
@@ -178,21 +183,21 @@ kero::ThreadActorSystem::Start() noexcept -> Result<Void> {
 auto
 kero::ThreadActorSystem::Stop() noexcept -> Result<Void> {
   if (!thread_.joinable()) {
-    return Error::From(Json{}.Set("message", "thread not started").Take());
+    return Error::From(FlatJson{}.Set("message", "thread not started").Take());
   }
 
   if (tx_ == nullptr) {
-    return Error::From(Json{}.Set("message", "tx not initialized").Take());
+    return Error::From(FlatJson{}.Set("message", "tx not initialized").Take());
   }
 
-  tx_->Send(Json{}.Set(std::string{kShutdown}, true).Take());
+  tx_->Send(FlatJson{}.Set(std::string{kShutdown}, true).Take());
   thread_.join();
   return OkVoid();
 }
 
 auto
 kero::ThreadActorSystem::ThreadMain(const Pin<ActorSystem> actor_system,
-                                    spsc::Rx<Json> &&rx) -> void {
+                                    spsc::Rx<FlatJson> &&rx) -> void {
   if (auto res = actor_system->Run(std::move(rx))) {
     log::Info("Actor system finished").Log();
   } else {

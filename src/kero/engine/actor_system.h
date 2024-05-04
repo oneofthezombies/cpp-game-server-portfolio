@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "kero/core/common.h"
-#include "kero/core/json.h"
+#include "kero/core/flat_json.h"
 #include "kero/core/result.h"
 #include "kero/core/spsc_channel.h"
 #include "kero/engine/pin.h"
@@ -16,13 +16,13 @@ struct Mail final {
   std::string from;
   std::string to;
   std::string event;
-  Json body;
+  FlatJson body;
 
   explicit Mail() noexcept = default;
   explicit Mail(std::string &&from,
                 std::string &&to,
                 std::string &&event,
-                Json &&body) noexcept;
+                FlatJson &&body) noexcept;
   ~Mail() noexcept = default;
   CLASS_KIND_MOVABLE(Mail);
 
@@ -59,7 +59,7 @@ class ActorSystem final {
   DestroyMailBox(const std::string &name) noexcept -> Result<Void>;
 
   [[nodiscard]] auto
-  Run(spsc::Rx<Json> &&rx) -> Result<Void>;
+  Run(spsc::Rx<FlatJson> &&rx) -> Result<Void>;
 
  private:
   [[nodiscard]] auto
@@ -84,10 +84,10 @@ class ThreadActorSystem {
 
  private:
   static auto
-  ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<Json> &&rx) -> void;
+  ThreadMain(Pin<ActorSystem> actor_system, spsc::Rx<FlatJson> &&rx) -> void;
 
   Pin<ActorSystem> actor_system_;
-  Own<spsc::Tx<Json>> tx_;
+  Own<spsc::Tx<FlatJson>> tx_;
   std::thread thread_;
 };
 

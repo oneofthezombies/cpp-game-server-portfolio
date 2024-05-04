@@ -61,13 +61,14 @@ contents::Lobby::OnConnect(Self &self,
 
   auto socket_id_res = mail.body.GetAsNumber<engine::SocketId>("socket_id");
   if (socket_id_res.IsErr()) {
-    return ResultT{Error::From(kLobbyMailGetSocketIdFailed,
-                               core::JsonParser{}.Set("mail", mail).IntoMap(),
-                               socket_id_res.TakeErr())};
+    return ResultT{
+        Error::From(kLobbyMailGetSocketIdFailed,
+                    core::FlatJsonParser{}.Set("mail", mail).IntoMap(),
+                    socket_id_res.TakeErr())};
   }
 
   const auto socket_id = socket_id_res.Ok();
-  auto message = core::JsonParser{}
+  auto message = core::FlatJsonParser{}
                      .Set("kind", "connect")
                      .Set("socket_id", socket_id)
                      .Take();
@@ -91,7 +92,7 @@ contents::Lobby::OnConnect(Self &self,
 
     const auto battle_id = self.NextBattleId();
     event_loop.SendMail("battle",
-                        core::JsonParser{}
+                        core::FlatJsonParser{}
                             .Set("kind", "start")
                             .Set("battle_id", battle_id)
                             .Set("first_socket_id", first_socket_id)

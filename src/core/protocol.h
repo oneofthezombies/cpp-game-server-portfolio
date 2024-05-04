@@ -41,7 +41,7 @@ auto
 operator<<(std::ostream &os, const MessageKind kind) -> std::ostream &;
 
 using MessageId = u64;
-using Message = JsonParser;
+using Message = FlatJsonParser;
 
 }  // namespace core
 

@@ -5,7 +5,7 @@
 
 #include "kero/core/borrow.h"
 #include "kero/core/common.h"
-#include "kero/core/json.h"
+#include "kero/core/flat_json.h"
 #include "kero/core/result.h"
 #include "kero/engine/pin.h"
 #include "kero/engine/service_kind.h"
@@ -46,7 +46,7 @@ class Service {
   template <IsServiceKind T>
   [[nodiscard]] auto
   GetDependency() noexcept -> Borrow<T> {
-    return GetDependency(T::GetKind());
+    return dependency_map_.GetService<T>();
   }
 
   [[nodiscard]] auto
@@ -56,8 +56,8 @@ class Service {
   UnsubscribeEvent(const std::string& event) -> Result<Void>;
 
   auto
-  InvokeEvent(const std::string& event, const Json& data) noexcept
-      -> Result<Void>;
+  InvokeEvent(const std::string& event,
+              const FlatJson& data) noexcept -> Result<Void>;
 
   /**
    * Default implementation of the `OnCreate` method is noop.
@@ -81,7 +81,7 @@ class Service {
    * Default implementation of the `OnEvent` method is noop.
    */
   virtual auto
-  OnEvent(const std::string& event, const Json& data) noexcept -> void;
+  OnEvent(const std::string& event, const FlatJson& data) noexcept -> void;
 
  private:
   ServiceReadOnlyMap dependency_map_{};

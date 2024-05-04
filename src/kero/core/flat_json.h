@@ -1,5 +1,5 @@
-#ifndef KERO_CORE_JSON_H
-#define KERO_CORE_JSON_H
+#ifndef KERO_CORE_FLAT_JSON_H
+#define KERO_CORE_FLAT_JSON_H
 
 #include <source_location>
 #include <string>
@@ -13,9 +13,9 @@
 namespace kero {
 
 template <typename T>
-concept IsJsonType = std::disjunction_v<std::is_same<T, bool>,
-                                        std::is_same<T, double>,
-                                        std::is_same<T, std::string>>;
+concept IsFlatJsonType = std::disjunction_v<std::is_same<T, bool>,
+                                            std::is_same<T, double>,
+                                            std::is_same<T, std::string>>;
 
 template <typename T>
 concept IsGetValueType = std::disjunction_v<std::is_same<T, bool>,
@@ -46,6 +46,7 @@ concept IsSetValueType = std::disjunction_v<std::is_same<T, bool>,
                                             std::is_same<T, u64>,
                                             std::is_same<T, float>,
                                             std::is_same<T, double>,
+                                            std::is_same<T, char>,
                                             std::is_same<T, const char*>,
                                             std::is_same<T, std::string_view>>;
 
@@ -55,15 +56,15 @@ concept IsSetConstRefType = std::disjunction_v<std::is_same<T, std::string>>;
 template <typename T>
 concept IsSetRValueType = std::disjunction_v<std::is_same<T, std::string>>;
 
-class Json final {
+class FlatJson final {
  public:
   using ValueStorage = std::variant<bool, double, std::string>;
   using Data = std::unordered_map<std::string, ValueStorage>;
 
-  explicit Json() noexcept = default;
-  explicit Json(Data&& data) noexcept;
-  ~Json() noexcept = default;
-  CLASS_KIND_MOVABLE(Json);
+  explicit FlatJson() noexcept = default;
+  explicit FlatJson(Data&& data) noexcept;
+  ~FlatJson() noexcept = default;
+  CLASS_KIND_MOVABLE(FlatJson);
 
   template <typename T>
     requires IsGetValueType<T>
@@ -78,17 +79,17 @@ class Json final {
   template <typename T>
     requires IsSetValueType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, const T value) noexcept -> Json&;
+  Set(std::string&& key, const T value) noexcept -> FlatJson&;
 
   template <typename T>
     requires IsSetConstRefType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, const T& value) noexcept -> Json&;
+  Set(std::string&& key, const T& value) noexcept -> FlatJson&;
 
   template <typename T>
     requires IsSetRValueType<T>
   [[nodiscard]] auto
-  Set(std::string&& key, T&& value) noexcept -> Json&;
+  Set(std::string&& key, T&& value) noexcept -> FlatJson&;
 
   template <typename T>
     requires IsSetValueType<T>
@@ -106,7 +107,7 @@ class Json final {
   TrySet(std::string&& key, T&& value) noexcept -> bool;
 
   [[nodiscard]] auto
-  Unset(const std::string& key) noexcept -> Json&;
+  Unset(const std::string& key) noexcept -> FlatJson&;
 
   [[nodiscard]] auto
   TryUnset(const std::string& key) noexcept -> bool;
@@ -115,10 +116,10 @@ class Json final {
   Has(const std::string& key) const noexcept -> bool;
 
   [[nodiscard]] auto
-  Take() noexcept -> Json;
+  Take() noexcept -> FlatJson;
 
   [[nodiscard]] auto
-  Clone() const noexcept -> Json;
+  Clone() const noexcept -> FlatJson;
 
   [[nodiscard]] auto
   AsRaw() const noexcept -> const Data&;
@@ -131,7 +132,7 @@ class Json final {
 
  private:
   template <typename T>
-    requires IsJsonType<T>
+    requires IsFlatJsonType<T>
   [[nodiscard]] auto
   TryGetImpl(const std::string& key) const noexcept -> OptionRef<const T&> {
     const auto found = data_.find(key);
@@ -148,9 +149,9 @@ class Json final {
   }
 
   template <typename T>
-    requires IsJsonType<T>
+    requires IsFlatJsonType<T>
   [[nodiscard]] auto
-  SetImpl(std::string&& key, T&& value) noexcept -> Json& {
+  SetImpl(std::string&& key, T&& value) noexcept -> FlatJson& {
     const auto [it, inserted] =
         data_.try_emplace(std::move(key), std::move(value));
     if (!inserted) {
@@ -162,7 +163,7 @@ class Json final {
   }
 
   template <typename T>
-    requires IsJsonType<T>
+    requires IsFlatJsonType<T>
   [[nodiscard]] auto
   TrySetImpl(std::string&& key, T&& value) noexcept -> bool {
     const auto [it, inserted] =
@@ -184,12 +185,12 @@ class Json final {
   Data data_;
 
   friend auto
-  operator<<(std::ostream& os, const Json& json) -> std::ostream&;
+  operator<<(std::ostream& os, const FlatJson& json) -> std::ostream&;
 };
 
 template <>
 inline auto
-kero::Json::TryGet<bool>(const std::string& key) const noexcept
+kero::FlatJson::TryGet<bool>(const std::string& key) const noexcept
     -> Option<bool> {
   const auto value = TryGetImpl<bool>(key);
   if (value.IsNone()) {
@@ -201,7 +202,8 @@ kero::Json::TryGet<bool>(const std::string& key) const noexcept
 
 template <>
 inline auto
-kero::Json::TryGet<i8>(const std::string& key) const noexcept -> Option<i8> {
+kero::FlatJson::TryGet<i8>(const std::string& key) const noexcept
+    -> Option<i8> {
   const auto value = TryGetImpl<double>(key);
   if (value.IsNone()) {
     return None;
@@ -212,7 +214,8 @@ kero::Json::TryGet<i8>(const std::string& key) const noexcept -> Option<i8> {
 
 template <>
 inline auto
-kero::Json::TryGet<i16>(const std::string& key) const noexcept -> Option<i16> {
+kero::FlatJson::TryGet<i16>(const std::string& key) const noexcept
+    -> Option<i16> {
   const auto value = TryGetImpl<double>(key);
   if (value.IsNone()) {
     return None;
@@ -223,7 +226,8 @@ kero::Json::TryGet<i16>(const std::string& key) const noexcept -> Option<i16> {
 
 template <>
 inline auto
-kero::Json::TryGet<i32>(const std::string& key) const noexcept -> Option<i32> {
+kero::FlatJson::TryGet<i32>(const std::string& key) const noexcept
+    -> Option<i32> {
   const auto value = TryGetImpl<double>(key);
   if (value.IsNone()) {
     return None;
@@ -234,7 +238,8 @@ kero::Json::TryGet<i32>(const std::string& key) const noexcept -> Option<i32> {
 
 template <>
 inline auto
-kero::Json::TryGet<i64>(const std::string& key) const noexcept -> Option<i64> {
+kero::FlatJson::TryGet<i64>(const std::string& key) const noexcept
+    -> Option<i64> {
   const auto value = TryGetImpl<double>(key);
   if (value.IsNone()) {
     return None;
@@ -245,7 +250,7 @@ kero::Json::TryGet<i64>(const std::string& key) const noexcept -> Option<i64> {
 
 template <>
 inline auto
-kero::Json::TryGet<std::string>(const std::string& key) const noexcept
+kero::FlatJson::TryGet<std::string>(const std::string& key) const noexcept
     -> OptionRef<const std::string&> {
   const auto value = TryGetImpl<std::string>(key);
   if (value.IsNone()) {
@@ -257,31 +262,36 @@ kero::Json::TryGet<std::string>(const std::string& key) const noexcept
 
 template <>
 inline auto
-kero::Json::Set<bool>(std::string&& key, const bool value) noexcept -> Json& {
+kero::FlatJson::Set<bool>(std::string&& key,
+                          const bool value) noexcept -> FlatJson& {
   return SetImpl<bool>(std::move(key), static_cast<bool>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<i8>(std::string&& key, const i8 value) noexcept -> Json& {
+kero::FlatJson::Set<i8>(std::string&& key,
+                        const i8 value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<i16>(std::string&& key, const i16 value) noexcept -> Json& {
+kero::FlatJson::Set<i16>(std::string&& key,
+                         const i16 value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<i32>(std::string&& key, const i32 value) noexcept -> Json& {
+kero::FlatJson::Set<i32>(std::string&& key,
+                         const i32 value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<i64>(std::string&& key, const i64 value) noexcept -> Json& {
+kero::FlatJson::Set<i64>(std::string&& key,
+                         const i64 value) noexcept -> FlatJson& {
   if (!IsSafeInteger(value)) {
     LogError("i64 value is too large for JSON. key: " + key +
              ", value: " + std::to_string(value));
@@ -293,25 +303,29 @@ kero::Json::Set<i64>(std::string&& key, const i64 value) noexcept -> Json& {
 
 template <>
 inline auto
-kero::Json::Set<u8>(std::string&& key, const u8 value) noexcept -> Json& {
+kero::FlatJson::Set<u8>(std::string&& key,
+                        const u8 value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<u16>(std::string&& key, const u16 value) noexcept -> Json& {
+kero::FlatJson::Set<u16>(std::string&& key,
+                         const u16 value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<u32>(std::string&& key, const u32 value) noexcept -> Json& {
+kero::FlatJson::Set<u32>(std::string&& key,
+                         const u32 value) noexcept -> FlatJson& {
   return SetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::Set<u64>(std::string&& key, const u64 value) noexcept -> Json& {
+kero::FlatJson::Set<u64>(std::string&& key,
+                         const u64 value) noexcept -> FlatJson& {
   if (!IsSafeInteger(value)) {
     LogError("u64 value is too large for JSON. key: " + key +
              ", value: " + std::to_string(value));
@@ -323,8 +337,15 @@ kero::Json::Set<u64>(std::string&& key, const u64 value) noexcept -> Json& {
 
 template <>
 inline auto
-kero::Json::Set<const char*>(std::string&& key, const char* value) noexcept
-    -> Json& {
+kero::FlatJson::Set<char>(std::string&& key,
+                          const char value) noexcept -> FlatJson& {
+  return SetImpl<std::string>(std::move(key), std::string{value});
+}
+
+template <>
+inline auto
+kero::FlatJson::Set<const char*>(std::string&& key,
+                                 const char* value) noexcept -> FlatJson& {
   if (value == nullptr) {
     LogError("Cannot set null char* value in JSON. key: " + key);
     return *this;
@@ -335,53 +356,56 @@ kero::Json::Set<const char*>(std::string&& key, const char* value) noexcept
 
 template <>
 inline auto
-kero::Json::Set<std::string_view>(std::string&& key,
-                                  const std::string_view value) noexcept
-    -> Json& {
+kero::FlatJson::Set<std::string_view>(
+    std::string&& key, const std::string_view value) noexcept -> FlatJson& {
   return SetImpl<std::string>(std::move(key), std::string{value});
 }
 
 template <>
 inline auto
-kero::Json::Set<std::string>(std::string&& key,
-                             const std::string& value) noexcept -> Json& {
+kero::FlatJson::Set<std::string>(
+    std::string&& key, const std::string& value) noexcept -> FlatJson& {
   return SetImpl<std::string>(std::move(key), std::string{value});
 }
 
 template <>
 inline auto
-kero::Json::Set<std::string>(std::string&& key, std::string&& value) noexcept
-    -> Json& {
+kero::FlatJson::Set<std::string>(std::string&& key,
+                                 std::string&& value) noexcept -> FlatJson& {
   return SetImpl<std::string>(std::move(key), std::move(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<bool>(std::string&& key, const bool value) noexcept -> bool {
+kero::FlatJson::TrySet<bool>(std::string&& key,
+                             const bool value) noexcept -> bool {
   return TrySetImpl<bool>(std::move(key), static_cast<bool>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<i8>(std::string&& key, const i8 value) noexcept -> bool {
+kero::FlatJson::TrySet<i8>(std::string&& key, const i8 value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<i16>(std::string&& key, const i16 value) noexcept -> bool {
+kero::FlatJson::TrySet<i16>(std::string&& key,
+                            const i16 value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<i32>(std::string&& key, const i32 value) noexcept -> bool {
+kero::FlatJson::TrySet<i32>(std::string&& key,
+                            const i32 value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<i64>(std::string&& key, const i64 value) noexcept -> bool {
+kero::FlatJson::TrySet<i64>(std::string&& key,
+                            const i64 value) noexcept -> bool {
   if (!IsSafeInteger(value)) {
     return false;
   }
@@ -391,25 +415,28 @@ kero::Json::TrySet<i64>(std::string&& key, const i64 value) noexcept -> bool {
 
 template <>
 inline auto
-kero::Json::TrySet<u8>(std::string&& key, const u8 value) noexcept -> bool {
+kero::FlatJson::TrySet<u8>(std::string&& key, const u8 value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<u16>(std::string&& key, const u16 value) noexcept -> bool {
+kero::FlatJson::TrySet<u16>(std::string&& key,
+                            const u16 value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<u32>(std::string&& key, const u32 value) noexcept -> bool {
+kero::FlatJson::TrySet<u32>(std::string&& key,
+                            const u32 value) noexcept -> bool {
   return TrySetImpl<double>(std::move(key), static_cast<double>(value));
 }
 
 template <>
 inline auto
-kero::Json::TrySet<u64>(std::string&& key, const u64 value) noexcept -> bool {
+kero::FlatJson::TrySet<u64>(std::string&& key,
+                            const u64 value) noexcept -> bool {
   if (!IsSafeInteger(value)) {
     return false;
   }
@@ -419,8 +446,15 @@ kero::Json::TrySet<u64>(std::string&& key, const u64 value) noexcept -> bool {
 
 template <>
 inline auto
-kero::Json::TrySet<const char*>(std::string&& key, const char* value) noexcept
-    -> bool {
+kero::FlatJson::TrySet<char>(std::string&& key,
+                             const char value) noexcept -> bool {
+  return TrySetImpl<std::string>(std::move(key), std::string{value});
+}
+
+template <>
+inline auto
+kero::FlatJson::TrySet<const char*>(std::string&& key,
+                                    const char* value) noexcept -> bool {
   if (value == nullptr) {
     return false;
   }
@@ -430,29 +464,28 @@ kero::Json::TrySet<const char*>(std::string&& key, const char* value) noexcept
 
 template <>
 inline auto
-kero::Json::TrySet<std::string_view>(std::string&& key,
-                                     const std::string_view value) noexcept
-    -> bool {
+kero::FlatJson::TrySet<std::string_view>(
+    std::string&& key, const std::string_view value) noexcept -> bool {
   return TrySetImpl<std::string>(std::move(key), std::string{value});
 }
 
 template <>
 inline auto
-kero::Json::TrySet<std::string>(std::string&& key,
-                                const std::string& value) noexcept -> bool {
+kero::FlatJson::TrySet<std::string>(std::string&& key,
+                                    const std::string& value) noexcept -> bool {
   return TrySetImpl<std::string>(std::move(key), std::string{value});
 }
 
 template <>
 inline auto
-kero::Json::TrySet<std::string>(std::string&& key, std::string&& value) noexcept
-    -> bool {
+kero::FlatJson::TrySet<std::string>(std::string&& key,
+                                    std::string&& value) noexcept -> bool {
   return TrySetImpl<std::string>(std::move(key), std::move(value));
 }
 
 auto
-operator<<(std::ostream& os, const Json& json) -> std::ostream&;
+operator<<(std::ostream& os, const FlatJson& json) -> std::ostream&;
 
 }  // namespace kero
 
-#endif  // KERO_CORE_JSON_H
+#endif  // KERO_CORE_FLAT_JSON_H

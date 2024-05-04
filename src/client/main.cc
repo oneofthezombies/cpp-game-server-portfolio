@@ -87,10 +87,10 @@ ParseArgs(core::Args &&args) noexcept -> Result<Config> {
       const auto next_token = *next;
       auto result = core::ParseNumberString<u16>(next_token);
       if (result.IsErr()) {
-        return ResultT{
-            Error::From(kPortParsingFailed,
-                        core::JsonParser{}.Set("token", next_token).IntoMap(),
-                        result.TakeErr())};
+        return ResultT{Error::From(
+            kPortParsingFailed,
+            core::FlatJsonParser{}.Set("token", next_token).IntoMap(),
+            result.TakeErr())};
       }
 
       config.port = result.Ok();
@@ -100,7 +100,7 @@ ParseArgs(core::Args &&args) noexcept -> Result<Config> {
 
     return ResultT{
         Error::From(kUnknownArgument,
-                    core::JsonParser{}.Set("token", token).IntoMap())};
+                    core::FlatJsonParser{}.Set("token", token).IntoMap())};
   }
 
   if (config.ip.empty()) {
@@ -177,7 +177,8 @@ main(int argc, char **argv) noexcept -> int {
     std::cout << "[DEBUG] Server: " << buffer << " (" << read_size << " bytes)"
               << std::endl;
 
-    const auto message = core::JsonParser::Parse(buffer.substr(0, read_size));
+    const auto message =
+        core::FlatJsonParser::Parse(buffer.substr(0, read_size));
     if (!message) {
       std::cout << "Failed to parse the message." << std::endl;
       continue;
@@ -237,7 +238,7 @@ main(int argc, char **argv) noexcept -> int {
         valid_move = true;
       }
 
-      const auto data = core::JsonParser{}
+      const auto data = core::FlatJsonParser{}
                             .Set("kind", "battle_move")
                             .Set("move", move)
                             .ToString();

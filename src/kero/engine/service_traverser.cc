@@ -4,20 +4,19 @@
 
 using namespace kero;
 
-kero::ServiceTraverser::ServiceTraverser(
-    const ServiceMap::IdToServiceMap& id_to_service_map) noexcept
-    : id_to_service_map_{id_to_service_map} {}
+kero::ServiceTraverser::ServiceTraverser(const ServiceMap& service_map) noexcept
+    : service_map_{service_map} {}
 
 auto
 kero::ServiceTraverser::Traverse(const OnVisit& on_visit) noexcept
     -> Result<Void> {
   using ResultT = Result<Void>;
 
-  visit_map_.clear();
+  visit_set_.clear();
   traversal_stack_.clear();
 
-  for (const auto& [_, service] : id_to_service_map_) {
-    auto result = TraverseRecursive(service->GetKind(), on_visit);
+  for (const auto& [_, service] : service_map_.id_to_service_map_) {
+    auto result = TraverseRecursive(service->GetKindId(), on_visit);
     if (result.IsErr()) {
       return ResultT::Err(result.TakeErr());
     }
@@ -32,50 +31,66 @@ kero::ServiceTraverser::TraverseRecursive(const ServiceKindId service_kind_id,
     -> Result<Void> {
   using ResultT = Result<Void>;
 
-  if (visit_map_.contains(service_kind.id)) {
+  if (visit_set_.contains(service_kind_id)) {
     return OkVoid();
   }
 
-  visit_map_.emplace(service_kind.id, service_kind.name);
-  traversal_stack_.push_back(service_kind.id);
+  visit_set_.insert(service_kind_id);
+  traversal_stack_.push_back(service_kind_id);
 
-  const auto service_it = id_to_service_map_.find(service_kind.id);
-  if (service_it == id_to_service_map_.end()) {
-    return ResultT::Err(
-        Json{}
-            .Set("message", "service not found in service map")
-            .Set("service_kind_id", static_cast<double>(service_kind.id))
-            .Take());
+  const auto service_it = service_map_.id_to_service_map_.find(service_kind_id);
+  if (service_it == service_map_.id_to_service_map_.end()) {
+    return ResultT::Err(FlatJson{}
+                            .Set("message", "service not found in service map")
+                            .Set("service_kind_id", service_kind_id)
+                            .Take());
   }
 
   auto& service = *service_it->second;
   const auto& dependency_declarations = service.GetDependencyDeclarations();
   for (const auto& dependency : dependency_declarations) {
-    auto visit_it = visit_map_.find(dependency.id);
-    if (visit_it != visit_map_.end()) {
+    auto visit_it = visit_set_.find(dependency);
+    if (visit_it != visit_set_.end()) {
       auto found = std::find(traversal_stack_.begin(),
                              traversal_stack_.end(),
-                             dependency.id);
+                             dependency);
       if (found != traversal_stack_.end()) {
-        std::string circular_dependencies = dependency.name + " -> ";
-        for (auto it = std::next(found); it != traversal_stack_.end(); ++it) {
-          auto circular_it = visit_map_.find(*it);
-          if (circular_it == visit_map_.end()) {
+        auto dependency_name_res = service_map_.FindNameById(dependency);
+        if (dependency_name_res.IsErr()) {
+          return ResultT::Err(dependency_name_res.TakeErr());
+        }
+
+        const auto dependency_name = dependency_name_res.TakeOk();
+        std::string circular_dependencies =
+            std::string{dependency_name} + " -> ";
+        for (auto traversal_it = std::next(found);
+             traversal_it != traversal_stack_.end();
+             ++traversal_it) {
+          auto circular_it = visit_set_.find(*traversal_it);
+          if (circular_it == visit_set_.end()) {
             return ResultT::Err(
-                Json{}
+                FlatJson{}
                     .Set("message", "circular dependency must be found")
-                    .Set("service_kind_id", static_cast<double>(*it))
+                    .Set("service_kind_id", *traversal_it)
                     .Take());
           }
 
-          circular_dependencies += circular_it->second;
-          if (std::next(it) != traversal_stack_.end()) {
+          const auto circular_dependency = *circular_it;
+          auto circular_name_res =
+              service_map_.FindNameById(circular_dependency);
+          if (circular_name_res.IsErr()) {
+            return ResultT::Err(circular_name_res.TakeErr());
+          }
+
+          const auto circular_name = circular_name_res.TakeOk();
+          circular_dependencies += circular_name;
+          if (std::next(traversal_it) != traversal_stack_.end()) {
             circular_dependencies += " -> ";
           }
         }
 
         return ResultT::Err(
-            Json{}
+            FlatJson{}
                 .Set("message", "circular dependencies found")
                 .Set("circular_dependencies", std::move(circular_dependencies))
                 .Take());

@@ -5,7 +5,7 @@
 
 #include <cstring>
 
-#include "kero/core/json.h"
+#include "kero/core/flat_json.h"
 #include "kero/core/utils.h"
 
 using namespace kero;
@@ -24,7 +24,7 @@ kero::Fd::Close(const Value fd) noexcept -> Result<Void> {
   }
 
   if (close(fd) == -1) {
-    return ResultT::Err(Error::From(Errno::FromErrno().IntoJson()));
+    return ResultT::Err(Error::From(Errno::FromErrno().IntoFlatJson()));
   }
 
   return OkVoid();
@@ -37,12 +37,12 @@ kero::Fd::UpdateNonBlocking(const Value fd) noexcept -> Result<Void> {
   const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
     return ResultT{
-        Error::From(kGetStatusFailed, Errno::FromErrno().IntoJson())};
+        Error::From(kGetStatusFailed, Errno::FromErrno().IntoFlatJson())};
   }
 
   if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
     return ResultT{
-        Error::From(kSetStatusFailed, Errno::FromErrno().IntoJson())};
+        Error::From(kSetStatusFailed, Errno::FromErrno().IntoFlatJson())};
   }
 
   return OkVoid();
@@ -59,8 +59,8 @@ kero::Errno::FromErrno() noexcept -> Errno {
 }
 
 auto
-kero::Errno::IntoJson() const noexcept -> Json {
-  return Json{}
+kero::Errno::IntoFlatJson() const noexcept -> FlatJson {
+  return FlatJson{}
       .Set("error_kind", std::string{"errno"})
       .Set("errno_code", static_cast<double>(code))
       .Set("errno_description", std::string{description})

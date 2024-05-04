@@ -3,14 +3,23 @@
 #include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
 #include "kero/log/log_builder.h"
-#include "kero/service/constants.h"
+#include "kero/middleware/constants.h"
 
 using namespace kero;
 
+auto
+kero::ConfigService::GetKindId() noexcept -> ServiceKindId {
+  return kServiceKindIdConfig;
+}
+
+auto
+kero::ConfigService::GetKindName() noexcept -> ServiceKindName {
+  return "config";
+}
+
 kero::ConfigService::ConfigService(const Pin<RunnerContext> runner_context,
-                                   Json&& config) noexcept
-    : Service{runner_context, kServiceKindConfig, {}},
-      config_{std::move(config)} {}
+                                   FlatJson&& config) noexcept
+    : Service{runner_context, {}}, config_{std::move(config)} {}
 
 auto
 kero::ConfigService::OnCreate() noexcept -> Result<Void> {
@@ -22,18 +31,12 @@ kero::ConfigService::OnCreate() noexcept -> Result<Void> {
 }
 
 auto
-kero::ConfigService::OnDestroy() noexcept -> void {}
-
-auto
-kero::ConfigService::OnUpdate() noexcept -> void {}
-
-auto
-kero::ConfigService::GetConfig() const noexcept -> const Json& {
+kero::ConfigService::GetConfig() const noexcept -> const FlatJson& {
   return config_;
 }
 
 auto
-kero::ConfigService::GetConfig() noexcept -> Json& {
+kero::ConfigService::GetConfig() noexcept -> FlatJson& {
   return config_;
 }
 
@@ -45,7 +48,7 @@ kero::ConfigServiceFactory::Create(
     const Pin<RunnerContext> runner_context) noexcept -> Result<Own<Service>> {
   using ResultT = Result<Own<Service>>;
 
-  Json config{};
+  FlatJson config{};
   ArgsScanner scanner{args_};
 
   // Skip the first argument which is the program name
@@ -68,7 +71,7 @@ kero::ConfigServiceFactory::Create(
       if (res.IsErr()) {
         return ResultT::Err(
             Error::From(kPortParsingFailed,
-                        Json{}.Set("port", std::move(port_str)).Take(),
+                        FlatJson{}.Set("port", std::move(port_str)).Take(),
                         res.TakeErr()));
       };
 
@@ -77,7 +80,7 @@ kero::ConfigServiceFactory::Create(
     } else {
       return ResultT::Err(
           Error::From(kUnknownArgument,
-                      Json{}.Set("token", std::string{token}).Take()));
+                      FlatJson{}.Set("token", std::string{token}).Take()));
     }
 
     scanner.Eat();

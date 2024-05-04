@@ -9,8 +9,6 @@
 
 namespace kero {
 
-static const ServiceKind kServiceKindActor = {2, "actor"};
-
 class ActorService final : public Service {
  public:
   virtual ~ActorService() noexcept override = default;
@@ -23,13 +21,18 @@ class ActorService final : public Service {
   GetName() const noexcept -> const std::string &;
 
   auto
-  SendMail(std::string &&to, std::string &&event, Json &&body) noexcept -> void;
+  SendMail(std::string &&to,
+           std::string &&event,
+           FlatJson &&body) noexcept -> void;
+
+  auto
+  BroadcastMail(std::string &&event, FlatJson &&body) noexcept -> void;
 
   [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKind::Id;
+  GetKindId() noexcept -> ServiceKindId;
 
   [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKind::Name;
+  GetKindName() noexcept -> ServiceKindName;
 
  private:
   explicit ActorService(const Pin<RunnerContext> runner_context,

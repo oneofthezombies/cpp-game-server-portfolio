@@ -37,7 +37,7 @@ struct Errno final {
   CLASS_KIND_COPYABLE(Errno);
 
   [[nodiscard]] auto
-  IntoJson() const noexcept -> Json;
+  IntoFlatJson() const noexcept -> FlatJson;
 
   [[nodiscard]] static auto
   FromErrno() noexcept -> Errno;

@@ -1,13 +1,11 @@
-#ifndef KERO_CORE_JSON_PARSER_H
-#define KERO_CORE_JSON_PARSER_H
+#ifndef KERO_CORE_FLAT_JSON_PARSER_H
+#define KERO_CORE_FLAT_JSON_PARSER_H
 
-#include "kero/core/common.h"
-#include "kero/core/json.h"
 #include "kero/core/result.h"
 
 namespace kero {
 
-class JsonParser final {
+class FlatJsonParser final {
  public:
   struct ParseOptions {
     bool allow_trailing_comma{false};
@@ -18,27 +16,27 @@ class JsonParser final {
     }
   };
 
-  explicit JsonParser() noexcept = default;
-  ~JsonParser() noexcept = default;
-  CLASS_KIND_PINNABLE(JsonParser);
+  explicit FlatJsonParser() noexcept = default;
+  ~FlatJsonParser() noexcept = default;
+  CLASS_KIND_PINNABLE(FlatJsonParser);
 
   [[nodiscard]] auto
   Parse(const std::string_view tiny_json_str,
-        ParseOptions &&options = ParseOptions::Default()) noexcept
-      -> Result<Json>;
+        ParseOptions&& options = ParseOptions::Default()) noexcept
+      -> Result<FlatJson>;
 
   [[nodiscard]] static auto
-  Stringify(const Json &json) noexcept -> Result<std::string>;
+  Stringify(const FlatJson& json) noexcept -> Result<std::string>;
 
  private:
   [[nodiscard]] auto
-  ParseObject() noexcept -> Result<Json>;
+  ParseObject() noexcept -> Result<FlatJson>;
 
   [[nodiscard]] auto
   ParseKey() noexcept -> Result<std::string>;
 
   [[nodiscard]] auto
-  ParseValue() noexcept -> Result<Json::ValueStorage>;
+  ParseValue() noexcept -> Result<FlatJson::ValueStorage>;
 
   [[nodiscard]] auto
   ParseString() noexcept -> Result<std::string>;
@@ -68,4 +66,4 @@ class JsonParser final {
 
 }  // namespace kero
 
-#endif  // KERO_CORE_JSON_PARSER_H
+#endif  // KERO_CORE_FLAT_JSON_PARSER_H

@@ -33,51 +33,30 @@ kero::Service::GetRunnerContext() noexcept -> RunnerContext& {
 }
 
 auto
-kero::Service::GetDependency(const ServiceKind& kind) noexcept
+kero::Service::GetDependency(const ServiceKindId service_kind_id) noexcept
     -> Borrow<Service> {
-  return GetDependency(kind.id);
+  return dependency_map_.GetService(service_kind_id);
 }
 
 auto
-kero::Service::GetDependency(const ServiceKind::Id kind_id) noexcept
+kero::Service::GetDependency(const ServiceKindName service_kind_name) noexcept
     -> Borrow<Service> {
-  return dependency_map_.GetService(kind_id);
-}
-
-auto
-kero::Service::GetDependency(const ServiceKind::Name& kind_name) noexcept
-    -> Borrow<Service> {
-  return dependency_map_.GetService(kind_name);
-}
-
-auto
-kero::Service::Is(const ServiceKind& kind) const noexcept -> bool {
-  return Is(kind.id);
-}
-
-auto
-kero::Service::Is(const ServiceKind::Id kind_id) const noexcept -> bool {
-  return kind_.id == kind_id;
-}
-
-auto
-kero::Service::Is(const ServiceKind::Name& kind_name) const noexcept -> bool {
-  return kind_.name == kind_name;
+  return dependency_map_.GetService(service_kind_name);
 }
 
 auto
 kero::Service::SubscribeEvent(const std::string& event) -> Result<Void> {
-  return runner_context_->SubscribeEvent(event, kind_);
+  return runner_context_->SubscribeEvent(event, GetKindId());
 }
 
 auto
 kero::Service::UnsubscribeEvent(const std::string& event) -> Result<Void> {
-  return runner_context_->UnsubscribeEvent(event, kind_);
+  return runner_context_->UnsubscribeEvent(event, GetKindId());
 }
 
 auto
-kero::Service::InvokeEvent(const std::string& event, const Json& data) noexcept
-    -> Result<Void> {
+kero::Service::InvokeEvent(const std::string& event,
+                           const FlatJson& data) noexcept -> Result<Void> {
   return runner_context_->InvokeEvent(event, data);
 }
 
@@ -97,7 +76,7 @@ kero::Service::OnUpdate() noexcept -> void {
 }
 
 auto
-kero::Service::OnEvent(const std::string& event, const Json& data) noexcept
-    -> void {
+kero::Service::OnEvent(const std::string& event,
+                       const FlatJson& data) noexcept -> void {
   // noop
 }

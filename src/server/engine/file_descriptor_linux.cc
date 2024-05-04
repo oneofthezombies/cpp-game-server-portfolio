@@ -19,7 +19,7 @@ engine::FileDescriptorLinux::FileDescriptorLinux(
 
 engine::FileDescriptorLinux::~FileDescriptorLinux() noexcept {
   if (auto res = Close(fd_); res.IsErr()) {
-    core::JsonParser{}
+    core::FlatJsonParser{}
         .Set("message", "file descriptor close failed")
         .Set("error", res.Err())
         .LogLn();
@@ -72,7 +72,7 @@ engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
   if (opts < 0) {
     return ResultT{
         Error::From(kFileDescriptorLinuxGetStatusFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .Set("fd", fd)
                         .IntoMap())};
@@ -81,7 +81,7 @@ engine::FileDescriptorLinux::UpdateNonBlocking(const Raw fd) noexcept
   if (fcntl(fd, F_SETFL, (opts | O_NONBLOCK)) < 0) {
     return ResultT{
         Error::From(kFileDescriptorLinuxSetStatusFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .Set("fd", fd)
                         .IntoMap())};
@@ -99,7 +99,7 @@ engine::FileDescriptorLinux::ParseFdToSocketId(const Raw fd) noexcept
   const auto restored_fd = static_cast<Raw>(casted_socket_id);
   if (fd != restored_fd) {
     return ResultT{Error::From(kFileDescriptorLinuxParseFdToSocketIdFailed,
-                               core::JsonParser{}
+                               core::FlatJsonParser{}
                                    .Set("fd", fd)
                                    .Set("casted_socket_id", casted_socket_id)
                                    .Set("restored_fd", restored_fd)
@@ -119,7 +119,7 @@ engine::FileDescriptorLinux::ParseSocketIdToFd(
   if (socket_id != restored_socket_id) {
     return ResultT{
         Error::From(kFileDescriptorLinuxParseSocketIdToFdFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("socket_id", socket_id)
                         .Set("casted_fd", casted_fd)
                         .Set("restored_socket_id", restored_socket_id)
@@ -140,7 +140,7 @@ engine::FileDescriptorLinux::Close(const Raw fd) noexcept -> Result<Void> {
   if (close(fd) == -1) {
     return ResultT{
         Error::From(kFileDescriptorLinuxCloseFailed,
-                    core::JsonParser{}
+                    core::FlatJsonParser{}
                         .Set("linux_error", core::LinuxError::FromErrno())
                         .Set("fd", fd)
                         .IntoMap())};
@@ -150,8 +150,8 @@ engine::FileDescriptorLinux::Close(const Raw fd) noexcept -> Result<Void> {
 }
 
 auto
-engine::operator<<(std::ostream &os, const FileDescriptorLinux &fd)
-    -> std::ostream & {
+engine::operator<<(std::ostream &os,
+                   const FileDescriptorLinux &fd) -> std::ostream & {
   os << "FileDescriptorLinux{";
   os << "fd=";
   if (fd.IsValid()) {

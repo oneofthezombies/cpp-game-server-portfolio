@@ -19,7 +19,7 @@ kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
   using ResultT = Result<Void>;
   if (!SubscribeEvent(EventSocketOpen::kEvent)) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message",
                  std::string{"Failed to subscribe to socket open event"})
             .Take()));
@@ -30,15 +30,17 @@ kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
                     .Unwrap()
                     .As<ConfigService>(kServiceKindConfig.id);
   if (!config) {
-    return ResultT::Err(Error::From(
-        Json{}.Set("message", std::string{"ConfigService not found"}).Take()));
+    return ResultT::Err(
+        Error::From(FlatJson{}
+                        .Set("message", std::string{"ConfigService not found"})
+                        .Take()));
   }
 
   auto target_actor =
       config.Unwrap().GetConfig().GetOrDefault("target_actor", std::string{});
   if (target_actor.empty()) {
     return ResultT::Err(Error::From(
-        Json{}
+        FlatJson{}
             .Set("message", std::string{"target_actor not found in config"})
             .Take()));
   }
@@ -50,7 +52,7 @@ kero::SocketRouterService::OnCreate() noexcept -> Result<Void> {
 
 auto
 kero::SocketRouterService::OnEvent(const std::string& event,
-                                   const Json& data) noexcept -> void {
+                                   const FlatJson& data) noexcept -> void {
   if (event != EventSocketOpen::kEvent) {
     return;
   }
