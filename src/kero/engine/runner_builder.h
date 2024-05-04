@@ -23,6 +23,10 @@ class RunnerBuilder {
       -> RunnerBuilder&;
 
   [[nodiscard]] auto
+  AddServiceFactory(ServiceFactoryFn&& service_factory_fn) noexcept
+      -> RunnerBuilder&;
+
+  [[nodiscard]] auto
   BuildRunner() noexcept -> Result<Pin<Runner>>;
 
   [[nodiscard]] auto

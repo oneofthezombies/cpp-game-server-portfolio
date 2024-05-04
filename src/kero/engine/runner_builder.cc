@@ -16,12 +16,22 @@ kero::RunnerBuilder::AddServiceFactory(
 }
 
 auto
+kero::RunnerBuilder::AddServiceFactory(
+    ServiceFactoryFn&& service_factory_fn) noexcept -> RunnerBuilder& {
+  service_factories_.emplace_back(
+      std::make_unique<ServiceFactoryFnImpl>(std::move(service_factory_fn)));
+  return *this;
+}
+
+auto
 kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
   using ResultT = Result<Pin<Runner>>;
 
   auto runner_context_output_res =
       engine_context_->pin_system.Create<RunnerContext>(
-          []() { return Result<RunnerContext*>::Ok(new RunnerContext{}); });
+          []() -> Result<RunnerContext*> {
+            return Result<RunnerContext*>::Ok(new RunnerContext{});
+          });
   if (runner_context_output_res.IsErr()) {
     return ResultT::Err(runner_context_output_res.TakeErr());
   }
