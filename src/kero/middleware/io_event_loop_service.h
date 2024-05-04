@@ -21,10 +21,8 @@ class IoEventLoopService final : public Service {
 
   explicit IoEventLoopService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~IoEventLoopService() noexcept override = default;
-  CLASS_KIND_MOVABLE(IoEventLoopService);
-
-  static constexpr ServiceKindId kKindId = kServiceKindId_IoEventLoop;
-  static constexpr ServiceKindName kKindName = "io_event_loop";
+  KERO_CLASS_KIND_MOVABLE(IoEventLoopService);
+  KERO_SERVICE_KIND(kServiceKindId_IoEventLoop, "io_event_loop");
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;
@@ -48,12 +46,6 @@ class IoEventLoopService final : public Service {
 
   [[nodiscard]] auto
   ReadFromFd(const Fd::Value fd) noexcept -> Result<std::string>;
-
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId;
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName;
 
  private:
   auto

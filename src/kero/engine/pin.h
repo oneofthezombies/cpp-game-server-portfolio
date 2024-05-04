@@ -11,7 +11,7 @@ template <typename T>
 class Pin final {
  public:
   ~Pin() noexcept = default;
-  CLASS_KIND_COPYABLE(Pin);
+  KERO_CLASS_KIND_COPYABLE(Pin);
 
   [[nodiscard]] operator bool() const noexcept { return data_ != nullptr; }
 

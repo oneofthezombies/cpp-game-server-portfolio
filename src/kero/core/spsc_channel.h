@@ -19,7 +19,7 @@ struct Node final {
   explicit Node() noexcept = default;
   explicit Node(T &&data) noexcept : data(std::move(data)) {}
   ~Node() noexcept = default;
-  CLASS_KIND_MOVABLE(Node);
+  KERO_CLASS_KIND_MOVABLE(Node);
 };
 
 template <typename T>
@@ -39,7 +39,7 @@ class Queue final {
     }
   }
 
-  CLASS_KIND_PINNABLE(Queue);
+  KERO_CLASS_KIND_PINNABLE(Queue);
 
   auto
   Enqueue(T &&data) noexcept -> void {
@@ -80,7 +80,7 @@ class Tx final {
   explicit Tx(const std::shared_ptr<Queue<T>> &queue) noexcept
       : queue_{queue} {}
   ~Tx() noexcept = default;
-  CLASS_KIND_MOVABLE(Tx);
+  KERO_CLASS_KIND_MOVABLE(Tx);
 
   auto
   Send(T &&value) const noexcept -> void {
@@ -98,7 +98,7 @@ class Rx final {
   explicit Rx(const std::shared_ptr<Queue<T>> &queue) noexcept
       : queue_{queue} {}
   ~Rx() noexcept = default;
-  CLASS_KIND_MOVABLE(Rx);
+  KERO_CLASS_KIND_MOVABLE(Rx);
 
   [[nodiscard]] auto
   TryReceive() const noexcept -> Option<T> {
@@ -121,7 +121,7 @@ struct Channel final {
    public:
     explicit Builder() noexcept = default;
     ~Builder() noexcept = default;
-    CLASS_KIND_PINNABLE(Builder);
+    KERO_CLASS_KIND_PINNABLE(Builder);
 
     [[nodiscard]] auto
     Build() noexcept -> Channel<T> {
@@ -136,7 +136,7 @@ struct Channel final {
   Rx<T> rx;
 
   ~Channel() noexcept = default;
-  CLASS_KIND_MOVABLE(Channel);
+  KERO_CLASS_KIND_MOVABLE(Channel);
 
  private:
   Channel(Tx<T> &&tx, Rx<T> &&rx) noexcept

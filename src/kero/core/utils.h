@@ -36,7 +36,7 @@ class Defer final {
  public:
   explicit Defer(std::function<void()> &&fn) noexcept;
   ~Defer() noexcept;
-  CLASS_KIND_PINNABLE(Defer);
+  KERO_CLASS_KIND_PINNABLE(Defer);
 
   auto
   Cancel() noexcept -> void;

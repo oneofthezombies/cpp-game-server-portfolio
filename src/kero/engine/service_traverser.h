@@ -19,7 +19,7 @@ class ServiceTraverser {
 
   explicit ServiceTraverser(const ServiceMap& service_map) noexcept;
   ~ServiceTraverser() noexcept = default;
-  CLASS_KIND_PINNABLE(ServiceTraverser);
+  KERO_CLASS_KIND_PINNABLE(ServiceTraverser);
 
   [[nodiscard]] auto
   Traverse(const OnVisit& on_visit) noexcept -> Result<Void>;

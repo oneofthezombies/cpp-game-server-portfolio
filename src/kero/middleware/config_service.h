@@ -14,10 +14,8 @@ class ConfigService final : public Service {
   explicit ConfigService(const Pin<RunnerContext> runner_context,
                          FlatJson&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
-  CLASS_KIND_MOVABLE(ConfigService);
-
-  static constexpr ServiceKindId kKindId = kServiceKindId_Config;
-  static constexpr ServiceKindName kKindName = "config";
+  KERO_CLASS_KIND_MOVABLE(ConfigService);
+  KERO_SERVICE_KIND(kServiceKindId_Config, "config");
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;
@@ -27,12 +25,6 @@ class ConfigService final : public Service {
 
   [[nodiscard]] auto
   GetConfig() noexcept -> FlatJson&;
-
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId;
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName;
 
  private:
   FlatJson config_;

@@ -12,10 +12,8 @@ class SignalService final : public Service {
  public:
   explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~SignalService() noexcept override = default;
-  CLASS_KIND_MOVABLE(SignalService);
-
-  static constexpr ServiceKindId kKindId = kServiceKindId_Signal;
-  static constexpr ServiceKindName kKindName = "signal";
+  KERO_CLASS_KIND_MOVABLE(SignalService);
+  KERO_SERVICE_KIND(kServiceKindId_Signal, "signal");
 
   virtual auto
   OnCreate() noexcept -> Result<Void> override;
@@ -28,12 +26,6 @@ class SignalService final : public Service {
 
   [[nodiscard]] auto
   IsInterrupted() const noexcept -> bool;
-
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId;
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName;
 
  private:
   static auto

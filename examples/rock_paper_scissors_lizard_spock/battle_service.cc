@@ -26,8 +26,9 @@ class BattleService final : public SocketPoolService<BattleService> {
     RegisterEventHandler(EventBattleStart::kEvent, OnBattleStart);
   }
 
-  static constexpr ServiceKindId kKindId = kServiceKindId_Battle;
-  static constexpr ServiceKindName kKindName = "battle";
+  virtual ~BattleService() noexcept override = default;
+  KERO_CLASS_KIND_MOVABLE(BattleService);
+  KERO_SERVICE_KIND(kServiceKindId_Battle, "battle");
 
   auto
   OnCreate() noexcept -> Result<Void> override {

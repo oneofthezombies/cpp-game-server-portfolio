@@ -16,7 +16,7 @@ class ArgsScanner final {
   explicit ArgsScanner(const Args &args) noexcept;
   explicit ArgsScanner(Args &&args) noexcept;
   ~ArgsScanner() noexcept = default;
-  CLASS_KIND_MOVABLE(ArgsScanner);
+  KERO_CLASS_KIND_MOVABLE(ArgsScanner);
 
   [[nodiscard]] auto
   Current() const noexcept -> OptionRef<const std::string &>;

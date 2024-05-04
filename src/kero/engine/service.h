@@ -7,7 +7,6 @@
 #include "kero/core/common.h"
 #include "kero/core/flat_json.h"
 #include "kero/core/result.h"
-#include "kero/engine/common.h"
 #include "kero/engine/pin.h"
 #include "kero/engine/service_kind.h"
 #include "kero/engine/service_read_only_map.h"
@@ -24,16 +23,13 @@ class Service {
                    DependencyDeclarations&& dependency_declarations) noexcept;
 
   virtual ~Service() noexcept = default;
-  CLASS_KIND_MOVABLE(Service);
+  KERO_CLASS_KIND_MOVABLE(Service);
 
-  static constexpr ServiceKindId kKindId = kServiceKindId_Service;
-  static constexpr ServiceKindName kKindName = "service";
+  [[nodiscard]] virtual auto
+  GetKindId() const noexcept -> ServiceKindId = 0;
 
-  [[nodiscard]] auto
-  GetKindId() const noexcept -> ServiceKindId;
-
-  [[nodiscard]] auto
-  GetKindName() const noexcept -> ServiceKindName;
+  [[nodiscard]] virtual auto
+  GetKindName() const noexcept -> ServiceKindName = 0;
 
   [[nodiscard]] auto
   GetDependencyDeclarations() const noexcept -> const DependencyDeclarations&;

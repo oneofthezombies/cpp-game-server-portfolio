@@ -42,7 +42,7 @@ struct Config final {
 
   explicit Config() noexcept = default;
   ~Config() noexcept = default;
-  CLASS_KIND_MOVABLE(Config);
+  KERO_CLASS_KIND_MOVABLE(Config);
 
   static constexpr u16 kUndefinedPort{0};
 };

@@ -15,7 +15,7 @@ class ServiceReadOnlyMap {
 
   explicit ServiceReadOnlyMap() noexcept = default;
   ~ServiceReadOnlyMap() noexcept = default;
-  CLASS_KIND_MOVABLE(ServiceReadOnlyMap);
+  KERO_CLASS_KIND_MOVABLE(ServiceReadOnlyMap);
 
   [[nodiscard]] auto
   GetService(const ServiceKindId service_kind_id) const noexcept

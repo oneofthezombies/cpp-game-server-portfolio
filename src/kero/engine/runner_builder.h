@@ -16,7 +16,7 @@ class RunnerBuilder {
   explicit RunnerBuilder(const Borrow<EngineContext> engine_context,
                          std::string&& runner_name) noexcept;
   ~RunnerBuilder() noexcept = default;
-  CLASS_KIND_PINNABLE(RunnerBuilder);
+  KERO_CLASS_KIND_PINNABLE(RunnerBuilder);
 
   [[nodiscard]] auto
   AddServiceFactory(Own<ServiceFactory>&& service_factory) noexcept

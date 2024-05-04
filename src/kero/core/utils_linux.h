@@ -34,7 +34,7 @@ struct Errno final {
   std::string_view description;
 
   ~Errno() noexcept = default;
-  CLASS_KIND_COPYABLE(Errno);
+  KERO_CLASS_KIND_COPYABLE(Errno);
 
   [[nodiscard]] auto
   IntoFlatJson() const noexcept -> FlatJson;

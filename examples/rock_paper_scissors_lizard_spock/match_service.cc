@@ -13,14 +13,15 @@ using namespace kero;
 
 class MatchService final : public SocketPoolService<MatchService> {
  public:
-  static constexpr ServiceKindId kKindId = kServiceKindId_Match;
-  static constexpr ServiceKindName kKindName = "match";
-
   explicit MatchService(const Pin<RunnerContext> runner_context) noexcept
       : SocketPoolService{runner_context, {kServiceKindId_Actor}} {
     RegisterEventHandler(EventSocketOpen::kEvent, OnSocketOpen);
     RegisterEventHandler(EventSocketClose::kEvent, OnSocketClose);
   }
+
+  virtual ~MatchService() noexcept override = default;
+  KERO_CLASS_KIND_MOVABLE(MatchService);
+  KERO_SERVICE_KIND(kServiceKindId_Match, "match");
 
   auto
   OnCreate() noexcept -> Result<Void> override {

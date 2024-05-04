@@ -11,10 +11,8 @@ class SocketRouterService final : public Service {
   explicit SocketRouterService(const Pin<RunnerContext> runner_context,
                                std::string&& target) noexcept;
   virtual ~SocketRouterService() noexcept override = default;
-  CLASS_KIND_MOVABLE(SocketRouterService);
-
-  static constexpr ServiceKindId kKindId = kServiceKindId_SocketRouter;
-  static constexpr ServiceKindName kKindName = "socket_router";
+  KERO_CLASS_KIND_MOVABLE(SocketRouterService);
+  KERO_SERVICE_KIND(kServiceKindId_SocketRouter, "socket_router");
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;
@@ -22,12 +20,6 @@ class SocketRouterService final : public Service {
   virtual auto
   OnEvent(const std::string& event,
           const FlatJson& data) noexcept -> void override;
-
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId;
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName;
 
  private:
   std::string target_;

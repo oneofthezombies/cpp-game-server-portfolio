@@ -21,7 +21,7 @@ class GlobalContext final {
    public:
     Builder() noexcept = default;
     ~Builder() noexcept = default;
-    CLASS_KIND_PINNABLE(Builder);
+    KERO_CLASS_KIND_PINNABLE(Builder);
 
     auto
     Build() const noexcept -> Own<GlobalContext>;
@@ -35,11 +35,11 @@ class GlobalContext final {
 
     SharedState(std::ostream& system_error_stream) noexcept;
     ~SharedState() noexcept = default;
-    CLASS_KIND_PINNABLE(SharedState);
+    KERO_CLASS_KIND_PINNABLE(SharedState);
   };
 
   ~GlobalContext() noexcept = default;
-  CLASS_KIND_PINNABLE(GlobalContext);
+  KERO_CLASS_KIND_PINNABLE(GlobalContext);
 
   auto
   UseStreamForLoggingSystemError(std::ostream& stream) noexcept -> void;

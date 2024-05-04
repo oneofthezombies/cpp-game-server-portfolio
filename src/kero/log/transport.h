@@ -10,7 +10,7 @@ class Transport {
   explicit Transport() noexcept;
   explicit Transport(const Level level) noexcept;
   virtual ~Transport() noexcept = default;
-  CLASS_KIND_MOVABLE(Transport);
+  KERO_CLASS_KIND_MOVABLE(Transport);
 
   auto
   SetLevel(const Level level) noexcept -> void;
@@ -29,7 +29,7 @@ class ConsolePlainTextTransport : public Transport {
  public:
   ConsolePlainTextTransport() noexcept = default;
   virtual ~ConsolePlainTextTransport() noexcept = default;
-  CLASS_KIND_MOVABLE(ConsolePlainTextTransport);
+  KERO_CLASS_KIND_MOVABLE(ConsolePlainTextTransport);
 
   virtual auto
   OnLog(const Log& log) noexcept -> void override;

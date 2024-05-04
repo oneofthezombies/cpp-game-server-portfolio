@@ -18,7 +18,7 @@ class RunnerContext {
 
   explicit RunnerContext() noexcept = default;
   ~RunnerContext() noexcept = default;
-  CLASS_KIND_PINNABLE(RunnerContext);
+  KERO_CLASS_KIND_PINNABLE(RunnerContext);
 
   [[nodiscard]] auto
   SubscribeEvent(const std::string& event,

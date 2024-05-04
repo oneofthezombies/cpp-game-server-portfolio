@@ -14,7 +14,7 @@ class Runner {
  public:
   explicit Runner(const Pin<RunnerContext> runner_context) noexcept;
   ~Runner() noexcept = default;
-  CLASS_KIND_PINNABLE(Runner);
+  KERO_CLASS_KIND_PINNABLE(Runner);
 
   [[nodiscard]] auto
   Run() noexcept -> Result<Void>;
@@ -27,7 +27,7 @@ class ThreadRunner {
  public:
   explicit ThreadRunner(Pin<Runner> runner) noexcept;
   ~ThreadRunner() noexcept = default;
-  CLASS_KIND_MOVABLE(ThreadRunner);
+  KERO_CLASS_KIND_MOVABLE(ThreadRunner);
 
   [[nodiscard]] auto
   Start() -> Result<Void>;

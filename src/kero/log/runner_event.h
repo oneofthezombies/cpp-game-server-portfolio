@@ -14,7 +14,7 @@ struct Shutdown final {
 
   explicit Shutdown(ShutdownConfig&& config) noexcept;
   ~Shutdown() noexcept = default;
-  CLASS_KIND_MOVABLE(Shutdown);
+  KERO_CLASS_KIND_MOVABLE(Shutdown);
 };
 
 }  // namespace runner_event

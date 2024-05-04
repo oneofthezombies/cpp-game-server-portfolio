@@ -32,7 +32,7 @@ class SocketPoolService : public Service {
   }
 
   virtual ~SocketPoolService() noexcept override = default;
-  CLASS_KIND_MOVABLE(SocketPoolService);
+  KERO_CLASS_KIND_MOVABLE(SocketPoolService);
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override {

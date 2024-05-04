@@ -27,7 +27,7 @@ struct Error final {
                  Cause &&cause) noexcept;
 
   ~Error() noexcept = default;
-  CLASS_KIND_MOVABLE(Error);
+  KERO_CLASS_KIND_MOVABLE(Error);
 
   [[nodiscard]] auto
   Take() noexcept -> Error;

@@ -12,7 +12,7 @@ class Center final {
  public:
   explicit Center() noexcept = default;
   ~Center() noexcept = default;
-  CLASS_KIND_PINNABLE(Center);
+  KERO_CLASS_KIND_PINNABLE(Center);
 
   auto
   UseStreamForLoggingSystemError(std::ostream& stream = std::cerr) noexcept

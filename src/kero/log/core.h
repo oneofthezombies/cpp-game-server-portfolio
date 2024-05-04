@@ -30,7 +30,7 @@ struct Log final {
                std::source_location&& location,
                const Level level) noexcept;
   ~Log() noexcept = default;
-  CLASS_KIND_MOVABLE(Log);
+  KERO_CLASS_KIND_MOVABLE(Log);
 };
 
 struct ShutdownConfig final {
@@ -39,7 +39,7 @@ struct ShutdownConfig final {
   ShutdownConfig() noexcept;
   ShutdownConfig(std::chrono::milliseconds&& timeout) noexcept;
   ~ShutdownConfig() noexcept = default;
-  CLASS_KIND_MOVABLE(ShutdownConfig);
+  KERO_CLASS_KIND_MOVABLE(ShutdownConfig);
 };
 
 }  // namespace kero

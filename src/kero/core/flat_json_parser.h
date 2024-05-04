@@ -9,7 +9,7 @@ class FlatJsonStringifier final {
  public:
   explicit FlatJsonStringifier() noexcept = default;
   ~FlatJsonStringifier() noexcept = default;
-  CLASS_KIND_PINNABLE(FlatJsonStringifier);
+  KERO_CLASS_KIND_PINNABLE(FlatJsonStringifier);
 
   [[nodiscard]] auto
   Stringify(const FlatJson& flat_json) noexcept -> Result<std::string>;
@@ -28,7 +28,7 @@ class FlatJsonParser final {
 
   explicit FlatJsonParser() noexcept = default;
   ~FlatJsonParser() noexcept = default;
-  CLASS_KIND_PINNABLE(FlatJsonParser);
+  KERO_CLASS_KIND_PINNABLE(FlatJsonParser);
 
   [[nodiscard]] auto
   Parse(const std::string_view tiny_json_str,

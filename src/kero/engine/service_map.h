@@ -19,7 +19,7 @@ class ServiceMap {
 
   explicit ServiceMap() noexcept = default;
   ~ServiceMap() noexcept = default;
-  CLASS_KIND_MOVABLE(ServiceMap);
+  KERO_CLASS_KIND_MOVABLE(ServiceMap);
 
   [[nodiscard]] auto
   InvokeCreate() noexcept -> Result<Void>;

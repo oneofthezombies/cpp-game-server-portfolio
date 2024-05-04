@@ -13,7 +13,6 @@ enum ErrorCode : Error::Code {
 enum : ServiceKindId {
   kServiceKindId_EngineBegin = 0,
 
-  kServiceKindId_Service,
   kServiceKindId_Actor,
   kServiceKindId_Signal,
 
@@ -25,5 +24,17 @@ struct EventShutdown {
 };
 
 }  // namespace kero
+
+#define KERO_SERVICE_KIND(kind_id, kind_name)             \
+  static constexpr ServiceKindId kKindId = kind_id;       \
+  static constexpr ServiceKindName kKindName = kind_name; \
+  [[nodiscard]] inline virtual auto GetKindId()           \
+      const noexcept -> ServiceKindId override {          \
+    return kKindId;                                       \
+  }                                                       \
+  [[nodiscard]] inline virtual auto GetKindName()         \
+      const noexcept -> ServiceKindName override {        \
+    return kKindName;                                     \
+  }
 
 #endif  // KERO_ENGINE_COMMON_H

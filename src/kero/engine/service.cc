@@ -12,16 +12,6 @@ kero::Service::Service(
       dependency_declarations_{std::move(dependency_declarations)} {}
 
 auto
-kero::Service::GetKindId() const noexcept -> ServiceKindId {
-  return kKindId;
-}
-
-auto
-kero::Service::GetKindName() const noexcept -> ServiceKindName {
-  return kKindName;
-}
-
-auto
 kero::Service::GetDependencyDeclarations() const noexcept
     -> const DependencyDeclarations& {
   return dependency_declarations_;

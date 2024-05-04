@@ -14,7 +14,7 @@ class Result {
   Result(T&& value) noexcept : data_{std::forward<T>(value)} {}
   Result(Error&& error) noexcept : data_{std::forward<Error>(error)} {}
   ~Result() noexcept = default;
-  CLASS_KIND_MOVABLE(Result);
+  KERO_CLASS_KIND_MOVABLE(Result);
 
   explicit
   operator bool() const noexcept {

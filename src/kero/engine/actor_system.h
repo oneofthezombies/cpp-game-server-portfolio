@@ -24,7 +24,7 @@ struct Mail final {
                 std::string &&event,
                 FlatJson &&body) noexcept;
   ~Mail() noexcept = default;
-  CLASS_KIND_MOVABLE(Mail);
+  KERO_CLASS_KIND_MOVABLE(Mail);
 
   [[nodiscard]] auto
   Clone() const noexcept -> Mail;
@@ -36,7 +36,7 @@ struct MailBox final {
   spsc::Rx<Mail> rx;
 
   ~MailBox() noexcept = default;
-  CLASS_KIND_MOVABLE(MailBox);
+  KERO_CLASS_KIND_MOVABLE(MailBox);
 
  private:
   explicit MailBox(std::string &&name,
@@ -50,7 +50,7 @@ class ActorSystem final {
  public:
   explicit ActorSystem() noexcept = default;
   ~ActorSystem() noexcept = default;
-  CLASS_KIND_PINNABLE(ActorSystem);
+  KERO_CLASS_KIND_PINNABLE(ActorSystem);
 
   [[nodiscard]] auto
   CreateMailBox(const std::string &name) noexcept -> Result<MailBox>;

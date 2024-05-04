@@ -19,7 +19,7 @@ class Borrow final {
   }
 
   ~Borrow() noexcept = default;
-  CLASS_KIND_COPYABLE(Borrow);
+  KERO_CLASS_KIND_COPYABLE(Borrow);
 
   [[nodiscard]] auto
   operator->() const noexcept -> T* {

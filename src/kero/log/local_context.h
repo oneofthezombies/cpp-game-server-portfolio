@@ -15,14 +15,14 @@ class LocalContext final {
    public:
     Builder() noexcept = default;
     ~Builder() noexcept = default;
-    CLASS_KIND_PINNABLE(Builder);
+    KERO_CLASS_KIND_PINNABLE(Builder);
 
     auto
     Build() const noexcept -> Result<Own<LocalContext>>;
   };
 
   ~LocalContext() noexcept;
-  CLASS_KIND_MOVABLE(LocalContext);
+  KERO_CLASS_KIND_MOVABLE(LocalContext);
 
   auto
   SendLog(Own<kero::Log>&& log) const noexcept -> void;

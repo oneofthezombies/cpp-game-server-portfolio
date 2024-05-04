@@ -16,10 +16,8 @@ class Engine;
 class ActorService final : public Service {
  public:
   virtual ~ActorService() noexcept override = default;
-  CLASS_KIND_MOVABLE(ActorService);
-
-  static constexpr ServiceKindId kKindId = kServiceKindId_Actor;
-  static constexpr ServiceKindName kKindName = "actor";
+  KERO_CLASS_KIND_MOVABLE(ActorService);
+  KERO_SERVICE_KIND(kServiceKindId_Actor, "actor");
 
   virtual auto
   OnUpdate() noexcept -> void override;
@@ -50,7 +48,7 @@ class ActorServiceFactory final : public ServiceFactory {
  public:
   explicit ActorServiceFactory(const Own<Engine> &engine) noexcept;
   virtual ~ActorServiceFactory() noexcept override = default;
-  CLASS_KIND_MOVABLE(ActorServiceFactory);
+  KERO_CLASS_KIND_MOVABLE(ActorServiceFactory);
 
   [[nodiscard]] virtual auto
   Create(const Pin<RunnerContext> runner_context) noexcept

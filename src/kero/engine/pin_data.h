@@ -13,7 +13,7 @@ class PinDataFactory {
  public:
   explicit PinDataFactory() noexcept = default;
   virtual ~PinDataFactory() noexcept = default;
-  CLASS_KIND_PINNABLE(PinDataFactory);
+  KERO_CLASS_KIND_PINNABLE(PinDataFactory);
 
   virtual auto
   Create() noexcept -> Result<T*> = 0;

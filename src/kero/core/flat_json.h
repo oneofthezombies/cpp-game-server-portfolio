@@ -64,7 +64,7 @@ class FlatJson final {
   explicit FlatJson() noexcept = default;
   explicit FlatJson(Data&& data) noexcept;
   ~FlatJson() noexcept = default;
-  CLASS_KIND_MOVABLE(FlatJson);
+  KERO_CLASS_KIND_MOVABLE(FlatJson);
 
   template <typename T>
     requires IsGetValueType<T>

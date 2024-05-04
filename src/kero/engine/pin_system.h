@@ -27,7 +27,7 @@ class PinSystem final {
 
   explicit PinSystem() noexcept = default;
   ~PinSystem() noexcept = default;
-  CLASS_KIND_PINNABLE(PinSystem);
+  KERO_CLASS_KIND_PINNABLE(PinSystem);
 
   auto
   DestroyAll() noexcept -> void;

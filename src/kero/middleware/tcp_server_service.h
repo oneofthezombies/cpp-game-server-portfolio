@@ -11,10 +11,8 @@ class TcpServerService final : public Service {
  public:
   explicit TcpServerService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~TcpServerService() noexcept override = default;
-  CLASS_KIND_MOVABLE(TcpServerService);
-
-  static constexpr ServiceKindId kKindId = kServiceKindId_TcpServer;
-  static constexpr ServiceKindName kKindName = "tcp_server";
+  KERO_CLASS_KIND_MOVABLE(TcpServerService);
+  KERO_SERVICE_KIND(kServiceKindId_TcpServer, "tcp_server");
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;
@@ -25,12 +23,6 @@ class TcpServerService final : public Service {
   virtual auto
   OnEvent(const std::string& event,
           const FlatJson& data) noexcept -> void override;
-
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId;
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName;
 
  private:
   Fd::Value server_fd_{Fd::kUnspecifiedInitialValue};

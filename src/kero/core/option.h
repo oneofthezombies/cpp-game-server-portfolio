@@ -23,7 +23,7 @@ class OptionRef final {
       : data_{Wrapper(data)} {}
 
   ~OptionRef() noexcept = default;
-  CLASS_KIND_PINNABLE(OptionRef);
+  KERO_CLASS_KIND_PINNABLE(OptionRef);
 
   explicit
   operator bool() const noexcept {
@@ -80,7 +80,7 @@ class Option final {
   Option(T&& data) noexcept : data_{std::move(data)} {}
 
   ~Option() noexcept = default;
-  CLASS_KIND_PINNABLE(Option);
+  KERO_CLASS_KIND_PINNABLE(Option);
 
   explicit
   operator bool() const noexcept {

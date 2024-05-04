@@ -41,6 +41,7 @@ kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
   Defer destroy_runner_context{
       [destroyer = runner_context_output.destroyer] { destroyer(); }};
 
+  runner_context->runner_name_ = std::move(runner_name_);
   for (const auto& service_factory : service_factories_) {
     auto service_res = service_factory->Create(runner_context);
     if (service_res.IsErr()) {
@@ -48,8 +49,8 @@ kero::RunnerBuilder::BuildRunner() noexcept -> Result<Pin<Runner>> {
     }
 
     auto service = service_res.TakeOk();
-    if (auto res =
-            runner_context->service_map_.AddService(std::move(service))) {
+    if (auto res = runner_context->service_map_.AddService(std::move(service));
+        res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
   }

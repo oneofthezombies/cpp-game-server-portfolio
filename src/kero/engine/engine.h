@@ -13,7 +13,7 @@ class Engine {
  public:
   explicit Engine() noexcept;
   ~Engine() noexcept = default;
-  CLASS_KIND_PINNABLE(Engine);
+  KERO_CLASS_KIND_PINNABLE(Engine);
 
   [[nodiscard]] auto
   CreateRunnerBuilder(std::string&& runner_name) -> RunnerBuilder;

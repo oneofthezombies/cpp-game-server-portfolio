@@ -17,7 +17,7 @@ class LogBuilder final {
                       std::source_location&& location,
                       const Level level) noexcept;
   ~LogBuilder() noexcept = default;
-  CLASS_KIND_PINNABLE(LogBuilder);
+  KERO_CLASS_KIND_PINNABLE(LogBuilder);
 
   template <typename T>
   [[nodiscard]] auto

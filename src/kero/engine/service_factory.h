@@ -15,7 +15,7 @@ class ServiceFactory {
  public:
   explicit ServiceFactory() noexcept = default;
   virtual ~ServiceFactory() noexcept = default;
-  CLASS_KIND_MOVABLE(ServiceFactory);
+  KERO_CLASS_KIND_MOVABLE(ServiceFactory);
 
   [[nodiscard]] virtual auto
   Create(const Pin<RunnerContext> runner_context) noexcept
@@ -30,7 +30,7 @@ class ServiceFactoryFnImpl final : public ServiceFactory {
   explicit ServiceFactoryFnImpl(ServiceFactoryFn&& service_factory_fn) noexcept;
 
   virtual ~ServiceFactoryFnImpl() noexcept override = default;
-  CLASS_KIND_MOVABLE(ServiceFactoryFnImpl);
+  KERO_CLASS_KIND_MOVABLE(ServiceFactoryFnImpl);
 
   [[nodiscard]] virtual auto
   Create(const Pin<RunnerContext> runner_context) noexcept
@@ -45,7 +45,7 @@ class DefaultServiceFactory final : public ServiceFactory {
  public:
   explicit DefaultServiceFactory() noexcept = default;
   virtual ~DefaultServiceFactory() noexcept override = default;
-  CLASS_KIND_MOVABLE(DefaultServiceFactory);
+  KERO_CLASS_KIND_MOVABLE(DefaultServiceFactory);
 
   [[nodiscard]] virtual auto
   Create(const Pin<RunnerContext> runner_context) noexcept

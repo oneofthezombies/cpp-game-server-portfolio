@@ -16,14 +16,14 @@ class NullStream : public std::ostream {
  public:
   NullStream() noexcept;
   ~NullStream() noexcept = default;
-  CLASS_KIND_PINNABLE(NullStream);
+  KERO_CLASS_KIND_PINNABLE(NullStream);
 
  private:
   class NullBuffer : public std::streambuf {
    public:
     NullBuffer() noexcept = default;
     ~NullBuffer() noexcept = default;
-    CLASS_KIND_PINNABLE(NullBuffer);
+    KERO_CLASS_KIND_PINNABLE(NullBuffer);
 
     virtual auto
     overflow(int c) noexcept -> int override;
