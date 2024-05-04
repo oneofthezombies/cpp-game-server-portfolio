@@ -13,7 +13,7 @@ kero::Service::Service(
 
 auto
 kero::Service::GetKindId() const noexcept -> ServiceKindId {
-  return Service::GetKindId();
+  return Service::kKindId;
 }
 
 auto

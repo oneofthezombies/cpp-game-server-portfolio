@@ -5,6 +5,7 @@
 #include "kero/core/common.h"
 #include "kero/engine/service.h"
 #include "kero/engine/service_factory.h"
+#include "kero/middleware/common.h"
 
 namespace kero {
 
@@ -14,6 +15,9 @@ class ConfigService final : public Service {
                          FlatJson&& config) noexcept;
   virtual ~ConfigService() noexcept override = default;
   CLASS_KIND_MOVABLE(ConfigService);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_Config;
+  static constexpr ServiceKindName kKindName = "config";
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;

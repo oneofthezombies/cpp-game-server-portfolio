@@ -37,16 +37,6 @@ AddOptionsToEpollEvents(
 
 }  // namespace
 
-auto
-kero::IoEventLoopService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindId_IoEventLoop;
-}
-
-auto
-kero::IoEventLoopService::GetKindName() noexcept -> ServiceKindName {
-  return "io_event_loop";
-}
-
 kero::IoEventLoopService::IoEventLoopService(
     const Pin<RunnerContext> runner_context) noexcept
     : Service{runner_context, {}} {}

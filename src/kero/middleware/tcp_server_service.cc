@@ -13,16 +13,6 @@
 
 using namespace kero;
 
-auto
-kero::TcpServerService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindId_TcpServer;
-}
-
-auto
-kero::TcpServerService::GetKindName() noexcept -> ServiceKindName {
-  return "tcp_server";
-}
-
 kero::TcpServerService::TcpServerService(
     const Pin<RunnerContext> runner_context) noexcept
     : Service{runner_context,

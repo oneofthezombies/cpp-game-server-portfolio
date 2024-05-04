@@ -13,15 +13,8 @@ using namespace kero;
 
 class MatchService final : public SocketPoolService<MatchService> {
  public:
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId {
-    return kServiceKindId_Match;
-  }
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName {
-    return "match";
-  }
+  static constexpr ServiceKindId kKindId = kServiceKindId_Match;
+  static constexpr ServiceKindName kKindName = "match";
 
   explicit MatchService(const Pin<RunnerContext> runner_context) noexcept
       : SocketPoolService{runner_context, {kServiceKindId_Actor}} {

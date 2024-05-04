@@ -3,6 +3,7 @@
 
 #include "kero/core/utils_linux.h"
 #include "kero/engine/service.h"
+#include "kero/middleware/common.h"
 
 struct epoll_event;
 
@@ -21,6 +22,9 @@ class IoEventLoopService final : public Service {
   explicit IoEventLoopService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~IoEventLoopService() noexcept override = default;
   CLASS_KIND_MOVABLE(IoEventLoopService);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_IoEventLoop;
+  static constexpr ServiceKindName kKindName = "io_event_loop";
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;

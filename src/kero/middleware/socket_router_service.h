@@ -2,6 +2,7 @@
 #define KERO_MIDDLEWARE_SOCKET_ROUTER_SERVICE_H
 
 #include "kero/engine/service.h"
+#include "kero/middleware/common.h"
 
 namespace kero {
 
@@ -11,6 +12,9 @@ class SocketRouterService final : public Service {
                                std::string&& target) noexcept;
   virtual ~SocketRouterService() noexcept override = default;
   CLASS_KIND_MOVABLE(SocketRouterService);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_SocketRouter;
+  static constexpr ServiceKindName kKindName = "socket_router";
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;

@@ -1,21 +1,10 @@
 #include "actor_service.h"
 
-#include "kero/engine/common.h"
 #include "kero/engine/engine.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 
 using namespace kero;
-
-auto
-kero::ActorService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindId_Actor;
-}
-
-auto
-kero::ActorService::GetKindName() noexcept -> ServiceKindName {
-  return "actor";
-}
 
 kero::ActorService::ActorService(const Pin<RunnerContext> runner_context,
                                  std::string &&name,

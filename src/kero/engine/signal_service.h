@@ -3,6 +3,7 @@
 
 #include <atomic>
 
+#include "kero/engine/common.h"
 #include "kero/engine/service.h"
 
 namespace kero {
@@ -12,6 +13,9 @@ class SignalService final : public Service {
   explicit SignalService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~SignalService() noexcept override = default;
   CLASS_KIND_MOVABLE(SignalService);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_Signal;
+  static constexpr ServiceKindName kKindName = "signal";
 
   virtual auto
   OnCreate() noexcept -> Result<Void> override;

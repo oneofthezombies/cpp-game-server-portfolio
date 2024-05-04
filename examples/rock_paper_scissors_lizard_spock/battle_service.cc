@@ -26,15 +26,8 @@ class BattleService final : public SocketPoolService<BattleService> {
     RegisterEventHandler(EventBattleStart::kEvent, OnBattleStart);
   }
 
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId {
-    return kServiceKindId_Battle;
-  }
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName {
-    return "battle";
-  }
+  static constexpr ServiceKindId kKindId = kServiceKindId_Battle;
+  static constexpr ServiceKindName kKindName = "battle";
 
   auto
   OnCreate() noexcept -> Result<Void> override {

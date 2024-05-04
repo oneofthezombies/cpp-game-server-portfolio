@@ -3,6 +3,7 @@
 
 #include "kero/core/utils_linux.h"
 #include "kero/engine/service.h"
+#include "kero/middleware/common.h"
 
 namespace kero {
 
@@ -11,6 +12,9 @@ class TcpServerService final : public Service {
   explicit TcpServerService(const Pin<RunnerContext> runner_context) noexcept;
   virtual ~TcpServerService() noexcept override = default;
   CLASS_KIND_MOVABLE(TcpServerService);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_TcpServer;
+  static constexpr ServiceKindName kKindName = "tcp_server";
 
   [[nodiscard]] virtual auto
   OnCreate() noexcept -> Result<Void> override;

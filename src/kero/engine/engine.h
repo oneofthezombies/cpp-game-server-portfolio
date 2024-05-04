@@ -11,7 +11,7 @@ class Service;
 
 class Engine {
  public:
-  explicit Engine() noexcept = default;
+  explicit Engine() noexcept;
   ~Engine() noexcept = default;
   CLASS_KIND_PINNABLE(Engine);
 

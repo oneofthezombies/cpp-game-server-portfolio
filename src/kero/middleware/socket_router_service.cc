@@ -8,16 +8,6 @@
 
 using namespace kero;
 
-auto
-kero::SocketRouterService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindId_SocketRouter;
-}
-
-auto
-kero::SocketRouterService::GetKindName() noexcept -> ServiceKindName {
-  return "socket_router";
-}
-
 kero::SocketRouterService::SocketRouterService(
     const Pin<RunnerContext> runner_context, std::string&& target) noexcept
     : Service{runner_context, {kServiceKindId_Actor}},

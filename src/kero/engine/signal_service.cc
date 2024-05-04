@@ -11,16 +11,6 @@
 
 using namespace kero;
 
-auto
-kero::SignalService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindId_Signal;
-}
-
-auto
-kero::SignalService::GetKindName() noexcept -> ServiceKindName {
-  return "signal";
-}
-
 kero::SignalService::SignalService(
     const Pin<RunnerContext> runner_context) noexcept
     : Service{runner_context, {kServiceKindId_Actor}} {}

@@ -3,10 +3,11 @@
 
 #include "kero/core/common.h"
 #include "kero/engine/actor_system.h"
+#include "kero/engine/common.h"
+#include "kero/engine/runner_context.h"
 #include "kero/engine/service.h"
 #include "kero/engine/service_factory.h"
 #include "kero/engine/service_kind.h"
-#include "runner_context.h"
 
 namespace kero {
 
@@ -16,6 +17,9 @@ class ActorService final : public Service {
  public:
   virtual ~ActorService() noexcept override = default;
   CLASS_KIND_MOVABLE(ActorService);
+
+  static constexpr ServiceKindId kKindId = kServiceKindId_Actor;
+  static constexpr ServiceKindName kKindName = "actor";
 
   virtual auto
   OnUpdate() noexcept -> void override;
@@ -30,12 +34,6 @@ class ActorService final : public Service {
 
   auto
   BroadcastMail(std::string &&event, FlatJson &&body) noexcept -> void;
-
-  [[nodiscard]] static auto
-  GetKindId() noexcept -> ServiceKindId;
-
-  [[nodiscard]] static auto
-  GetKindName() noexcept -> ServiceKindName;
 
  private:
   explicit ActorService(const Pin<RunnerContext> runner_context,

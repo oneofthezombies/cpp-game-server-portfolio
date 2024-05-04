@@ -3,19 +3,8 @@
 #include "kero/core/args_scanner.h"
 #include "kero/core/utils.h"
 #include "kero/log/log_builder.h"
-#include "kero/middleware/common.h"
 
 using namespace kero;
-
-auto
-kero::ConfigService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindId_Config;
-}
-
-auto
-kero::ConfigService::GetKindName() noexcept -> ServiceKindName {
-  return "config";
-}
 
 kero::ConfigService::ConfigService(const Pin<RunnerContext> runner_context,
                                    FlatJson&& config) noexcept
