@@ -55,6 +55,19 @@ main(int argc, char** argv) -> int {
                 std::make_unique<MatchService>(runner_context)};
           })
           .BuildThreadRunner();
+  if (match_runner.IsErr()) {
+    log::Error("Failed to create match runner")
+        .Data("error", match_runner.TakeErr())
+        .Log();
+    return 1;
+  }
+
+  if (auto res = match_runner.Ok()->Start(); res.IsErr()) {
+    log::Error("Failed to start match runner")
+        .Data("error", res.TakeErr())
+        .Log();
+    return 1;
+  }
 
   auto battle_runner =
       engine->CreateRunnerBuilder("battle")
@@ -66,6 +79,27 @@ main(int argc, char** argv) -> int {
                 std::make_unique<MatchService>(runner_context)};
           })
           .BuildThreadRunner();
+
+  if (battle_runner.IsErr()) {
+    log::Error("Failed to create battle runner")
+        .Data("error", battle_runner.TakeErr())
+        .Log();
+    return 1;
+  }
+
+  if (auto res = battle_runner.Ok()->Start(); res.IsErr()) {
+    log::Error("Failed to start battle runner")
+        .Data("error", res.TakeErr())
+        .Log();
+    return 1;
+  }
+
+  if (auto res = main_runner.Ok()->Run(); res.IsErr()) {
+    log::Error("Failed to start main runner")
+        .Data("error", res.TakeErr())
+        .Log();
+    return 1;
+  }
 
   return 0;
 }
