@@ -1,8 +1,9 @@
 #include "common.h"
+#include "kero/core/utils.h"
 #include "kero/engine/runner_context.h"
 #include "kero/engine/service.h"
 #include "kero/log/log_builder.h"
-#include "kero/middleware/constants.h"
+#include "kero/middleware/common.h"
 
 using namespace kero;
 
@@ -15,27 +16,39 @@ class BattleService final : public Service {
   OnCreate() noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
-    if (!SubscribeEvent(EventBattleStart::kEvent)) {
+    if (!SubscribeEvent(EventSocketRegister::kEvent)) {
       return ResultT::Err(Error::From(
           FlatJson{}
-              .Set("message", "Failed to subscribe to battle start event")
+              .Set("message", "Failed to subscribe to socket register event")
               .Take()));
     }
 
-    return ResultT::Ok(Void{});
+    if (!SubscribeEvent(EventSocketUnregister::kEvent)) {
+      return ResultT::Err(Error::From(
+          FlatJson{}
+              .Set("message", "Failed to subscribe to socket unregister event")
+              .Take()));
+    }
+
+    return OkVoid();
   }
 
   auto
   OnDestroy() noexcept -> void override {
-    if (!UnsubscribeEvent(EventBattleStart::kEvent)) {
-      log::Error("Failed to unsubscribe from battle start event").Log();
+    if (!UnsubscribeEvent(EventSocketRegister::kEvent)) {
+      log::Error("Failed to unsubscribe from socket register event").Log();
+    }
+
+    if (!UnsubscribeEvent(EventSocketUnregister::kEvent)) {
+      log::Error("Failed to unsubscribe from socket unregister event").Log();
     }
   }
 
   auto
   OnEvent(const std::string &event,
           const FlatJson &data) noexcept -> void override {
-    if (event == EventBattleStart::kEvent) {
+    if (event == EventSocketRegister::kEvent) {
+    } else if (event == EventSocketUnregister::kEvent) {
     } else {
       log::Error("Unknown event").Data("event", event).Log();
     }

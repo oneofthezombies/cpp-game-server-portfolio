@@ -9,7 +9,7 @@
 #include "kero/core/utils_linux.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/middleware/constants.h"
+#include "kero/middleware/common.h"
 
 using namespace kero;
 
@@ -39,7 +39,7 @@ AddOptionsToEpollEvents(
 
 auto
 kero::IoEventLoopService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindIdIoEventLoop;
+  return kServiceKindId_IoEventLoop;
 }
 
 auto

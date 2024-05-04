@@ -7,8 +7,8 @@
 #include "kero/core/utils.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
+#include "kero/middleware/common.h"
 #include "kero/middleware/config_service.h"
-#include "kero/middleware/constants.h"
 #include "kero/middleware/io_event_loop_service.h"
 
 using namespace kero;

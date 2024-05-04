@@ -5,7 +5,7 @@
 #include "kero/core/utils.h"
 #include "kero/core/utils_linux.h"
 #include "kero/engine/actor_service.h"
-#include "kero/engine/constants.h"
+#include "kero/engine/common.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
 
@@ -13,7 +13,7 @@ using namespace kero;
 
 auto
 kero::SignalService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindIdSignal;
+  return kServiceKindId_Signal;
 }
 
 auto
@@ -23,7 +23,7 @@ kero::SignalService::GetKindName() noexcept -> ServiceKindName {
 
 kero::SignalService::SignalService(
     const Pin<RunnerContext> runner_context) noexcept
-    : Service{runner_context, {kServiceKindIdActor}} {}
+    : Service{runner_context, {kServiceKindId_Actor}} {}
 
 auto
 kero::SignalService::OnCreate() noexcept -> Result<Void> {

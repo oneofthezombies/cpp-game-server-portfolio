@@ -2,15 +2,17 @@
 #include "kero/core/flat_json.h"
 #include "kero/core/flat_json_parser.h"
 #include "kero/core/utils.h"
+#include "kero/engine/actor_service.h"
+#include "kero/engine/common.h"
 #include "kero/engine/runner_context.h"
 #include "kero/log/log_builder.h"
-#include "kero/middleware/constants.h"
+#include "kero/middleware/common.h"
 #include "kero/middleware/io_event_loop_service.h"
 #include "kero/middleware/socket_pool_service.h"
 
 using namespace kero;
 
-class MatchService final : public Service {
+class MatchService final : public SocketPoolService {
  public:
   static auto
   GetKindId() noexcept -> ServiceKindId {
@@ -24,7 +26,9 @@ class MatchService final : public Service {
 
   explicit MatchService(const Pin<RunnerContext> runner_context) noexcept
       : Service{runner_context,
-                {kServiceKindIdSocketPool, kServiceKindIdIoEventLoop}} {}
+                {kServiceKindIdSocketPool,
+                 kServiceKindIdIoEventLoop,
+                 kServiceKindIdActor}} {}
 
   auto
   OnCreate() noexcept -> Result<Void> override {
@@ -153,6 +157,15 @@ class MatchService final : public Service {
           .Data("data", data)
           .Log();
       return;
+    }
+
+    if (reason.Unwrap() == "match") {
+      GetDependency<ActorService>()->SendMail(
+          "battle",
+          EventSocketOpen::kEvent,
+          FlatJson{}.Set(EventSocketOpen::kFd, fd.Unwrap()).Take());
+    } else {
+      log::Error("Unhandle reason").Data("reason", reason.Unwrap()).Log();
     }
   }
 };

@@ -1,5 +1,5 @@
-#ifndef KERO_ENGINE_CONSTANTS_H
-#define KERO_ENGINE_CONSTANTS_H
+#ifndef KERO_ENGINE_COMMON_H
+#define KERO_ENGINE_COMMON_H
 
 #include "kero/core/error.h"
 #include "kero/engine/service_kind.h"
@@ -10,9 +10,13 @@ enum ErrorCode : Error::Code {
   kInterrupted = 3,
 };
 
-enum EngineServiceKindId : ServiceKindId {
-  kServiceKindIdActor = 1,
-  kServiceKindIdSignal = 2,
+enum : ServiceKindId {
+  kServiceKindId_EngineBegin = 0,
+
+  kServiceKindId_Actor,
+  kServiceKindId_Signal,
+
+  kServiceKindId_EngineEnd,
 };
 
 struct EventShutdown {
@@ -21,4 +25,4 @@ struct EventShutdown {
 
 }  // namespace kero
 
-#endif  // KERO_ENGINE_CONSTANTS_H
+#endif  // KERO_ENGINE_COMMON_H
