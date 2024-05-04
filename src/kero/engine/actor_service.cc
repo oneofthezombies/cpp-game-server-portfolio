@@ -9,7 +9,7 @@ using namespace kero;
 
 auto
 kero::ActorService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindIdActor;
+  return kServiceKindId_Actor;
 }
 
 auto

@@ -5,47 +5,36 @@
 #include "kero/engine/actor_service.h"
 #include "kero/engine/common.h"
 #include "kero/engine/runner_context.h"
-#include "kero/log/log_builder.h"
 #include "kero/middleware/common.h"
 #include "kero/middleware/io_event_loop_service.h"
 #include "kero/middleware/socket_pool_service.h"
 
 using namespace kero;
 
-class MatchService final : public SocketPoolService {
+class MatchService final : public SocketPoolService<MatchService> {
  public:
-  static auto
+  [[nodiscard]] static auto
   GetKindId() noexcept -> ServiceKindId {
-    return kServiceKindIdMatch;
+    return kServiceKindId_Match;
   }
 
-  static auto
+  [[nodiscard]] static auto
   GetKindName() noexcept -> ServiceKindName {
     return "match";
   }
 
   explicit MatchService(const Pin<RunnerContext> runner_context) noexcept
-      : Service{runner_context,
-                {kServiceKindIdSocketPool,
-                 kServiceKindIdIoEventLoop,
-                 kServiceKindIdActor}} {}
+      : SocketPoolService{runner_context, {kServiceKindId_Actor}} {
+    RegisterEventHandler(EventSocketOpen::kEvent, OnSocketOpen);
+    RegisterEventHandler(EventSocketClose::kEvent, OnSocketClose);
+  }
 
   auto
   OnCreate() noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
 
-    if (!SubscribeEvent(EventSocketRegister::kEvent)) {
-      return ResultT::Err(Error::From(
-          FlatJson{}
-              .Set("message", "Failed to subscribe to socket register event")
-              .Take()));
-    }
-
-    if (!SubscribeEvent(EventSocketUnregister::kEvent)) {
-      return ResultT::Err(Error::From(
-          FlatJson{}
-              .Set("message", "Failed to subscribe to socket unregister event")
-              .Take()));
+    if (auto res = SocketPoolService::OnCreate(); res.IsErr()) {
+      return res;
     }
 
     return OkVoid();
@@ -53,119 +42,92 @@ class MatchService final : public SocketPoolService {
 
   auto
   OnDestroy() noexcept -> void override {
-    if (!UnsubscribeEvent(EventSocketRegister::kEvent)) {
-      log::Error("Failed to unsubscribe from socket register event").Log();
-    }
-
-    if (!UnsubscribeEvent(EventSocketUnregister::kEvent)) {
-      log::Error("Failed to unsubscribe from socket unregister event").Log();
-    }
-  }
-
-  auto
-  OnEvent(const std::string &event,
-          const FlatJson &data) noexcept -> void override {
-    if (event == EventSocketRegister::kEvent) {
-      OnSocketRegister(data);
-    } else if (event == EventSocketUnregister::kEvent) {
-      OnSocketUnregister(data);
-    } else {
-      log::Error("Unknown event").Data("event", event).Log();
-    }
+    SocketPoolService::OnDestroy();
   }
 
  private:
-  auto
-  OnSocketRegister(const FlatJson &data) noexcept -> void {
-    const auto fd = data.TryGet<u64>(EventSocketRegister::kFd);
-    if (!fd) {
-      log::Error("Failed to get fd from socket register event")
-          .Data("data", data)
-          .Log();
-      return;
+  [[nodiscard]] static auto
+  OnSocketOpen(MatchService* self,
+               const FlatJson& data) noexcept -> Result<Void> {
+    using ResultT = Result<Void>;
+
+    auto socket_id_opt = data.TryGet<u64>(EventSocketOpen::kSocketId);
+    if (!socket_id_opt) {
+      return ResultT::Err(
+          FlatJson{}
+              .Set("message", "Failed to get socket id from data")
+              .Take());
+    }
+
+    const auto socket_id = socket_id_opt.Unwrap();
+    if (auto res = self->RegisterSocket(socket_id); res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
     }
 
     auto stringified = FlatJsonStringifier{}.Stringify(
-        FlatJson{}.Set("kind", "connect").Set("fd", fd.Unwrap()).Take());
+        FlatJson{}.Set("kind", "connect").Set("socket_id", socket_id).Take());
     if (stringified.IsErr()) {
-      log::Error("Failed to stringify connect message")
-          .Data("error", stringified.TakeErr())
-          .Log();
-      return;
+      return ResultT::Err(stringified.TakeErr());
     }
 
-    if (auto res = GetDependency<IoEventLoopService>()->WriteToFd(
-            fd.Unwrap(),
+    if (auto res = self->GetDependency<IoEventLoopService>()->WriteToFd(
+            socket_id,
             stringified.TakeOk());
         res.IsErr()) {
-      log::Error("Failed to send connect message to socket")
-          .Data("fd", fd.Unwrap())
-          .Data("error", res.TakeErr())
-          .Log();
-      return;
+      return ResultT::Err(res.TakeErr());
     }
 
-    const auto count = data.TryGet<u64>(EventSocketRegister::kCount);
-    if (!count) {
-      log::Error("Failed to get count from socket register event")
-          .Data("data", data)
-          .Log();
-      return;
-    }
-
-    if (count.Unwrap() >= 2) {
-      auto socket_pool_service = GetDependency<SocketPoolService>();
-      auto &sockets = socket_pool_service->GetSockets();
-      const auto player1_it = sockets.begin();
-      const auto player1 = *player1_it;
+    if (self->socket_ids_.size() >= 2) {
+      const auto player1_it = self->socket_ids_.begin();
+      const auto player1_socket_id = *player1_it;
       const auto player2_it = std::next(player1_it);
-      const auto player2 = *player2_it;
-      if (auto res = socket_pool_service->UnregisterSocket(player1, "match");
-          res.IsErr()) {
-        log::Error("Failed to unregister player1 socket")
-            .Data("fd", player1)
-            .Data("error", res.TakeErr())
-            .Log();
-        return;
+      const auto player2_socket_id = *player2_it;
+      if (auto res = self->UnregisterSocket(player1_socket_id); res.IsErr()) {
+        return ResultT::Err(res.TakeErr());
       }
 
-      if (auto res = socket_pool_service->UnregisterSocket(player2, "match");
-          res.IsErr()) {
-        log::Error("Failed to unregister player2 socket")
-            .Data("fd", player2)
-            .Data("error", res.TakeErr())
-            .Log();
-        return;
+      if (auto res = self->UnregisterSocket(player2_socket_id); res.IsErr()) {
+        return ResultT::Err(res.TakeErr());
       }
+
+      const auto battle_id = self->NextBattleId();
+      self->GetDependency<ActorService>()->SendMail(
+          "battle",
+          EventBattleStart::kEvent,
+          FlatJson{}
+              .Set(EventBattleStart::kBattleId, battle_id)
+              .Set(EventBattleStart::kPlayer1SocketId, player1_socket_id)
+              .Set(EventBattleStart::kPlayer2SocketId, player2_socket_id)
+              .Take());
     }
+
+    return OkVoid();
+  }
+
+  [[nodiscard]] static auto
+  OnSocketClose(MatchService* self,
+                const FlatJson& data) noexcept -> Result<Void> {
+    using ResultT = Result<Void>;
+
+    auto socket_id = data.TryGet<u64>(EventSocketClose::kSocketId);
+    if (!socket_id) {
+      return ResultT::Err(
+          FlatJson{}
+              .Set("message", "Failed to get socket id from data")
+              .Take());
+    }
+
+    if (auto res = self->UnregisterSocket(socket_id.Unwrap()); res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    return OkVoid();
   }
 
   auto
-  OnSocketUnregister(const FlatJson &data) noexcept -> void {
-    const auto fd = data.TryGet<u64>(EventSocketUnregister::kFd);
-    if (!fd) {
-      log::Error("Failed to get fd from socket unregister event")
-          .Data("data", data)
-          .Log();
-      return;
-    }
-
-    const auto reason =
-        data.TryGet<std::string>(EventSocketUnregister::kReason);
-    if (!reason) {
-      log::Error("Failed to get reason from socket unregister event")
-          .Data("data", data)
-          .Log();
-      return;
-    }
-
-    if (reason.Unwrap() == "match") {
-      GetDependency<ActorService>()->SendMail(
-          "battle",
-          EventSocketOpen::kEvent,
-          FlatJson{}.Set(EventSocketOpen::kFd, fd.Unwrap()).Take());
-    } else {
-      log::Error("Unhandle reason").Data("reason", reason.Unwrap()).Log();
-    }
+  NextBattleId() noexcept -> u64 {
+    return battle_id_++;
   }
+
+  u64 battle_id_{};
 };

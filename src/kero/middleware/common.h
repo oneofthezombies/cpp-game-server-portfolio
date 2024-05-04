@@ -14,7 +14,6 @@ enum : ServiceKindId {
   kServiceKindId_IoEventLoop,
   kServiceKindId_TcpServer,
   kServiceKindId_Config,
-  kServiceKindId_SocketPool,
   kServiceKindId_SocketRouter,
 
   kServiceKindId_MiddlewareEnd,

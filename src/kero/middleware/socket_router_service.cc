@@ -10,7 +10,7 @@ using namespace kero;
 
 auto
 kero::SocketRouterService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindIdSocketRouter;
+  return kServiceKindId_SocketRouter;
 }
 
 auto
@@ -20,7 +20,7 @@ kero::SocketRouterService::GetKindName() noexcept -> ServiceKindName {
 
 kero::SocketRouterService::SocketRouterService(
     const Pin<RunnerContext> runner_context, std::string&& target) noexcept
-    : Service{runner_context, {kServiceKindIdActor}},
+    : Service{runner_context, {kServiceKindId_Actor}},
       target_{std::move(target)} {}
 
 auto

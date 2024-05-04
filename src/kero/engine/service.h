@@ -80,9 +80,11 @@ class Service {
   virtual auto
   OnEvent(const std::string& event, const FlatJson& data) noexcept -> void;
 
+ protected:
+  DependencyDeclarations dependency_declarations_;
+
  private:
   ServiceReadOnlyMap dependency_map_{};
-  DependencyDeclarations dependency_declarations_;
   Pin<RunnerContext> runner_context_;
 
   friend class ServiceMap;

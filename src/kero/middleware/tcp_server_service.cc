@@ -15,7 +15,7 @@ using namespace kero;
 
 auto
 kero::TcpServerService::GetKindId() noexcept -> ServiceKindId {
-  return kServiceKindIdTcpServer;
+  return kServiceKindId_TcpServer;
 }
 
 auto
@@ -26,7 +26,7 @@ kero::TcpServerService::GetKindName() noexcept -> ServiceKindName {
 kero::TcpServerService::TcpServerService(
     const Pin<RunnerContext> runner_context) noexcept
     : Service{runner_context,
-              {kServiceKindIdConfig, kServiceKindIdIoEventLoop}} {}
+              {kServiceKindId_Config, kServiceKindId_IoEventLoop}} {}
 
 auto
 kero::TcpServerService::OnCreate() noexcept -> Result<Void> {
@@ -123,13 +123,13 @@ auto
 kero::TcpServerService::OnEvent(const std::string& event,
                                 const FlatJson& data) noexcept -> void {
   if (event == EventSocketRead::kEvent) {
-    auto fd_opt = data.TryGet<u64>(EventSocketRead::kFd);
-    if (fd_opt.IsNone()) {
+    auto socket_id = data.TryGet<u64>(EventSocketRead::kSocketId);
+    if (socket_id.IsNone()) {
       log::Error("Failed to get fd from event data").Log();
       return;
     }
 
-    const auto fd = fd_opt.TakeUnwrap();
+    const auto fd = static_cast<int>(socket_id.TakeUnwrap());
     if (fd == server_fd_) {
       struct sockaddr_in client_addr {};
       socklen_t addrlen = sizeof(struct sockaddr_in);
@@ -153,7 +153,9 @@ kero::TcpServerService::OnEvent(const std::string& event,
 
       if (auto res = InvokeEvent(
               EventSocketOpen::kEvent,
-              FlatJson{}.Set(EventSocketOpen::kFd, client_fd).Take())) {
+              FlatJson{}
+                  .Set(EventSocketOpen::kSocketId, static_cast<u64>(client_fd))
+                  .Take())) {
         log::Error("Failed to invoke socket open event")
             .Data("error", res.TakeErr())
             .Log();
