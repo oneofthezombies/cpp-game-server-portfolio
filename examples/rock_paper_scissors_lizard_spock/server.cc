@@ -11,7 +11,6 @@
 #include "kero/log/transport.h"
 #include "kero/middleware/config_service.h"
 #include "kero/middleware/io_event_loop_service.h"
-#include "kero/middleware/socket_pool_service.h"
 #include "kero/middleware/socket_router_service.h"
 #include "kero/middleware/tcp_server_service.h"
 #include "match_service.cc"
@@ -51,8 +50,6 @@ main(int argc, char** argv) -> int {
           .AddServiceFactory(std::make_unique<ActorServiceFactory>(engine))
           .AddServiceFactory(
               std::make_unique<DefaultServiceFactory<IoEventLoopService>>())
-          .AddServiceFactory(
-              std::make_unique<DefaultServiceFactory<SocketPoolService>>())
           .AddServiceFactory([](const Pin<RunnerContext> runner_context) {
             return Result<Own<Service>>{
                 std::make_unique<MatchService>(runner_context)};
@@ -64,8 +61,6 @@ main(int argc, char** argv) -> int {
           .AddServiceFactory(std::make_unique<ActorServiceFactory>(engine))
           .AddServiceFactory(
               std::make_unique<DefaultServiceFactory<IoEventLoopService>>())
-          .AddServiceFactory(
-              std::make_unique<DefaultServiceFactory<SocketPoolService>>())
           .AddServiceFactory([](const Pin<RunnerContext> runner_context) {
             return Result<Own<Service>>{
                 std::make_unique<MatchService>(runner_context)};

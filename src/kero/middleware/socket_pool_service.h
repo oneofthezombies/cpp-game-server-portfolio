@@ -79,7 +79,7 @@ class SocketPoolService : public Service {
       return;
     }
 
-    if (auto res = found->second(this, data); res.IsErr()) {
+    if (auto res = found->second(static_cast<T*>(this), data); res.IsErr()) {
       log::Error("Failed to handle event")
           .Data("event", event)
           .Data("error", res.TakeErr())
