@@ -272,7 +272,8 @@ kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
     if (read == 0) {
       if (auto res = InvokeEvent(EventSocketClose::kEvent,
                                  FlatJson{}.Set(EventSocketClose::kSocketId,
-                                                static_cast<u64>(fd)))) {
+                                                static_cast<u64>(fd)));
+          res.IsErr()) {
         log::Error("Failed to invoke socket close event")
             .Data("error", res.TakeErr())
             .Log();

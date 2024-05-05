@@ -58,6 +58,7 @@ struct BattleState {
   RpslsAction player1_action;
   SocketId player2_socket_id{};
   RpslsAction player2_action;
+  u32 remaining_socket_count{};
 };
 
 class BattleService final : public SocketPoolService<BattleService> {
@@ -199,6 +200,7 @@ class BattleService final : public SocketPoolService<BattleService> {
                                   .player1_action = RpslsAction::kInvalid,
                                   .player2_socket_id = player2_socket_id,
                                   .player2_action = RpslsAction::kInvalid,
+                                  .remaining_socket_count = 2,
                               });
     player_state_map_.emplace(player1_socket_id,
                               PlayerState{.battle_id = battle_id});
@@ -369,6 +371,21 @@ class BattleService final : public SocketPoolService<BattleService> {
 
     if (auto res = UnregisterSocket(socket_id); res.IsErr()) {
       return ResultT::Err(res.TakeErr());
+    }
+
+    const auto player_state_it = player_state_map_.find(socket_id);
+    if (player_state_it != player_state_map_.end()) {
+      const auto battle_id = player_state_it->second.battle_id;
+      player_state_map_.erase(player_state_it);
+
+      const auto battle_state_it = battle_state_map_.find(battle_id);
+      if (battle_state_it != battle_state_map_.end()) {
+        --battle_state_it->second.remaining_socket_count;
+        if (battle_state_it->second.remaining_socket_count <= 0) {
+          battle_state_map_.erase(battle_state_it);
+          log::Debug("Battle ended").Data("battle_id", battle_id).Log();
+        }
+      }
     }
 
     const auto& name = GetDependency<ActorService>()->GetName();

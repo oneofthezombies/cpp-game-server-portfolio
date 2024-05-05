@@ -108,6 +108,12 @@ class MatchService final : public SocketPoolService<MatchService> {
       }
 
       const auto& name = min_battle_socket_count_it->first;
+      log::Debug("Matched players")
+          .Data("player1_socket_id", player1_socket_id)
+          .Data("player2_socket_id", player2_socket_id)
+          .Data("name", name)
+          .Log();
+
       GetDependency<ActorService>()->SendMail(
           std::string{name},
           EventSocketMove::kEvent,
@@ -170,6 +176,10 @@ class MatchService final : public SocketPoolService<MatchService> {
     const auto name = name_opt.Unwrap();
     const auto count = count_opt.Unwrap();
     battle_socket_count_map_[name] = count;
+    log::Debug("Battle socket count updated")
+        .Data("name", name)
+        .Data("count", count)
+        .Log();
 
     return OkVoid();
   }

@@ -91,7 +91,12 @@ class SocketPoolService : public Service {
     const auto socket_id = socket_id_opt.Unwrap();
     auto read_res = GetDependency<IoEventLoopService>()->ReadFromFd(socket_id);
     if (read_res.IsErr()) {
-      return ResultT::Err(read_res.TakeErr());
+      auto err = read_res.TakeErr();
+      if (err.code == IoEventLoopService::kSocketClosed) {
+        return OkVoid();
+      }
+
+      return ResultT::Err(std::move(err));
     }
 
     auto found_socket_info = socket_map_.find(socket_id);
@@ -146,6 +151,8 @@ class SocketPoolService : public Service {
 
   [[nodiscard]] auto
   UnregisterSocket(const SocketId socket_id) noexcept -> Result<Void> {
+    log::Debug("Unregistering socket").Data("socket_id", socket_id).Log();
+
     if (socket_map_.erase(socket_id) == 0) {
       log::Error("Failed to remove socket_id from set")
           .Data("socket_id", socket_id)
@@ -198,8 +205,7 @@ class SocketPoolService : public Service {
     }
 
     if (auto res = found->second(data); res.IsErr()) {
-      return Result<Void>::Err(
-          FlatJson{}.Set("message", "Failed to handle event").Take());
+      return Result<Void>::Err(res.TakeErr());
     }
 
     return OkVoid();
