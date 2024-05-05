@@ -15,6 +15,7 @@
 #include "kero/core/error.h"
 #include "kero/core/flat_json.h"
 #include "kero/core/flat_json_parser.h"
+#include "kero/core/flat_json_scanner.h"
 #include "kero/core/result.h"
 #include "kero/core/utils.h"
 
@@ -267,9 +268,11 @@ main(int argc, char **argv) noexcept -> int {
     return OkVoid();
   };
 
-  std::string buffer(4096, '\0');
+  FlatJsonScanner scanner;
   while (true) {
-    auto read_size = recv(sock, buffer.data(), buffer.size(), 0);
+    constexpr u64 kBufferSize{4096};
+    char buffer[kBufferSize]{};
+    auto read_size = recv(sock, buffer, kBufferSize, 0);
     if (read_size == -1) {
       std::cerr << "Failed to read from the server." << std::endl;
       return 1;
@@ -283,8 +286,14 @@ main(int argc, char **argv) noexcept -> int {
     std::cout << "[DEBUG] Server: " << buffer << " (" << read_size << "bytes)"
               << std::endl;
 
-    const auto message =
-        kero::FlatJsonParser{}.Parse(buffer.substr(0, read_size));
+    scanner.Push(std::string_view{buffer, static_cast<size_t>(read_size)});
+    auto token_opt = scanner.Pop();
+    if (!token_opt) {
+      continue;
+    }
+
+    const auto &token = token_opt.Unwrap();
+    const auto message = kero::FlatJsonParser{}.Parse(token);
     if (message.IsErr()) {
       std::cout << "Failed to parse the message." << message.Err() << std::endl;
       continue;
