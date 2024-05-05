@@ -1,4 +1,5 @@
 #include "common.h"
+#include "kero/core/flat_json.h"
 #include "kero/core/flat_json_parser.h"
 #include "kero/core/utils.h"
 #include "kero/engine/actor_service.h"
@@ -11,12 +12,28 @@
 
 using namespace kero;
 
-struct BattleState {
-  u64 player1_socket_id;
-  std::string player1_move;
+static const std::unordered_map<std::string, std::string> kWinActionMap{
+    {"scissors", "paper"},
+    {"paper", "rock"},
+    {"rock", "lizard"},
+    {"lizard", "spock"},
+    {"spock", "scissors"},
+    {"scissors", "lizard"},
+    {"lizard", "paper"},
+    {"paper", "spock"},
+    {"spock", "rock"},
+    {"rock", "scissors"},
+};
 
-  u64 player2_socket_id;
-  std::string player2_move;
+struct PlayerState {
+  u64 battle_id{};
+};
+
+struct BattleState {
+  SocketId player1_socket_id{};
+  std::string player1_action;
+  SocketId player2_socket_id{};
+  std::string player2_action;
 };
 
 class BattleService final : public SocketPoolService<BattleService> {
@@ -50,6 +67,12 @@ class BattleService final : public SocketPoolService<BattleService> {
 
     if (auto res = RegisterMethodEventHandler(EventBattleStart::kEvent,
                                               &BattleService::OnBattleStart);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    if (auto res = RegisterMethodEventHandler(EventBattleAction::kEvent,
+                                              &BattleService::OnBattleAction);
         res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
@@ -149,12 +172,14 @@ class BattleService final : public SocketPoolService<BattleService> {
     battle_state_map_.emplace(battle_id,
                               BattleState{
                                   .player1_socket_id = player1_socket_id,
-                                  .player1_move = "",
+                                  .player1_action = "",
                                   .player2_socket_id = player2_socket_id,
-                                  .player2_move = "",
+                                  .player2_action = "",
                               });
-    socket_to_battle_.emplace(player1_socket_id, battle_id);
-    socket_to_battle_.emplace(player2_socket_id, battle_id);
+    player_state_map_.emplace(player1_socket_id,
+                              PlayerState{.battle_id = battle_id});
+    player_state_map_.emplace(player2_socket_id,
+                              PlayerState{.battle_id = battle_id});
 
     auto player1_stringified_res = FlatJsonStringifier{}.Stringify(
         FlatJson{}
@@ -189,6 +214,60 @@ class BattleService final : public SocketPoolService<BattleService> {
             player2_stringified.TakeOk());
         res.IsErr()) {
       return ResultT::Err(res.TakeErr());
+    }
+
+    return OkVoid();
+  }
+
+  [[nodiscard]] auto
+  OnBattleAction(const FlatJson& data) noexcept -> Result<Void> {
+    using ResultT = Result<Void>;
+
+    const auto socket_id_opt = data.TryGet<u64>(EventBattleAction::kSocketId);
+    if (!socket_id_opt) {
+      return ResultT::Err(
+          FlatJson{}
+              .Set("message", "Failed to get socket id from data")
+              .Take());
+    }
+
+    const auto socket_id = socket_id_opt.Unwrap();
+
+    const auto action_opt =
+        data.TryGet<std::string>(EventBattleAction::kAction);
+    if (!action_opt) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to get action from data").Take());
+    }
+
+    const auto action = action_opt.Unwrap();
+
+    const auto player_state_it = player_state_map_.find(socket_id);
+    if (player_state_it == player_state_map_.end()) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to find player state").Take());
+    }
+
+    auto& player_state = player_state_it->second;
+    const auto battle_state_it = battle_state_map_.find(player_state.battle_id);
+    if (battle_state_it == battle_state_map_.end()) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to find battle state").Take());
+    }
+
+    auto& battle_state = battle_state_it->second;
+    if (battle_state.player1_socket_id == socket_id) {
+      battle_state.player1_action = action;
+    } else if (battle_state.player2_socket_id == socket_id) {
+      battle_state.player2_action = action;
+    } else {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to find player in battle").Take());
+    }
+
+    if (battle_state.player1_action.empty() ||
+        battle_state.player2_action.empty()) {
+      return OkVoid();
     }
 
     return OkVoid();
@@ -235,5 +314,5 @@ class BattleService final : public SocketPoolService<BattleService> {
   }
 
   std::unordered_map<u64 /* battle_id */, BattleState> battle_state_map_;
-  std::unordered_map<SocketId, u64 /* battle_id */> socket_to_battle_;
+  std::unordered_map<SocketId, PlayerState> player_state_map_;
 };

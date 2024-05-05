@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "kero/core/common.h"
+#include "kero/core/flat_json_parser.h"
 #include "kero/core/utils.h"
 #include "kero/engine/service.h"
 #include "kero/engine/service_kind.h"
@@ -36,9 +37,16 @@ class SocketPoolService : public Service {
   virtual ~SocketPoolService() noexcept override = default;
   KERO_CLASS_KIND_MOVABLE(SocketPoolService);
 
-  [[nodiscard]] virtual auto
+  virtual auto
   OnCreate() noexcept -> Result<Void> override {
     using ResultT = Result<Void>;
+
+    if (auto res = RegisterMethodEventHandler(EventSocketRead::kEvent,
+                                              &SocketPoolService::OnSocketRead);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
     return OkVoid();
   }
 
@@ -57,20 +65,51 @@ class SocketPoolService : public Service {
   virtual auto
   OnEvent(const std::string& event,
           const FlatJson& data) noexcept -> void override {
-    auto found = event_handler_map_.find(event);
-    if (found == event_handler_map_.end()) {
-      log::Error("Event handler not found for event")
-          .Data("event", event)
-          .Log();
-      return;
-    }
-
-    if (auto res = found->second(data); res.IsErr()) {
+    if (auto res = InvokeMethodEvent(event, data); res.IsErr()) {
       log::Error("Failed to handle event")
           .Data("event", event)
           .Data("error", res.TakeErr())
           .Log();
     }
+  }
+
+  [[nodiscard]] auto
+  OnSocketRead(const FlatJson& data) noexcept -> Result<Void> {
+    using ResultT = Result<Void>;
+
+    auto socket_id_opt = data.TryGet<u64>(EventSocketRead::kSocketId);
+    if (!socket_id_opt) {
+      return ResultT::Err(
+          FlatJson{}
+              .Set("message", "Failed to get socket id from data")
+              .Take());
+    }
+
+    const auto socket_id = socket_id_opt.Unwrap();
+    auto read_res = GetDependency<IoEventLoopService>()->ReadFromFd(socket_id);
+    if (read_res.IsErr()) {
+      return ResultT::Err(read_res.TakeErr());
+    }
+
+    auto parsed = FlatJsonParser{}.Parse(read_res.TakeOk());
+    if (parsed.IsErr()) {
+      return ResultT::Err(parsed.TakeErr());
+    }
+
+    auto read_data = parsed.TakeOk();
+    auto event_opt = read_data.template TryGet<std::string>("__event");
+    if (!event_opt) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Failed to get event from data").Take());
+    }
+
+    read_data.Set("__socket_id", socket_id);
+    const auto event = event_opt.Unwrap();
+    if (auto res = InvokeMethodEvent(event, read_data); res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    return OkVoid();
   }
 
   [[nodiscard]] auto
@@ -128,6 +167,23 @@ class SocketPoolService : public Service {
     event_handler_map_.emplace(
         event,
         std::bind(handler, static_cast<T*>(this), std::placeholders::_1));
+
+    return OkVoid();
+  }
+
+  [[nodiscard]] auto
+  InvokeMethodEvent(const std::string& event,
+                    const FlatJson& data) noexcept -> Result<Void> {
+    auto found = event_handler_map_.find(event);
+    if (found == event_handler_map_.end()) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Event handler not found").Take());
+    }
+
+    if (auto res = found->second(data); res.IsErr()) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Failed to handle event").Take());
+    }
 
     return OkVoid();
   }

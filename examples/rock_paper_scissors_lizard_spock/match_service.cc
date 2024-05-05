@@ -42,12 +42,6 @@ class MatchService final : public SocketPoolService<MatchService> {
       return ResultT::Err(res.TakeErr());
     }
 
-    if (auto res = RegisterMethodEventHandler(EventSocketRead::kEvent,
-                                              &MatchService::OnSocketRead);
-        res.IsErr()) {
-      return ResultT::Err(res.TakeErr());
-    }
-
     if (auto res =
             RegisterMethodEventHandler(EventBattleSocketCount::kEvent,
                                        &MatchService::OnBattleSocketCount);
@@ -56,11 +50,6 @@ class MatchService final : public SocketPoolService<MatchService> {
     }
 
     return OkVoid();
-  }
-
-  auto
-  OnDestroy() noexcept -> void override {
-    SocketPoolService::OnDestroy();
   }
 
  private:
@@ -157,24 +146,6 @@ class MatchService final : public SocketPoolService<MatchService> {
     if (auto res = UnregisterSocket(socket_id.Unwrap()); res.IsErr()) {
       return ResultT::Err(res.TakeErr());
     }
-
-    return OkVoid();
-  }
-
-  [[nodiscard]] auto
-  OnSocketRead(const FlatJson& data) noexcept -> Result<Void> {
-    using ResultT = Result<Void>;
-
-    auto socket_id_opt = data.TryGet<u64>(EventSocketRead::kSocketId);
-    if (!socket_id_opt) {
-      return ResultT::Err(
-          FlatJson{}
-              .Set("message", "Failed to get socket id from data")
-              .Take());
-    }
-
-    const auto socket_id = socket_id_opt.Unwrap();
-    GetDependency<IoEventLoopService>()->ReadFromFd(socket_id);
 
     return OkVoid();
   }

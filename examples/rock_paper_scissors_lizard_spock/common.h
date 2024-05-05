@@ -24,4 +24,11 @@ struct EventBattleStart {
   static constexpr auto kPlayer2SocketId = "player2_socket_id";
 };
 
+struct EventBattleAction {
+  static constexpr auto kEvent = "battle_action";
+  static constexpr auto kSocketId = "socket_id";
+  static constexpr auto kBattleId = "battle_id";
+  static constexpr auto kAction = "action";
+};
+
 #endif  // RPSLS_COMMON_H

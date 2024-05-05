@@ -196,30 +196,30 @@ main(int argc, char **argv) noexcept -> int {
               << " and opponent socket id: " << opponent_socket_id.Unwrap()
               << std::endl;
 
-    std::string move;
-    bool valid_move = false;
-    while (!valid_move) {
-      std::cout << "Please enter your move: ";
-      std::cout << "Available moves: rock, paper, scissors, lizard, spock"
+    std::string action;
+    bool valid_action = false;
+    while (!valid_action) {
+      std::cout << "Please enter your action: ";
+      std::cout << "Available actions: rock, paper, scissors, lizard, spock"
                 << std::endl;
-      std::cin >> move;
-      if (move != "rock" && move != "paper" && move != "scissors" &&
-          move != "lizard" && move != "spock") {
-        std::cout << "Invalid move." << std::endl;
+      std::cin >> action;
+      if (action != "rock" && action != "paper" && action != "scissors" &&
+          action != "lizard" && action != "spock") {
+        std::cout << "Invalid action." << std::endl;
         continue;
       }
 
-      valid_move = true;
+      valid_action = true;
     }
 
     auto stringified_res =
         FlatJsonStringifier{}.Stringify(FlatJson{}
-                                            .Set("kind", "battle_move")
-                                            .Set("move", std::move(move))
+                                            .Set("__event", "battle_action")
+                                            .Set("action", std::move(action))
                                             .Take());
     if (stringified_res.IsErr()) {
       return Result<Void>::Err(
-          FlatJson{}.Set("message", "Failed to stringify the move.").Take());
+          FlatJson{}.Set("message", "Failed to stringify the action.").Take());
     }
 
     const auto stringified = stringified_res.TakeOk();
@@ -227,11 +227,11 @@ main(int argc, char **argv) noexcept -> int {
     if (count == -1) {
       return Result<Void>::Err(
           FlatJson{}
-              .Set("message", "Failed to send the move to the server.")
+              .Set("message", "Failed to send the action to the server.")
               .Take());
     }
 
-    std::cout << "Move sent to the server. Waiting for the opponent's move."
+    std::cout << "Move sent to the server. Waiting for the opponent's action."
               << std::endl;
     return OkVoid();
   };
