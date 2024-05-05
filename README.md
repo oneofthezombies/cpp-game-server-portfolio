@@ -1,34 +1,34 @@
 # Kero Modular Server Engine
 
 This project is component based modular server engine.  
-It was implemented using `C++ Standard 20` and `Linux epoll` without the use of third-party.  
+It was implemented from scratch using `C++ Standard 20` and `Linux epoll`.
 
-The example is a 1:1 matching multiplayer __Rock, Paper, Scissors, Lizard, Spock__ game.  
+The example is a 1:1 matching multiplayer [Rock, Paper, Scissors, Lizard, Spock](examples/rock_paper_scissors_lizard_spock/README.md) game.  
 
-# Features
+## Features
 
 - Component based modular system
+- Async IO event loop system
 - Actor system
-- IO event loop system
 - Asynchronous structured logging system
 
-# Prerequisites
+## Prerequisites
 
-## Python
+### Python
 
 `python` >= 3.8
 
-It's a simple build script, but I use Python.
+The build script was written in `Python`.
 
-# CMake
+### CMake
 
 `cmake` >= 3.28
 
-# Ninja
+### Ninja
 
 `ninja` >= 1.10
 
-# cmake-format
+### cmake-format
 
 `cmake-format` >= 0.6
 
@@ -36,12 +36,8 @@ It's a simple build script, but I use Python.
 pip install cmake_format
 ```
 
-# How to Build
+## How to Build
 
 ```sh
 python dev.py build
 ```
-
-# Reference
-
-Rock, Paper, Scissors, Lizard, Spock - https://bigbangtheory.fandom.com/wiki/Rock,_Paper,_Scissors,_Lizard,_Spock
