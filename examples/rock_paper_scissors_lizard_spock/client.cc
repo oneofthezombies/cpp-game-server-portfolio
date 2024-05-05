@@ -7,7 +7,9 @@
 #include <iostream>
 #include <ostream>
 #include <string>
+#include <type_traits>
 
+#include "common.h"
 #include "kero/core/args_scanner.h"
 #include "kero/core/common.h"
 #include "kero/core/error.h"
@@ -196,34 +198,33 @@ main(int argc, char **argv) noexcept -> int {
               << " and opponent socket id: " << opponent_socket_id.Unwrap()
               << std::endl;
 
-    std::string action;
-    bool valid_action = false;
-    while (!valid_action) {
+    RpslsAction action{RpslsAction::kInvalid};
+    while (action == RpslsAction::kInvalid) {
       std::cout << "Please enter your action: ";
       std::cout << "Available actions: rock, paper, scissors, lizard, spock"
                 << std::endl;
-      std::cin >> action;
-      if (action != "rock" && action != "paper" && action != "scissors" &&
-          action != "lizard" && action != "spock") {
+      std::string action_str;
+      std::cin >> action_str;
+      action = StringToRpslsAction(action_str);
+      if (action == RpslsAction::kInvalid) {
         std::cout << "Invalid action." << std::endl;
         continue;
       }
-
-      valid_action = true;
     }
 
-    auto stringified_res =
-        FlatJsonStringifier{}.Stringify(FlatJson{}
-                                            .Set("__event", "battle_action")
-                                            .Set("action", std::move(action))
-                                            .Take());
+    auto stringified_res = FlatJsonStringifier{}.Stringify(
+        FlatJson{}
+            .Set("__event", "battle_action")
+            .Set("action",
+                 static_cast<std::underlying_type_t<RpslsAction>>(action))
+            .Take());
     if (stringified_res.IsErr()) {
       return Result<Void>::Err(
           FlatJson{}.Set("message", "Failed to stringify the action.").Take());
     }
 
     const auto stringified = stringified_res.TakeOk();
-    auto count = write(sock, stringified.data(), stringified.size());
+    auto count = send(sock, stringified.data(), stringified.size(), 0);
     if (count == -1) {
       return Result<Void>::Err(
           FlatJson{}
@@ -238,22 +239,29 @@ main(int argc, char **argv) noexcept -> int {
 
   event_handler_map["battle_result"] =
       [](const FlatJson &data) -> Result<Void> {
-    const auto result = data.TryGet<std::string>("result");
-    if (!result) {
+    const auto result_opt =
+        data.TryGet<std::underlying_type_t<RpslsResult>>("result");
+    if (!result_opt) {
       return Result<Void>::Err(
           FlatJson{}.Set("message", "Failed to get the result.").Take());
     }
 
-    std::cout << "Battle result: " << result.Unwrap() << std::endl;
+    const auto result = RawToRpslsResult(result_opt.Unwrap());
+    if (result == RpslsResult::kInvalid) {
+      return Result<Void>::Err(
+          FlatJson{}.Set("message", "Invalid result.").Take());
+    }
 
-    if (result.Unwrap() == "win") {
+    const auto result_str = RpslsResultToString(result);
+
+    std::cout << "Battle result: " << result_str << std::endl;
+
+    if (result == RpslsResult::kWin) {
       std::cout << "You won the battle." << std::endl;
-    } else if (result.Unwrap() == "lose") {
+    } else if (result == RpslsResult::kLose) {
       std::cout << "You lost the battle." << std::endl;
-    } else if (result.Unwrap() == "draw") {
-      std::cout << "The battle is a draw." << std::endl;
     } else {
-      std::cout << "Unknown battle result: " << result.Unwrap() << std::endl;
+      std::cout << "The battle is a draw." << std::endl;
     }
 
     return OkVoid();

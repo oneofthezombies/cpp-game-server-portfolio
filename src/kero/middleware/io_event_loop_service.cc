@@ -258,11 +258,7 @@ kero::IoEventLoopService::ReadFromFd(const Fd::Value fd) noexcept
     const auto read = recv(fd, buffer.data(), buffer.size(), 0);
     if (read == -1) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        log::Error("Failed to read data from fd")
-            .Data("fd", fd)
-            .Data("errno", Errno::FromErrno())
-            .Log();
-        continue;
+        break;
       }
 
       return ResultT::Err(Error::From(

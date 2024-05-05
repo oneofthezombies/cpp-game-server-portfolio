@@ -12,18 +12,42 @@
 
 using namespace kero;
 
-static const std::unordered_map<std::string, std::string> kWinActionMap{
-    {"scissors", "paper"},
-    {"paper", "rock"},
-    {"rock", "lizard"},
-    {"lizard", "spock"},
-    {"spock", "scissors"},
-    {"scissors", "lizard"},
-    {"lizard", "paper"},
-    {"paper", "spock"},
-    {"spock", "rock"},
-    {"rock", "scissors"},
+static const std::unordered_map<RpslsAction, std::vector<RpslsAction>> kWinMap{
+    {RpslsAction::kRock, {RpslsAction::kScissors, RpslsAction::kLizard}},
+    {RpslsAction::kPaper, {RpslsAction::kRock, RpslsAction::kSpock}},
+    {RpslsAction::kScissors, {RpslsAction::kPaper, RpslsAction::kLizard}},
+    {RpslsAction::kLizard, {RpslsAction::kSpock, RpslsAction::kPaper}},
+    {RpslsAction::kSpock, {RpslsAction::kScissors, RpslsAction::kRock}},
 };
+
+struct RpslsResultInfo {
+  RpslsResult player1;
+  RpslsResult player2;
+};
+
+auto
+GetResultInfo(const RpslsAction player1_action,
+              const RpslsAction player2_action) noexcept -> RpslsResultInfo {
+  if (player1_action == player2_action) {
+    return RpslsResultInfo{
+        .player1 = RpslsResult::kDraw,
+        .player2 = RpslsResult::kDraw,
+    };
+  }
+
+  const auto& wins = kWinMap.at(player1_action);
+  if (std::find(wins.begin(), wins.end(), player2_action) != wins.end()) {
+    return RpslsResultInfo{
+        .player1 = RpslsResult::kWin,
+        .player2 = RpslsResult::kLose,
+    };
+  }
+
+  return RpslsResultInfo{
+      .player1 = RpslsResult::kLose,
+      .player2 = RpslsResult::kWin,
+  };
+}
 
 struct PlayerState {
   u64 battle_id{};
@@ -31,9 +55,9 @@ struct PlayerState {
 
 struct BattleState {
   SocketId player1_socket_id{};
-  std::string player1_action;
+  RpslsAction player1_action;
   SocketId player2_socket_id{};
-  std::string player2_action;
+  RpslsAction player2_action;
 };
 
 class BattleService final : public SocketPoolService<BattleService> {
@@ -172,9 +196,9 @@ class BattleService final : public SocketPoolService<BattleService> {
     battle_state_map_.emplace(battle_id,
                               BattleState{
                                   .player1_socket_id = player1_socket_id,
-                                  .player1_action = "",
+                                  .player1_action = RpslsAction::kInvalid,
                                   .player2_socket_id = player2_socket_id,
-                                  .player2_action = "",
+                                  .player2_action = RpslsAction::kInvalid,
                               });
     player_state_map_.emplace(player1_socket_id,
                               PlayerState{.battle_id = battle_id});
@@ -233,14 +257,18 @@ class BattleService final : public SocketPoolService<BattleService> {
 
     const auto socket_id = socket_id_opt.Unwrap();
 
-    const auto action_opt =
-        data.TryGet<std::string>(EventBattleAction::kAction);
+    const auto action_opt = data.TryGet<std::underlying_type_t<RpslsAction>>(
+        EventBattleAction::kAction);
     if (!action_opt) {
       return ResultT::Err(
           FlatJson{}.Set("message", "Failed to get action from data").Take());
     }
 
     const auto action = action_opt.Unwrap();
+    const auto rpsls_action = RawToRpslsAction(action);
+    if (rpsls_action == RpslsAction::kInvalid) {
+      return ResultT::Err(FlatJson{}.Set("message", "Invalid action").Take());
+    }
 
     const auto player_state_it = player_state_map_.find(socket_id);
     if (player_state_it == player_state_map_.end()) {
@@ -257,17 +285,59 @@ class BattleService final : public SocketPoolService<BattleService> {
 
     auto& battle_state = battle_state_it->second;
     if (battle_state.player1_socket_id == socket_id) {
-      battle_state.player1_action = action;
+      battle_state.player1_action = rpsls_action;
     } else if (battle_state.player2_socket_id == socket_id) {
-      battle_state.player2_action = action;
+      battle_state.player2_action = rpsls_action;
     } else {
       return ResultT::Err(
           FlatJson{}.Set("message", "Failed to find player in battle").Take());
     }
 
-    if (battle_state.player1_action.empty() ||
-        battle_state.player2_action.empty()) {
+    // If both players have made their actions
+    if (battle_state.player1_action == RpslsAction::kInvalid ||
+        battle_state.player2_action == RpslsAction::kInvalid) {
       return OkVoid();
+    }
+
+    const auto result_info =
+        GetResultInfo(battle_state.player1_action, battle_state.player2_action);
+
+    auto player1_stringified_res = FlatJsonStringifier{}.Stringify(
+        FlatJson{}
+            .Set("event", "battle_result")
+            .Set("result",
+                 static_cast<std::underlying_type_t<RpslsResult>>(
+                     result_info.player1))
+            .Take());
+    if (player1_stringified_res.IsErr()) {
+      return ResultT::Err(player1_stringified_res.TakeErr());
+    }
+
+    const auto player1_stringified = player1_stringified_res.TakeOk();
+    if (auto res = GetDependency<IoEventLoopService>()->WriteToFd(
+            battle_state.player1_socket_id,
+            player1_stringified);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
+    }
+
+    auto player2_stringified_res = FlatJsonStringifier{}.Stringify(
+        FlatJson{}
+            .Set("event", "battle_result")
+            .Set("result",
+                 static_cast<std::underlying_type_t<RpslsResult>>(
+                     result_info.player2))
+            .Take());
+    if (player2_stringified_res.IsErr()) {
+      return ResultT::Err(player2_stringified_res.TakeErr());
+    }
+
+    const auto player2_stringified = player2_stringified_res.TakeOk();
+    if (auto res = GetDependency<IoEventLoopService>()->WriteToFd(
+            battle_state.player2_socket_id,
+            player2_stringified);
+        res.IsErr()) {
+      return ResultT::Err(res.TakeErr());
     }
 
     return OkVoid();

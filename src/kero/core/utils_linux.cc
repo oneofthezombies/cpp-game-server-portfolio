@@ -34,6 +34,11 @@ auto
 kero::Fd::UpdateNonBlocking(const Value fd) noexcept -> Result<Void> {
   using ResultT = Result<Void>;
 
+  if (fd < 0) {
+    return ResultT::Err(
+        Error::From(kInvalidValue, FlatJson{}.Set("fd", fd).Take()));
+  }
+
   const int opts = fcntl(fd, F_GETFL);
   if (opts < 0) {
     return ResultT{
