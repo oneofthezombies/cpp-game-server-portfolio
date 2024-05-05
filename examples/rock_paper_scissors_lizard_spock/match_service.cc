@@ -165,13 +165,16 @@ class MatchService final : public SocketPoolService<MatchService> {
   OnSocketRead(const FlatJson& data) noexcept -> Result<Void> {
     using ResultT = Result<Void>;
 
-    auto socket_id = data.TryGet<u64>(EventSocketRead::kSocketId);
-    if (!socket_id) {
+    auto socket_id_opt = data.TryGet<u64>(EventSocketRead::kSocketId);
+    if (!socket_id_opt) {
       return ResultT::Err(
           FlatJson{}
               .Set("message", "Failed to get socket id from data")
               .Take());
     }
+
+    const auto socket_id = socket_id_opt.Unwrap();
+    GetDependency<IoEventLoopService>()->ReadFromFd(socket_id);
 
     return OkVoid();
   }
