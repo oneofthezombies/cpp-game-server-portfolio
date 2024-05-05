@@ -13,6 +13,10 @@ class FlatJsonStringifier final {
 
   [[nodiscard]] auto
   Stringify(const FlatJson& flat_json) noexcept -> Result<std::string>;
+
+ private:
+  [[nodiscard]] auto
+  TrimDoubleString(const std::string_view str) noexcept -> std::string_view;
 };
 
 class FlatJsonParser final {

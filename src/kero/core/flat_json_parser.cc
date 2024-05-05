@@ -21,7 +21,8 @@ kero::FlatJsonStringifier::Stringify(const FlatJson& json) noexcept
     if (std::holds_alternative<bool>(value)) {
       str += std::get<bool>(value) ? "true" : "false";
     } else if (std::holds_alternative<double>(value)) {
-      str += std::to_string(std::get<double>(value));
+      const auto double_str = std::to_string(std::get<double>(value));
+      str += TrimDoubleString(double_str);
     } else if (std::holds_alternative<std::string>(value)) {
       const auto data = std::get<std::string>(value);
       str += "\"";
@@ -72,6 +73,25 @@ kero::FlatJsonStringifier::Stringify(const FlatJson& json) noexcept
 
   str += "}";
   return str;
+}
+
+auto
+kero::FlatJsonStringifier::TrimDoubleString(const std::string_view str) noexcept
+    -> std::string_view {
+  if (str.find('.') == std::string::npos) {
+    return str;
+  }
+
+  size_t pos = str.size() - 1;
+  while (str[pos] == '0') {
+    --pos;
+  }
+
+  if (str[pos] == '.') {
+    return str.substr(0, pos);
+  }
+
+  return str.substr(0, pos + 1);
 }
 
 auto

@@ -269,7 +269,7 @@ main(int argc, char **argv) noexcept -> int {
 
   std::string buffer(4096, '\0');
   while (true) {
-    auto read_size = read(sock, buffer.data(), buffer.size());
+    auto read_size = recv(sock, buffer.data(), buffer.size(), 0);
     if (read_size == -1) {
       std::cerr << "Failed to read from the server." << std::endl;
       return 1;
