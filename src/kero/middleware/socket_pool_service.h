@@ -1,10 +1,9 @@
 #ifndef KERO_MIDDLEWARE_SOCKET_POOL_SERVICE_H
 #define KERO_MIDDLEWARE_SOCKET_POOL_SERVICE_H
 
-#include <unordered_set>
-
 #include "kero/core/common.h"
 #include "kero/core/flat_json_parser.h"
+#include "kero/core/flat_json_scanner.h"
 #include "kero/core/utils.h"
 #include "kero/engine/service.h"
 #include "kero/engine/service_kind.h"
@@ -13,6 +12,10 @@
 #include "kero/middleware/io_event_loop_service.h"
 
 namespace kero {
+
+struct SocketInfo {
+  FlatJsonScanner scanner{};
+};
 
 template <typename T>
 class SocketPoolService : public Service {
@@ -91,7 +94,21 @@ class SocketPoolService : public Service {
       return ResultT::Err(read_res.TakeErr());
     }
 
-    auto parsed = FlatJsonParser{}.Parse(read_res.TakeOk());
+    auto found_socket_info = socket_map_.find(socket_id);
+    if (found_socket_info == socket_map_.end()) {
+      return ResultT::Err(
+          FlatJson{}.Set("message", "Socket info not found").Take());
+    }
+
+    auto& socket_info = found_socket_info->second;
+    socket_info.scanner.Push(read_res.TakeOk());
+    auto token_opt = socket_info.scanner.Pop();
+    if (!token_opt) {
+      return OkVoid();
+    }
+
+    auto token = token_opt.Unwrap();
+    auto parsed = FlatJsonParser{}.Parse(token);
     if (parsed.IsErr()) {
       return ResultT::Err(parsed.TakeErr());
     }
@@ -103,7 +120,7 @@ class SocketPoolService : public Service {
           FlatJson{}.Set("message", "Failed to get event from data").Take());
     }
 
-    read_data.Set("__socket_id", socket_id);
+    (void)read_data.Set("__socket_id", socket_id);
     const auto event = event_opt.Unwrap();
     if (auto res = InvokeMethodEvent(event, read_data); res.IsErr()) {
       return ResultT::Err(res.TakeErr());
@@ -123,13 +140,13 @@ class SocketPoolService : public Service {
       return ResultT::Err(res.TakeErr());
     }
 
-    socket_ids_.insert(socket_id);
+    socket_map_.emplace(socket_id, SocketInfo{});
     return OkVoid();
   }
 
   [[nodiscard]] auto
   UnregisterSocket(const SocketId socket_id) noexcept -> Result<Void> {
-    if (socket_ids_.erase(socket_id) == 0) {
+    if (socket_map_.erase(socket_id) == 0) {
       log::Error("Failed to remove socket_id from set")
           .Data("socket_id", socket_id)
           .Log();
@@ -189,7 +206,7 @@ class SocketPoolService : public Service {
   }
 
  protected:
-  std::unordered_set<SocketId> socket_ids_;
+  std::unordered_map<SocketId, SocketInfo> socket_map_;
 
  private:
   std::unordered_map<std::string /* event */, EventHandler> event_handler_map_;

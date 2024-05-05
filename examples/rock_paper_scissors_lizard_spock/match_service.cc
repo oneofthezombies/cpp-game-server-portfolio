@@ -83,11 +83,11 @@ class MatchService final : public SocketPoolService<MatchService> {
       return ResultT::Err(res.TakeErr());
     }
 
-    if (socket_ids_.size() >= 2) {
-      const auto player1_it = socket_ids_.begin();
-      const auto player1_socket_id = *player1_it;
+    if (socket_map_.size() >= 2) {
+      const auto player1_it = socket_map_.begin();
+      const auto player1_socket_id = player1_it->first;
       const auto player2_it = std::next(player1_it);
-      const auto player2_socket_id = *player2_it;
+      const auto player2_socket_id = player2_it->first;
       if (auto res = UnregisterSocket(player1_socket_id); res.IsErr()) {
         return ResultT::Err(res.TakeErr());
       }

@@ -107,7 +107,7 @@ class BattleService final : public SocketPoolService<BattleService> {
         EventBattleSocketCount::kEvent,
         FlatJson{}
             .Set(EventBattleSocketCount::kName, name)
-            .Set(EventBattleSocketCount::kCount, socket_ids_.size())
+            .Set(EventBattleSocketCount::kCount, socket_map_.size())
             .Take());
 
     return OkVoid();
@@ -357,7 +357,7 @@ class BattleService final : public SocketPoolService<BattleService> {
         EventBattleSocketCount::kEvent,
         FlatJson{}
             .Set(EventBattleSocketCount::kName, name)
-            .Set(EventBattleSocketCount::kCount, socket_ids_.size())
+            .Set(EventBattleSocketCount::kCount, socket_map_.size())
             .Take());
 
     return OkVoid();
@@ -377,7 +377,7 @@ class BattleService final : public SocketPoolService<BattleService> {
         EventBattleSocketCount::kEvent,
         FlatJson{}
             .Set(EventBattleSocketCount::kName, name)
-            .Set(EventBattleSocketCount::kCount, socket_ids_.size())
+            .Set(EventBattleSocketCount::kCount, socket_map_.size())
             .Take());
 
     return OkVoid();
